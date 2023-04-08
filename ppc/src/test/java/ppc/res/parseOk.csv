@@ -1,0 +1,11 @@
+Test;Test;0
+"Test";"""Test""";"1"
+"Te;st","Te""st";2
+Test,Test,5
+"Test","""Test""","3"
+"Te;st","Te""st",4
+Test;Test;7
+Test;Test;0
+Test;Test,0
+Test,Test;0
+Test;Test;1
