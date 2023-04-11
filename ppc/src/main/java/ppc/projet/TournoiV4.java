@@ -36,12 +36,12 @@ public class TournoiV4 {
 		if (nbStudents % 2 == 1) {
 			System.out.println("adding ghost player");
 			ghost = nbStudents++;
+			nbClasses++;
 			listClasses = Arrays.copyOf(listClasses, listClasses.length + 1);
 			listClasses[listClasses.length - 1] = new Integer[] { ghost };
 		}
 
 		studentClasses = new int[nbStudents];
-		Arrays.fill(studentClasses, -1);
 		classmates = getClassmates(newIdClasses(listClasses));
 	}
 
