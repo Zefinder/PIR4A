@@ -11,7 +11,7 @@ import com.google.ortools.Loader;
 import com.google.ortools.sat.BoolVar;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
-import com.google.ortools.sat.CpSolverStatus;
+import com.google.ortools.sat.CpSolverSolutionCallback;
 import com.google.ortools.sat.IntVar;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
@@ -20,49 +20,40 @@ import com.google.ortools.sat.Literal;
 public class TournoiV4 {
 
 	private static final int NUMBER_MATCHES = 6;
-	private int[] studentClasses;
-	private Integer[] ids;
-	private Integer ghost = -1;
+	private static int nbStudents;
+	private static int nbClasses;
+	private static int[] studentClasses;
+	private static Integer ghost = -1;
+	Map<Integer, Integer[]> classmates;
 
-	public TournoiV4() {
+	public TournoiV4(Integer[][] listClasses) {
 		Loader.loadNativeLibraries();
-	}
 
-	private double solve(Integer[][] listClasses) {
-		CpModel model = new CpModel();
+		nbClasses = listClasses.length;
 
-		int nbStudents = 0;
 		for (Integer[] classs : listClasses)
 			nbStudents += classs.length;
-
 		if (nbStudents % 2 == 1) {
-			System.out.println("adding ghost");
+			System.out.println("adding ghost player");
 			ghost = nbStudents++;
 			listClasses = Arrays.copyOf(listClasses, listClasses.length + 1);
 			listClasses[listClasses.length - 1] = new Integer[] { ghost };
 		}
 
-		int nbClasses = listClasses.length;
+		studentClasses = new int[nbStudents];
+		Arrays.fill(studentClasses, -1);
+		classmates = getClassmates(newIdClasses(listClasses));
+	}
 
-		IntVar[][] opponents = new IntVar[nbStudents / 2][NUMBER_MATCHES];
+	private double solve() {
+		CpModel model = new CpModel();
+
+		IntVar[][] opponents = new IntVar[nbStudents][NUMBER_MATCHES];
 		IntVar[][] opponentsClasses = new IntVar[opponents.length][opponents[0].length];
 		Literal[][] sameClassesMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
 
-		listClasses = newIdClasses(listClasses, nbStudents);
-		Map<Integer, Integer[]> classmates = getClassmates(listClasses, nbStudents);
-
 		// Debug
-		System.out.println("nouvelles classes : ");
-		for (Integer[] classs : listClasses) {
-			System.out.print("[ ");
-			for (Integer id : classs) {
-				System.out.print(id + " ");
-			}
-			System.out.println("]");
-		}
-
-		// Debug
-		System.out.print("camarades des n/2 premiers joueurs : ");
+		System.out.print("camarades des joueurs : ");
 		for (Map.Entry<Integer, Integer[]> entry : classmates.entrySet()) {
 			System.out.print(entry.getKey() + ": [");
 			for (Integer id : entry.getValue()) {
@@ -74,12 +65,16 @@ public class TournoiV4 {
 
 		for (int student = 0; student < opponents.length; student++) {
 			for (int game = 0; game < opponents[0].length; game++) {
-				opponents[student][game] = model.newIntVar(nbStudents / 2, nbStudents - 1,
-						"student" + student + "_game" + game);
-
+				if (student < nbStudents / 2)
+					opponents[student][game] = model.newIntVar(nbStudents / 2, nbStudents - 1,
+							"student" + student + "_game" + game);
+				else 
+					opponents[student][game] = model.newIntVar(0, nbStudents / 2 - 1,
+							"student" + student + "_game" + game);
+				
 				// associating the opponent to their class
 				opponentsClasses[student][game] = model.newIntVar(0, nbClasses - 1, "class_" + game);
-				model.addElement(opponents[student][game], this.studentClasses, opponentsClasses[student][game]);
+				model.addElement(opponents[student][game], studentClasses, opponentsClasses[student][game]);
 
 				for (int classmate : classmates.get(student)) {
 					model.addDifferent(opponents[student][game], classmate);
@@ -94,6 +89,7 @@ public class TournoiV4 {
 			for (int j = 0; j < opponents.length; j++) {
 				column[j] = opponents[j][i];
 			}
+			model.addInverse(column, column);
 			model.addAllDifferent(column);
 		}
 
@@ -127,21 +123,45 @@ public class TournoiV4 {
 		model.maximize(objectiveFunction);
 
 		CpSolver solver = new CpSolver();
-		CpSolverStatus status = solver.solve(model);
 
-		if (status == CpSolverStatus.FEASIBLE || status == CpSolverStatus.OPTIMAL) {
+		SolutionPrinter sp = new SolutionPrinter(opponents, sameClassesMet);
+		solver.getParameters().setEnumerateAllSolutions(true);
+
+		solver.solve(model, sp);
+
+		System.out.println("Time spent: " + solver.wallTime());
+
+		return solver.wallTime();
+	}
+
+	private static class SolutionPrinter extends CpSolverSolutionCallback {
+		private int solutionCount;
+		IntVar[][] opponents;
+		Literal[][] sameClassesMet;
+
+		public SolutionPrinter(IntVar[][] opponents, Literal[][] sameClassesMet) {
+			solutionCount = 0;
+			this.opponents = opponents;
+			this.sameClassesMet = sameClassesMet;
+		}
+
+		@Override
+		public void onSolutionCallback() {
+			System.out.println("Solution " + ++solutionCount);
+			int sumClassesMet = 0;
 			for (int i = 0; i < opponents.length; i++) {
 				int nbClassesMet = 1;
-				System.out.print(String.format("Student %d (class %d): \t[", i, getClass(listClasses, i)));
-				for (int j = 0; j < opponents[0].length; j++) {
+				System.out.print(String.format("Student %d (class %d): \t[", i, studentClasses[i]));
+				for (int j = 0; j < NUMBER_MATCHES; j++) {
 					if (j < NUMBER_MATCHES - 1)
-						nbClassesMet += solver.booleanValue(sameClassesMet[i][j]) ? 1 : 0;
-					long opponent = solver.value(opponents[i][j]);
+						nbClassesMet += booleanValue(sameClassesMet[i][j]) ? 1 : 0;
+					long opponent = value(opponents[i][j]);
 					if (j == opponents[0].length - 1)
-						System.out.print(opponent + " (" + getClass(listClasses, (int) opponent) + ")");
+						System.out.print(opponent + " (" + studentClasses[(int) opponent] + ")");
 					else
-						System.out.print(opponent + " (" + getClass(listClasses, (int) opponent) + ")" + "\t");
+						System.out.print(opponent + " (" + studentClasses[(int) opponent] + ")" + "\t");
 				}
+				sumClassesMet += nbClassesMet;
 				System.out.print("]");
 				System.out.println("\t   -> " + nbClassesMet + " classes met");
 			}
@@ -149,13 +169,9 @@ public class TournoiV4 {
 				System.out.println("Need a ghost player; id " + ghost);
 
 			System.out.println("Problem for " + nbStudents + " students done!");
-		} else {
-			System.out.println("No solution!");
+			System.out.println("Total classes met: " + sumClassesMet + " (max: " + ((nbClasses - 1) > 6 ? 6 : (nbClasses - 1)) * nbStudents + ")");
+			System.out.println("Time spent: " + wallTime());
 		}
-
-		System.out.println("Time spent: " + solver.wallTime());
-
-		return solver.wallTime();
 	}
 
 	/**
@@ -166,17 +182,16 @@ public class TournoiV4 {
 	 * @param nbStudents
 	 * @return classes with the new ids
 	 */
-	private Integer[][] newIdClasses(Integer[][] classes, int nbStudents) {
-		// initialising ids
-		this.ids = new Integer[nbStudents];
-		this.studentClasses = new int[nbStudents];
+	private Integer[][] newIdClasses(Integer[][] listClasses) {
+		// array that keeps track of which old id (the index) 
+		// is turned into which new id (the value)
+		Integer[] ids = new Integer[nbStudents];
 		Arrays.fill(ids, -1);
-		Arrays.fill(studentClasses, -1);
 
 		// copying the classes to a list of lists
-		List<List<Integer>> listClasses = new ArrayList<>();
-		for (Integer[] currentClass : classes) {
-			listClasses.add(new LinkedList<Integer>(Arrays.asList(currentClass)));
+		List<List<Integer>> studentsToBeAssigned = new ArrayList<>();
+		for (Integer[] currentClass : listClasses) {
+			studentsToBeAssigned.add(new LinkedList<Integer>(Arrays.asList(currentClass)));
 		}
 
 		// The first numStudents/2 will start with the white pawns
@@ -186,93 +201,91 @@ public class TournoiV4 {
 		int id = 0;
 		while (id < nbStudents / 2) {
 			int biggestClassId = 0;
-			List<Integer> biggestClass = listClasses.get(biggestClassId);
-			for (int classNb = 1; classNb < listClasses.size(); classNb++) {
-				if (listClasses.get(classNb).size() > biggestClass.size()) {
-					biggestClass = listClasses.get(classNb);
+			List<Integer> biggestClass = studentsToBeAssigned.get(biggestClassId);
+			for (int classNb = 1; classNb < studentsToBeAssigned.size(); classNb++) {
+				if (studentsToBeAssigned.get(classNb).size() > biggestClass.size()) {
+					biggestClass = studentsToBeAssigned.get(classNb);
 					biggestClassId = classNb;
 				}
 			}
 			Integer initId = biggestClass.get(0);
 			biggestClass.remove(biggestClass.get(0));
-			this.studentClasses[id] = biggestClassId;
-			this.ids[initId] = id++;
+			studentClasses[id] = biggestClassId;
+			ids[initId] = id++;
 		}
+
 		// The last numStudents/2 will start with the black pawns
-		for (int i = 0; i < ids.length; i++) {
-			if (ids[i] == -1) {
-				studentClasses[id] = getClass(classes, i);
-				ids[i] = id++;
+		int currClass = 0;
+		for (List<Integer> c : studentsToBeAssigned) {
+			for (Integer s : c) {
+				studentClasses[id] = currClass;
+				ids[s] = id++;
 			}
+			currClass++;
 		}
 
 		// updating the classes matrix
-		for (int classNb = 0; classNb < classes.length; classNb++) {
-			for (int student = 0; student < classes[classNb].length; student++) {
-				int oldId = classes[classNb][student];
-				classes[classNb][student] = ids[oldId];
+		for (int classNb = 0; classNb < listClasses.length; classNb++) {
+			for (int student = 0; student < listClasses[classNb].length; student++) {
+				int oldId = listClasses[classNb][student];
+				listClasses[classNb][student] = ids[oldId];
 			}
+		}
+		
+		// Debug
+		System.out.println("classes : ");
+		for (Integer[] classs : listClasses) {
+			System.out.print("[ ");
+			for (Integer s : classs)
+				System.out.print(s + " ");
+			System.out.println("]");
 		}
 
 		// debug, printing studentClasses
-		/*
-		 * System.out.print("studentClasses: ["); for (int i = 0; i <
-		 * studentClasses.length; i++) { System.out.print(studentClasses[i] + " "); }
-		 * System.out.println("]");
-		 */
-
-		return classes;
+//		System.out.print("studentClasses: [");
+//		for (int i = 0; i < studentClasses.length; i++)
+//			System.out.print(studentClasses[i] + " ");
+//		System.out.println("]");
+		
+		return listClasses;
 	}
 
 	/**
-	 * associates each student to its classmates (including themselves)
+	 * associates each student to its classmates (including themselves) for the
+	 * first half of students
 	 * 
 	 * @return the {@link HashMap} (idStudent -> classmates)
 	 */
-	private Map<Integer, Integer[]> getClassmates(Integer[][] classes, int nbStudents) {
+	private Map<Integer, Integer[]> getClassmates(Integer[][] listClasses) {
 		Map<Integer, Integer[]> classmates = new HashMap<>();
 
 		// creating the map
-		for (Integer[] classs : classes) {
+		for (Integer[] classs : listClasses) {
 			for (int student : classs) {
-				if (student < nbStudents / 2)
+				if (student < nbStudents)
 					classmates.put(student, classs);
 			}
 		}
 		return classmates;
 	}
 
-	private int getClass(Integer[][] classes, int student) {
-		int classs = -1;
-		for (int c = 0; c < classes.length; c++) {
-			for (int s : classes[c]) {
-				if (s == student) {
-					classs = c;
-					break;
-				}
-			}
-		}
-		return classs;
-	}
-
 	public static void main(String[] args) {
-		TournoiV4 tournoi = new TournoiV4();
-
 		// works
 		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12,
 		// 13, 14, 15, 16, 17 } };
 
 		// to test maximisation
-		Integer[][] classes = { { 0, 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 },
-				{ 17, 18, 19, 20 }, { 21, 22, 23 } };
+		// Integer[][] classes = { { 0, 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 },
+		//		{ 17, 18, 19, 20 }, { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 } };
 
 		// doesn't work with the ghost player somehow
 //		Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 } };
 
 		// niveau 1 rencontre 2019, works :
-//		Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13}, {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
+		Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13}, {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
 
-		tournoi.solve(classes);
+		TournoiV4 tournoi = new TournoiV4(classes);
+		tournoi.solve();
 	}
 
 }
