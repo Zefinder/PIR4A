@@ -187,10 +187,18 @@ public class TournoiV4 {
 		// is turned into which new id (the value)
 		Integer[] ids = new Integer[nbStudents];
 		Arrays.fill(ids, -1);
+		
+		int id = 0;
+		int classes = listClasses.length;
+		if (ghost != -1) {
+			ids[ghost] = id++;
+			classes--;
+		}
 
 		// copying the classes to a list of lists
 		List<List<Integer>> studentsToBeAssigned = new ArrayList<>();
-		for (Integer[] currentClass : listClasses) {
+		for (int i = 0; i < classes; i++) {
+			Integer[] currentClass = listClasses[i];
 			studentsToBeAssigned.add(new LinkedList<Integer>(Arrays.asList(currentClass)));
 		}
 
@@ -198,7 +206,6 @@ public class TournoiV4 {
 		// We are going to choose a student to start with the white pawns
 		// To choose them, we take a student from the class that has the most
 		// non assigned students
-		int id = 0;
 		while (id < nbStudents / 2) {
 			int biggestClassId = 0;
 			List<Integer> biggestClass = studentsToBeAssigned.get(biggestClassId);
@@ -278,12 +285,18 @@ public class TournoiV4 {
 		// Integer[][] classes = { { 0, 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 },
 		//		{ 17, 18, 19, 20 }, { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 } };
 
-		// doesn't work with the ghost player somehow
+		// works with the ghost player!
 //		Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 } };
 
-		// niveau 1 rencontre 2019, works :
-		Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13}, {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
-
+		// works :
+		// Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13}, {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
+		
+		// niveau 2 rencontre 2019
+		// Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, {12, 13, 14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25, 26, 27}};
+		
+		// niveau 3 rencontre 2019
+		Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22}, {23, 24, 25, 26, 27, 28, 29}};
+		
 		TournoiV4 tournoi = new TournoiV4(classes);
 		tournoi.solve();
 	}
