@@ -2,6 +2,8 @@ package ppc.projet;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -24,6 +26,8 @@ public class TournoiV4 {
 	private static int nbClasses;
 	private static int[] studentClasses;
 	private static Integer ghost = -1;
+	private static int maxClassesMet = 0;
+	private static boolean paul = true;
 	Map<Integer, Integer[]> classmates;
 
 	public TournoiV4(Integer[][] listClasses) {
@@ -169,7 +173,7 @@ public class TournoiV4 {
 				System.out.println("Need a ghost player; id " + ghost);
 
 			System.out.println("Problem for " + nbStudents + " students done!");
-			System.out.println("Total classes met: " + sumClassesMet + " (max: " + ((nbClasses - 1) > 6 ? 6 : (nbClasses - 1)) * nbStudents + ")");
+			System.out.println("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")");
 			System.out.println("Time spent: " + wallTime());
 		}
 	}
@@ -188,47 +192,101 @@ public class TournoiV4 {
 		Integer[] ids = new Integer[nbStudents];
 		Arrays.fill(ids, -1);
 		
+		int[][] pawnDistribution = new int[listClasses.length][2];
+		int whitePawns = 0;
+		int blackPawns = 1;
+		
 		int id = 0;
 		int classes = listClasses.length;
 		if (ghost != -1) {
 			ids[ghost] = id++;
 			classes--;
+			pawnDistribution[classes][0] = 1;
+			pawnDistribution[classes][1] = 0;
 		}
-
-		// copying the classes to a list of lists
-		List<List<Integer>> studentsToBeAssigned = new ArrayList<>();
-		for (int i = 0; i < classes; i++) {
-			Integer[] currentClass = listClasses[i];
-			studentsToBeAssigned.add(new LinkedList<Integer>(Arrays.asList(currentClass)));
-		}
-
-		// The first numStudents/2 will start with the white pawns
-		// We are going to choose a student to start with the white pawns
-		// To choose them, we take a student from the class that has the most
-		// non assigned students
-		while (id < nbStudents / 2) {
-			int biggestClassId = 0;
-			List<Integer> biggestClass = studentsToBeAssigned.get(biggestClassId);
-			for (int classNb = 1; classNb < studentsToBeAssigned.size(); classNb++) {
-				if (studentsToBeAssigned.get(classNb).size() > biggestClass.size()) {
-					biggestClass = studentsToBeAssigned.get(classNb);
-					biggestClassId = classNb;
+		
+		if (paul) {
+			// sorting the classes from biggest to smallest
+			List<Integer[]> tmpList = new ArrayList<>();
+			for (int i = 0; i < classes; i++) {
+				tmpList.add(listClasses[i]);
+			}
+			Collections.sort(tmpList, new Comparator<Integer[]>() {
+			    @Override
+			    public int compare(Integer[] o1, Integer[] o2) {
+			        return o2.length - o1.length;
+			    }
+			});
+			Integer[][] orderedClasses = tmpList.toArray(new Integer[0][]);
+			System.out.println(Arrays.deepToString(orderedClasses));
+			
+			boolean unbalanced = false;
+			for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
+				Integer[] c = orderedClasses[classNb];
+				for (int i = 0; i < c.length/2; i++) {
+					int oldId = c[i];
+					studentClasses[id] = classNb;
+					ids[oldId] = id++;
+					pawnDistribution[classNb][0]++;
+				}
+				if (c.length % 2 != 0) {
+					if (unbalanced) {
+						int oldId = c[c.length / 2];
+						ids[oldId] = id++;
+						pawnDistribution[classNb][whitePawns]++;
+					}
+					unbalanced = !unbalanced;
 				}
 			}
-			Integer initId = biggestClass.get(0);
-			biggestClass.remove(biggestClass.get(0));
-			studentClasses[id] = biggestClassId;
-			ids[initId] = id++;
-		}
-
-		// The last numStudents/2 will start with the black pawns
-		int currClass = 0;
-		for (List<Integer> c : studentsToBeAssigned) {
-			for (Integer s : c) {
-				studentClasses[id] = currClass;
-				ids[s] = id++;
+			
+			for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
+				for (int student : orderedClasses[classNb]) {
+					if (ids[student] == -1) {
+						studentClasses[id] = classNb;
+						ids[student] = id++;
+						pawnDistribution[classNb][blackPawns]++;
+					}
+				}
 			}
-			currClass++;
+		}
+		
+		else {
+			// copying the classes to a list of lists
+			List<List<Integer>> studentsToBeAssigned = new ArrayList<>();
+			for (int i = 0; i < classes; i++) {
+				Integer[] currentClass = listClasses[i];
+				studentsToBeAssigned.add(new LinkedList<Integer>(Arrays.asList(currentClass)));
+			}
+
+			// The first numStudents/2 will start with the white pawns
+			// We are going to choose a student to start with the white pawns
+			// To choose them, we take a student from the class that has the most
+			// non assigned students
+			while (id < nbStudents / 2) {
+				int biggestClassId = 0;
+				List<Integer> biggestClass = studentsToBeAssigned.get(biggestClassId);
+				for (int classNb = 1; classNb < studentsToBeAssigned.size(); classNb++) {
+					if (studentsToBeAssigned.get(classNb).size() > biggestClass.size()) {
+						biggestClass = studentsToBeAssigned.get(classNb);
+						biggestClassId = classNb;
+					}
+				}
+				Integer initId = biggestClass.get(0);
+				biggestClass.remove(biggestClass.get(0));
+				studentClasses[id] = biggestClassId;
+				ids[initId] = id++;
+				pawnDistribution[biggestClassId][whitePawns]++;
+			}
+
+			// The last numStudents/2 will start with the black pawns
+			for (int classNb = 0; classNb < studentsToBeAssigned.size(); classNb++) {
+				List<Integer> c = studentsToBeAssigned.get(classNb);
+				for (Integer s : c) {
+					studentClasses[id] = classNb;
+					ids[s] = id++;
+					pawnDistribution[classNb][blackPawns]++;
+				}
+			}
 		}
 
 		// updating the classes matrix
@@ -236,6 +294,19 @@ public class TournoiV4 {
 			for (int student = 0; student < listClasses[classNb].length; student++) {
 				int oldId = listClasses[classNb][student];
 				listClasses[classNb][student] = ids[oldId];
+			}
+		}
+		
+		// Debug
+		System.out.println(Arrays.deepToString(pawnDistribution));
+		
+		// computing maxClassesMet
+		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
+			for (int opponentClass = 0; opponentClass < pawnDistribution.length; opponentClass++) {
+				if (classNb != classes && opponentClass != classNb) {
+					maxClassesMet += (pawnDistribution[opponentClass][blackPawns] == 0) ? 0 : pawnDistribution[classNb][whitePawns];
+					maxClassesMet += (pawnDistribution[opponentClass][whitePawns] == 0) ? 0 : pawnDistribution[classNb][blackPawns];
+				}
 			}
 		}
 		
@@ -281,12 +352,15 @@ public class TournoiV4 {
 		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12,
 		// 13, 14, 15, 16, 17 } };
 
-		// to test maximisation
+		// to test maximisation + better maxClassesMet for paul
 		// Integer[][] classes = { { 0, 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 },
 		//		{ 17, 18, 19, 20 }, { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 } };
 
 		// works with the ghost player!
-//		Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 } };
+		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 } };
+		
+		// tests paul vs adrien: fonctionne pas pour adrien !
+		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15 }, {16, 17, 18, 19} };
 
 		// works :
 		// Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13}, {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
