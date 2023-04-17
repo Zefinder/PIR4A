@@ -120,10 +120,16 @@ public class TournoiV4 {
 				}
 			}
 		}
-		// Maximising the number of classes met
+		// Maximising the number of classes met for everyone but ghost player
 		LinearExprBuilder objectiveFunction = LinearExpr.newBuilder();
-		for (Literal[] hasMetClasses : sameClassesMet)
+		int nbRealStudents = nbStudents;
+		if (ghost != -1) {
+			nbRealStudents--;
+		}
+		for (int student = 0; student < nbRealStudents; student++) {
+			Literal[] hasMetClasses = sameClassesMet[student];
 			objectiveFunction.addSum(hasMetClasses);
+		}
 		model.maximize(objectiveFunction);
 
 		CpSolver solver = new CpSolver();
@@ -132,8 +138,6 @@ public class TournoiV4 {
 		solver.getParameters().setEnumerateAllSolutions(true);
 
 		solver.solve(model, sp);
-
-		System.out.println("Time spent: " + solver.wallTime());
 
 		return solver.wallTime();
 	}
@@ -174,6 +178,10 @@ public class TournoiV4 {
 
 			System.out.println("Problem for " + nbStudents + " students done!");
 			System.out.println("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")");
+			if (sumClassesMet == maxClassesMet) {
+				System.out.println("optimal solution found!");
+				stopSearch();
+			}
 			System.out.println("Time spent: " + wallTime());
 		}
 	}
@@ -231,6 +239,7 @@ public class TournoiV4 {
 				}
 				if (c.length % 2 != 0) {
 					if (unbalanced) {
+						studentClasses[id] = classNb;
 						int oldId = c[c.length / 2];
 						ids[oldId] = id++;
 						pawnDistribution[classNb][whitePawns]++;
