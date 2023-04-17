@@ -136,9 +136,11 @@ public class TournoiV4 {
 
 		SolutionPrinter sp = new SolutionPrinter(opponents, sameClassesMet);
 		solver.getParameters().setEnumerateAllSolutions(true);
-
+		solver.getParameters().setMaxTimeInSeconds(60);
+		
 		solver.solve(model, sp);
-
+		
+		System.out.println("Timed out! Time spent: " + solver.wallTime());
 		return solver.wallTime();
 	}
 
