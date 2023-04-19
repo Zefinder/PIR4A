@@ -72,10 +72,10 @@ public class TournoiV4 {
 				if (student < nbStudents / 2)
 					opponents[student][game] = model.newIntVar(nbStudents / 2, nbStudents - 1,
 							"student" + student + "_game" + game);
-				else 
+				else
 					opponents[student][game] = model.newIntVar(0, nbStudents / 2 - 1,
 							"student" + student + "_game" + game);
-				
+
 				// associating the opponent to their class
 				opponentsClasses[student][game] = model.newIntVar(0, nbClasses - 1, "class_" + game);
 				model.addElement(opponents[student][game], studentClasses, opponentsClasses[student][game]);
@@ -122,11 +122,11 @@ public class TournoiV4 {
 		}
 		// Maximising the number of classes met for everyone but ghost player
 		LinearExprBuilder objectiveFunction = LinearExpr.newBuilder();
-		int nbRealStudents = nbStudents;
+		int firstStudent = 0;
 		if (ghost != -1) {
-			nbRealStudents--;
+			firstStudent = 1;
 		}
-		for (int student = 0; student < nbRealStudents; student++) {
+		for (int student = firstStudent; student < nbStudents; student++) {
 			Literal[] hasMetClasses = sameClassesMet[student];
 			objectiveFunction.addSum(hasMetClasses);
 		}
@@ -137,10 +137,10 @@ public class TournoiV4 {
 		SolutionPrinter sp = new SolutionPrinter(opponents, sameClassesMet);
 		solver.getParameters().setEnumerateAllSolutions(true);
 		solver.getParameters().setMaxTimeInSeconds(60);
-		
+
 		solver.solve(model, sp);
-		
-		System.out.println("Timed out! Time spent: " + solver.wallTime());
+
+		System.out.println("Timed out after " + solver.wallTime());
 		return solver.wallTime();
 	}
 
@@ -171,9 +171,14 @@ public class TournoiV4 {
 					else
 						System.out.print(opponent + " (" + studentClasses[(int) opponent] + ")" + "\t");
 				}
-				sumClassesMet += nbClassesMet;
-				System.out.print("]");
-				System.out.println("\t   -> " + nbClassesMet + " classes met");
+
+				if (i != ghost) {
+					sumClassesMet += nbClassesMet;
+					System.out.print("]");
+					System.out.println("\t   -> " + nbClassesMet + " classes met");
+				} else {
+					System.out.println("]");
+				}
 			}
 			if (ghost != -1)
 				System.out.println("Need a ghost player; id " + ghost);
@@ -197,24 +202,26 @@ public class TournoiV4 {
 	 * @return classes with the new ids
 	 */
 	private Integer[][] newIdClasses(Integer[][] listClasses) {
-		// array that keeps track of which old id (the index) 
+		// array that keeps track of which old id (the index)
 		// is turned into which new id (the value)
 		Integer[] ids = new Integer[nbStudents];
 		Arrays.fill(ids, -1);
-		
+
 		int[][] pawnDistribution = new int[listClasses.length][2];
 		int whitePawns = 0;
 		int blackPawns = 1;
-		
+
 		int id = 0;
 		int classes = listClasses.length;
 		if (ghost != -1) {
-			ids[ghost] = id++;
+			studentClasses[id] = classes - 1;
+			ids[ghost] = id;
+			ghost = id++;
 			classes--;
 			pawnDistribution[classes][0] = 1;
 			pawnDistribution[classes][1] = 0;
 		}
-		
+
 		if (paul) {
 			// sorting the classes from biggest to smallest
 			List<Integer[]> tmpList = new ArrayList<>();
@@ -222,18 +229,18 @@ public class TournoiV4 {
 				tmpList.add(listClasses[i]);
 			}
 			Collections.sort(tmpList, new Comparator<Integer[]>() {
-			    @Override
-			    public int compare(Integer[] o1, Integer[] o2) {
-			        return o2.length - o1.length;
-			    }
+				@Override
+				public int compare(Integer[] o1, Integer[] o2) {
+					return o2.length - o1.length;
+				}
 			});
 			Integer[][] orderedClasses = tmpList.toArray(new Integer[0][]);
 			System.out.println(Arrays.deepToString(orderedClasses));
-			
+
 			boolean unbalanced = false;
 			for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
 				Integer[] c = orderedClasses[classNb];
-				for (int i = 0; i < c.length/2; i++) {
+				for (int i = 0; i < c.length / 2; i++) {
 					int oldId = c[i];
 					studentClasses[id] = classNb;
 					ids[oldId] = id++;
@@ -249,7 +256,7 @@ public class TournoiV4 {
 					unbalanced = !unbalanced;
 				}
 			}
-			
+
 			for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
 				for (int student : orderedClasses[classNb]) {
 					if (ids[student] == -1) {
@@ -260,7 +267,7 @@ public class TournoiV4 {
 				}
 			}
 		}
-		
+
 		else {
 			// copying the classes to a list of lists
 			List<List<Integer>> studentsToBeAssigned = new ArrayList<>();
@@ -307,20 +314,22 @@ public class TournoiV4 {
 				listClasses[classNb][student] = ids[oldId];
 			}
 		}
-		
+
 		// Debug
 		System.out.println(Arrays.deepToString(pawnDistribution));
-		
+
 		// computing maxClassesMet
-		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
+		for (int classNb = 0; classNb < classes; classNb++) {
 			for (int opponentClass = 0; opponentClass < pawnDistribution.length; opponentClass++) {
-				if (classNb != classes && opponentClass != classNb) {
-					maxClassesMet += (pawnDistribution[opponentClass][blackPawns] == 0) ? 0 : pawnDistribution[classNb][whitePawns];
-					maxClassesMet += (pawnDistribution[opponentClass][whitePawns] == 0) ? 0 : pawnDistribution[classNb][blackPawns];
+				if (opponentClass != classNb) {
+					maxClassesMet += (pawnDistribution[opponentClass][blackPawns] == 0) ? 0
+							: pawnDistribution[classNb][whitePawns];
+					maxClassesMet += (pawnDistribution[opponentClass][whitePawns] == 0) ? 0
+							: pawnDistribution[classNb][blackPawns];
 				}
 			}
 		}
-		
+
 		// Debug
 		System.out.println("classes : ");
 		for (Integer[] classs : listClasses) {
@@ -331,11 +340,11 @@ public class TournoiV4 {
 		}
 
 		// debug, printing studentClasses
-//		System.out.print("studentClasses: [");
-//		for (int i = 0; i < studentClasses.length; i++)
-//			System.out.print(studentClasses[i] + " ");
-//		System.out.println("]");
-		
+		System.out.print("studentClasses: [");
+		for (int i = 0; i < studentClasses.length; i++)
+			System.out.print(studentClasses[i] + " ");
+		System.out.println("]");
+
 		return listClasses;
 	}
 
@@ -364,24 +373,35 @@ public class TournoiV4 {
 		// 13, 14, 15, 16, 17 } };
 
 		// to test maximisation + better maxClassesMet for paul
-		// Integer[][] classes = { { 0, 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 },
-		//		{ 17, 18, 19, 20 }, { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 } };
+		// Integer[][] classes = { { 0, 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9, 10, 11 }, {
+		// 12, 13, 14, 15, 16 },
+		// { 17, 18, 19, 20 }, { 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33 } };
 
 		// works with the ghost player!
-		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16 } };
-		
+		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12,
+		// 13, 14, 15, 16 } };
+
 		// tests paul vs adrien: fonctionne pas pour adrien !
-		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12, 13, 14, 15 }, {16, 17, 18, 19} };
+		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12,
+		// 13, 14, 15, 16 }, { 17, 18, 19, 20} };
 
 		// works :
-		// Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13}, {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
-		
+		// Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13},
+		// {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
+
 		// niveau 2 rencontre 2019
-		// Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, {12, 13, 14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25, 26, 27}};
-		
+		// Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, {12, 13, 14,
+		// 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25, 26, 27}};
+
 		// niveau 3 rencontre 2019
-		Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, {11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22}, {23, 24, 25, 26, 27, 28, 29}};
+		// Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}, {11, 12, 13, 14,
+		// 15, 16, 17, 18, 19, 20, 21, 22}, {23, 24, 25, 26, 27, 28, 29}};
 		
+		// tournoi MJ
+		Integer[][] classes = { { 0, 1, 2, 3, 4, 5, 6, 7 }, { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
+				{ 20, 21, 22, 23, 24, 25, 26, 27, 28 }, { 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41 },
+				{ 42, 43, 44, 45, 46, 47, 48 }, { 49, 50, 51, 52, 53, 54 } };
+
 		TournoiV4 tournoi = new TournoiV4(classes);
 		tournoi.solve();
 	}
