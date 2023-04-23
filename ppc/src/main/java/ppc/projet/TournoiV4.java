@@ -28,11 +28,10 @@ public class TournoiV4 {
 	private static Integer ghost = -1;
 	private static int maxClassesMet = 0;
 	private static boolean paul = true;
+	private static boolean allowMeetingSameStudent = false;
 	Map<Integer, Integer[]> classmates;
-
-	public TournoiV4(Integer[][] listClasses) {
-		Loader.loadNativeLibraries();
-
+	
+	private void initAttributes(Integer[][] listClasses) {
 		nbClasses = listClasses.length;
 
 		for (Integer[] classs : listClasses)
@@ -49,12 +48,24 @@ public class TournoiV4 {
 		classmates = getClassmates(newIdClasses(listClasses));
 	}
 
-	private double solve() {
+	public TournoiV4(Integer[][] listClasses) {
+		Loader.loadNativeLibraries();
+		initAttributes(listClasses);
+	}
+	
+	public TournoiV4(Integer[][] listClasses, boolean soft) {
+		allowMeetingSameStudent = soft;
+		Loader.loadNativeLibraries();
+		initAttributes(listClasses);
+	}
+
+	private double solve(int timeout) {
 		CpModel model = new CpModel();
 
 		IntVar[][] opponents = new IntVar[nbStudents][NUMBER_MATCHES];
 		IntVar[][] opponentsClasses = new IntVar[opponents.length][opponents[0].length];
 		Literal[][] sameClassesMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
+		Literal[][] sameStudentsMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
 
 		// Debug
 		System.out.print("camarades des joueurs : ");
@@ -84,8 +95,9 @@ public class TournoiV4 {
 					model.addDifferent(opponents[student][game], classmate);
 				}
 			}
-
-			model.addAllDifferent(opponents[student]);
+			
+			if (!allowMeetingSameStudent)
+				model.addAllDifferent(opponents[student]);
 		}
 
 		for (int i = 0; i < opponents[0].length; i++) {
@@ -101,42 +113,54 @@ public class TournoiV4 {
 		for (int student = 0; student < opponents.length; student++) {
 			for (int curr = 0; curr < NUMBER_MATCHES; curr++) {
 				List<Literal> sameClasses = new ArrayList<>();
+				List<Literal> sameStudents = new ArrayList<>();
 				// For each opponent, checking if their class has already been met
+				// For each opponent, checking if they have already been met
 				for (int prev = 0; prev < curr; prev++) {
-					BoolVar alreadyMet = model.newBoolVar("Met_" + curr + "_" + prev);
-					sameClasses.add(alreadyMet);
+					BoolVar alreadyMetClass = model.newBoolVar("Met_" + curr + "_" + prev);
+					sameClasses.add(alreadyMetClass);
+					BoolVar alreadyMetStudent = model.newBoolVar("StudentMet_" + curr + "_" + prev);
+					sameStudents.add(alreadyMetStudent);
 
-					// checking that the classes are different
+					// checking that the classes/students are different
 					model.addDifferent(opponentsClasses[student][prev], opponentsClasses[student][curr])
-							.onlyEnforceIf(alreadyMet);
+							.onlyEnforceIf(alreadyMetClass);
+					model.addDifferent(opponents[student][prev], opponents[student][curr])
+					.onlyEnforceIf(alreadyMetStudent);
 				}
 
 				// The first index is always 1
 				if (curr != 0) {
-					BoolVar hasMet = model.newBoolVar("hasMet_" + curr);
-					sameClassesMet[student][curr - 1] = hasMet;
-					model.addBoolAnd(sameClasses).onlyEnforceIf(hasMet);
+					BoolVar hasMetClass = model.newBoolVar("hasMet_" + curr);
+					sameClassesMet[student][curr - 1] = hasMetClass;
+					model.addBoolAnd(sameClasses).onlyEnforceIf(hasMetClass);
+					
+					BoolVar hasMetStudent = model.newBoolVar("hasMetStudent_" + curr);
+					sameStudentsMet[student][curr - 1] = hasMetStudent;
+					model.addBoolAnd(sameStudents).onlyEnforceIf(hasMetStudent);
 
 				}
 			}
 		}
 		// Maximising the number of classes met for everyone but ghost player
+		// Also minimising the number of times the same student is met if allowed
 		LinearExprBuilder objectiveFunction = LinearExpr.newBuilder();
 		int firstStudent = 0;
 		if (ghost != -1) {
 			firstStudent = 1;
 		}
 		for (int student = firstStudent; student < nbStudents; student++) {
-			Literal[] hasMetClasses = sameClassesMet[student];
-			objectiveFunction.addSum(hasMetClasses);
+			if (allowMeetingSameStudent)
+				objectiveFunction.addWeightedSum(sameStudentsMet[student], new int[]{5, 5, 5, 5, 5});
+			objectiveFunction.addSum(sameClassesMet[student]);
 		}
 		model.maximize(objectiveFunction);
 
 		CpSolver solver = new CpSolver();
 
-		SolutionPrinter sp = new SolutionPrinter(opponents, sameClassesMet);
+		SolutionPrinter sp = new SolutionPrinter(opponents, sameClassesMet, sameStudentsMet);
 		solver.getParameters().setEnumerateAllSolutions(true);
-		solver.getParameters().setMaxTimeInSeconds(60);
+		solver.getParameters().setMaxTimeInSeconds(timeout);
 
 		solver.solve(model, sp);
 
@@ -148,23 +172,29 @@ public class TournoiV4 {
 		private int solutionCount;
 		IntVar[][] opponents;
 		Literal[][] sameClassesMet;
+		Literal[][] sameStudentsMet;
 
-		public SolutionPrinter(IntVar[][] opponents, Literal[][] sameClassesMet) {
+		public SolutionPrinter(IntVar[][] opponents, Literal[][] sameClassesMet, Literal[][] sameStudentsMet) {
 			solutionCount = 0;
 			this.opponents = opponents;
 			this.sameClassesMet = sameClassesMet;
+			this.sameStudentsMet = sameStudentsMet;
 		}
 
 		@Override
 		public void onSolutionCallback() {
 			System.out.println("Solution " + ++solutionCount);
 			int sumClassesMet = 0;
+			int sumStudentsMet = 0;
 			for (int i = 0; i < opponents.length; i++) {
 				int nbClassesMet = 1;
+				int nbStudentsMet = 1;
 				System.out.print(String.format("Student %d (class %d): \t[", i, studentClasses[i]));
 				for (int j = 0; j < NUMBER_MATCHES; j++) {
-					if (j < NUMBER_MATCHES - 1)
+					if (j < NUMBER_MATCHES - 1) {
 						nbClassesMet += booleanValue(sameClassesMet[i][j]) ? 1 : 0;
+						nbStudentsMet += booleanValue(sameStudentsMet[i][j]) ? 1 : 0;
+					}
 					long opponent = value(opponents[i][j]);
 					if (j == opponents[0].length - 1)
 						System.out.print(opponent + " (" + studentClasses[(int) opponent] + ")");
@@ -174,8 +204,12 @@ public class TournoiV4 {
 
 				if (i != ghost) {
 					sumClassesMet += nbClassesMet;
-					System.out.print("]");
-					System.out.println("\t   -> " + nbClassesMet + " classes met");
+					sumStudentsMet += nbStudentsMet;
+					System.out.print("]\t  -> ");
+					if (allowMeetingSameStudent) {
+						System.out.print("\t" + nbStudentsMet + " students met");
+					}
+					System.out.println("\t" + nbClassesMet + " classes met");
 				} else {
 					System.out.println("]");
 				}
@@ -185,6 +219,7 @@ public class TournoiV4 {
 
 			System.out.println("Problem for " + nbStudents + " students done!");
 			System.out.println("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")");
+			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + nbStudents * NUMBER_MATCHES + ")");
 			if (sumClassesMet == maxClassesMet) {
 				System.out.println("optimal solution found!");
 				stopSearch();
@@ -385,9 +420,8 @@ public class TournoiV4 {
 		// Integer[][] classes = { { 0, 1, 2, 3, 4, 5, 6 }, { 7, 8, 9, 10, 11 }, { 12,
 		// 13, 14, 15, 16 }, { 17, 18, 19, 20} };
 
-		// works :
-		// Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11, 12, 13},
-		// {14, 15, 16, 17, 18, 19, 20, 21}, {22, 23, 24, 25}};
+		// rencontre pélissier marche pas, besoin de soft :
+		// Integer[][] classes = { {0, 1, 2, 3}, {4, 5, 6}, {7, 8, 9, 10, 11} };
 
 		// niveau 2 rencontre 2019
 		// Integer[][] classes = {{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}, {12, 13, 14,
@@ -401,9 +435,9 @@ public class TournoiV4 {
 		Integer[][] classes = { { 0, 1, 2, 3, 4, 5, 6, 7 }, { 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19 },
 				{ 20, 21, 22, 23, 24, 25, 26, 27, 28 }, { 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41 },
 				{ 42, 43, 44, 45, 46, 47, 48 }, { 49, 50, 51, 52, 53, 54 } };
-
-		TournoiV4 tournoi = new TournoiV4(classes);
-		tournoi.solve();
+		
+		TournoiV4 tournoi = new TournoiV4(classes, true);
+		tournoi.solve(300);
 	}
 
 }
