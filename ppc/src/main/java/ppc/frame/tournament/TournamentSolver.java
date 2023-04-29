@@ -1,4 +1,4 @@
-package ppc.projet;
+package ppc.frame.tournament;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -19,7 +19,7 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
-public class TournoiV4 {
+public class TournamentSolver {
 
 	private static final int NUMBER_MATCHES = 6;
 	private static int nbStudents;
@@ -30,7 +30,7 @@ public class TournoiV4 {
 	private static boolean paul = true;
 	Map<Integer, Integer[]> classmates;
 
-	public TournoiV4(Integer[][] listClasses) {
+	public TournamentSolver(Integer[][] listClasses) {
 		Loader.loadNativeLibraries();
 
 		nbClasses = listClasses.length;
@@ -402,7 +402,7 @@ public class TournoiV4 {
 				{ 20, 21, 22, 23, 24, 25, 26, 27, 28 }, { 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41 },
 				{ 42, 43, 44, 45, 46, 47, 48 }, { 49, 50, 51, 52, 53, 54 } };
 
-		TournoiV4 tournoi = new TournoiV4(classes);
+		TournamentSolver tournoi = new TournamentSolver(classes);
 		tournoi.solve();
 	}
 
