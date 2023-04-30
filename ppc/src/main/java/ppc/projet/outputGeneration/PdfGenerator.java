@@ -33,6 +33,7 @@ public class PdfGenerator {
 	private List<Solution> solutions;
 	private final int columnNumber = 2 + Tournament.NUMBER_MATCHES;
 	private Map<Integer, BaseColor> colourMap = new HashMap<>();
+	private boolean needsGhosts = false;
 
 	public PdfGenerator(List<Solution> solutions, int nbClasses) {
 		this.solutions = solutions;
@@ -88,12 +89,21 @@ public class PdfGenerator {
 		table.addCell(studentCell);
 		
 		for (int game = 1; game <= Tournament.NUMBER_MATCHES; game++) {
-			table.addCell(formatHeaderCell("Ronde " + game));
+			table.addCell(formatHeaderCell("Partie " + game));
 		}
 		
 		PdfPCell adversaireCell = formatHeaderCell("Adversaire");
 		adversaireCell.setColspan(Tournament.NUMBER_MATCHES);
 		table.addCell(adversaireCell);
+	}
+	
+	private void addGhostTableHeader(PdfPTable ghostTable) {
+		ghostTable.addCell(formatHeaderCell("Partie"));
+		ghostTable.addCell(formatHeaderCell("Niveau"));
+		
+		for (int game = 1; game <= Tournament.NUMBER_MATCHES; game++) {
+			ghostTable.addCell(formatHeaderCell("Partie " + game));
+		}
 	}
 	
 	public class CrossedOutCellEvent implements PdfPCellEvent {
@@ -109,39 +119,66 @@ public class PdfGenerator {
 	    }
 	}
 	
-	private void addRows(PdfPTable table) {
-		int level = 1;
+	private void addRows(PdfPTable table, PdfPTable ghostTable) {
+		int level = 0;
 		int nbStudentsPrevLevels = 0;
 		for (Solution solution : solutions) {
-			PdfPCell levelSeparator = new PdfPCell(new Phrase("Niveau " + level++));
+			PdfPCell levelSeparator = new PdfPCell(new Phrase("Niveau " + ++level));
 			levelSeparator.setHorizontalAlignment(Element.ALIGN_CENTER);
 			levelSeparator.setBackgroundColor(BaseColor.LIGHT_GRAY);
 			levelSeparator.setColspan(columnNumber);
 			table.addCell(levelSeparator);
 			
+			int ghost = solution.getGhost();
+			if (ghost != -1) {
+				needsGhosts = true;
+				ghostTable.addCell(new PdfPCell(new Phrase("Élève seul(e)")));
+				PdfPCell levelCell = new PdfPCell(new Phrase("" + level));
+				levelCell.setBorderWidthRight(1);
+				ghostTable.addCell(levelCell);
+			}
+			int[] ghostOpponents = new int[Tournament.NUMBER_MATCHES];
+			
 			Integer[][] matches = solution.getMatches();
 			int firstRealStudent = (solution.getGhost() == -1) ? 0 : 1;
 			int offset = (solution.getGhost() == -1) ? 1 : 0;
 			int nbStudentsCurrLevel = 0;
+			int tableNb = 1;
 			for (int student = firstRealStudent; student < matches.length; student++) {
 				nbStudentsCurrLevel++;
-				table.addCell("table");
+				
+				if (student <= matches.length / 2 - offset)
+					table.addCell("table " + (tableNb++));
+				else 
+					table.addCell("bouge");
+				
 				PdfPCell studentCell = new PdfPCell(new Phrase("" + (student + offset + nbStudentsPrevLevels)));
 				studentCell.setBorderWidthRight(1);
 				studentCell.setBorderWidthTop(0);
 				studentCell.setBackgroundColor(colourMap.get(solution.getStudentClasses()[student]));
 				table.addCell(studentCell);
 				
+				int match = 0;
 				for (Integer opponent : matches[student]) {
 					PdfPCell opponentCell = new PdfPCell();
-					if (opponent != solution.getGhost()) {
+					if (opponent != ghost) {
 						opponentCell.setPhrase(new Phrase("" + (opponent + offset + nbStudentsPrevLevels)));
 						opponentCell.setBackgroundColor(colourMap.get(solution.getStudentClasses()[opponent]));
 					}
 					else {
 						opponentCell.setCellEvent(new CrossedOutCellEvent());
+						ghostOpponents[match] = student;
 					}
 					table.addCell(opponentCell);
+					match++;
+				}
+			}
+			
+			if (ghost != -1) {
+				for (int ghostOpponent : ghostOpponents) {
+					PdfPCell ghostCell = new PdfPCell(new Phrase("" + (ghostOpponent + offset + nbStudentsPrevLevels)));
+					ghostCell.setBackgroundColor(colourMap.get(solution.getStudentClasses()[ghostOpponent]));
+					ghostTable.addCell(ghostCell);
 				}
 			}
 			nbStudentsPrevLevels += nbStudentsCurrLevel;
@@ -158,13 +195,26 @@ public class PdfGenerator {
 		
 		PdfPTable table = new PdfPTable(columnNumber);
         table.setWidthPercentage(100);
+        PdfPTable ghostTable = new PdfPTable(new float[] { 4, 3, 3, 3, 3, 3, 3, 3 });
+        ghostTable.setWidthPercentage(100);
+        
 		addTableHeader(table);
-		addRows(table);
+		addGhostTableHeader(ghostTable);
+		addRows(table, ghostTable);
 		
 		document.add(title);
 		document.add(date);
 		document.add(Chunk.NEWLINE);
 		document.add(table);
+		
+		if (needsGhosts) {
+			document.add(Chunk.NEWLINE);
+			Paragraph ghostExplanation = new Paragraph("Besoin de joueurs adultes additionnels pour les parties:");
+			ghostExplanation.setSpacingAfter(6);
+			document.add(ghostExplanation);
+			document.add(ghostTable);
+		}
+		
 		document.close();
 	}
 }
