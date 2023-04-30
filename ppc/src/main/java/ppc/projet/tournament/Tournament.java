@@ -1,4 +1,4 @@
-package ppc.projet;
+package ppc.projet.tournament;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +21,7 @@ import com.google.ortools.sat.Literal;
 
 public class Tournament {
 
-	private static final int NUMBER_MATCHES = 6;
+	public static final int NUMBER_MATCHES = 6;
 	private int level;
 	private int nbStudents;
 	private int nbClasses;
@@ -33,7 +33,7 @@ public class Tournament {
 	private boolean paul = true;
 	private boolean allowMeetingSameStudent = false;
 	Map<Integer, Integer[]> classmates;
-	private Solution solution;
+	private Integer[][] solution;
 	
 	private void initAttributes(Integer[][] listClasses) {
 		nbClasses = listClasses.length;
@@ -59,11 +59,7 @@ public class Tournament {
 		initAttributes(listClasses);
 	}
 	
-	public void setSolution(Solution solution) {
-		this.solution = solution;
-	}
-	
-	public double solve(int timeout) {
+	public Solution solve(int timeout) {
 		CpModel model = new CpModel();
 
 		IntVar[][] opponents = new IntVar[nbStudents][NUMBER_MATCHES];
@@ -171,9 +167,9 @@ public class Tournament {
 		solver.solve(model, sp);
 		
 		System.out.println("Final solution:");
-		System.out.println(this.solution);
+		System.out.println(this.toString());
 		System.out.println("Timed out after " + solver.wallTime());
-		return solver.wallTime();
+		return new Solution(solution, studentClasses, ghost);
 	}
 
 
@@ -354,45 +350,37 @@ public class Tournament {
 	}
 	
 	
-	private class Solution {
-		private int[][] matches;
-		
-		public Solution(int[][] matches) {
-			this.matches = matches;
-		}
-		
-		@Override
-		public String toString() {
-			String solutionString = new String();
-			for (int i = 0; i < matches.length; i++) {
-				List<Integer> classesMet = new ArrayList<>();
-				solutionString += String.format("Student %d (class %d): \t[", i, studentClasses[i]);
-				
-				for (int j = 0; j < NUMBER_MATCHES; j++) {
-					int opponent = matches[i][j];
-					if (opponent != ghost) {
-						classesMet.add(studentClasses[opponent]);
-					}
-					if (j == matches[0].length - 1)
-						solutionString += opponent + " (" + studentClasses[opponent] + ")";
-					else
-						solutionString += opponent + " (" + studentClasses[opponent] + ")" + "\t";
+	@Override
+	public String toString() {
+		String solutionString = new String();
+		for (int i = 0; i < solution.length; i++) {
+			List<Integer> classesMet = new ArrayList<>();
+			solutionString += String.format("Student %d (class %d): \t[", i, studentClasses[i]);
+			
+			for (int j = 0; j < NUMBER_MATCHES; j++) {
+				int opponent = solution[i][j];
+				if (opponent != ghost) {
+					classesMet.add(studentClasses[opponent]);
 				}
-
-				if (i != ghost) {
-					solutionString += "]\t  -> ";
-					if (allowMeetingSameStudent) {
-						solutionString += "\t" + Arrays.stream(matches[i]).distinct().count() + " students met";
-					}
-					solutionString += "\t" + classesMet.stream().distinct().count() + " classes met\n";
-				} else {
-					solutionString += "] \t -> \tghost player\n";
-				}
+				if (j == solution[0].length - 1)
+					solutionString += opponent + " (" + studentClasses[opponent] + ")";
+				else
+					solutionString += opponent + " (" + studentClasses[opponent] + ")" + "\t";
 			}
-			if (ghost != -1)
-				solutionString += "Need a ghost player; id " + ghost + "\n";
-			return solutionString;
+
+			if (i != ghost) {
+				solutionString += "]\t  -> ";
+				if (allowMeetingSameStudent) {
+					solutionString += "\t" + Arrays.stream(solution[i]).distinct().count() + " students met";
+				}
+				solutionString += "\t" + classesMet.stream().distinct().count() + " classes met\n";
+			} else {
+				solutionString += "] \t -> \tghost player\n";
+			}
 		}
+		if (ghost != -1)
+			solutionString += "Need a ghost player; id " + ghost + "\n";
+		return solutionString;
 	}
 	
 	
@@ -411,7 +399,7 @@ public class Tournament {
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
 			
-			int[][] solutionMatches = new int[opponents.length][opponents[0].length];
+			Integer[][] solutionMatches = new Integer[opponents.length][opponents[0].length];
 			
 			for (int i = 0; i < opponents.length; i++) {
 				List<Integer> classesMet = new ArrayList<>();
@@ -431,7 +419,7 @@ public class Tournament {
 				}
 			}
 			
-			setSolution(new Solution(solutionMatches));
+			solution = solutionMatches;
 			
 			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
 			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + maxStudentsMet + ")");

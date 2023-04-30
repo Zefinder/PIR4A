@@ -1,5 +1,15 @@
 package ppc.projet;
 
+import java.io.FileNotFoundException;
+import java.util.ArrayList;
+import java.util.List;
+
+import com.itextpdf.text.DocumentException;
+
+import ppc.projet.outputGeneration.PdfGenerator;
+import ppc.projet.tournament.LevelThread;
+import ppc.projet.tournament.Solution;
+
 public class Main {
 	public static void main(String[] args) {
 		// works
@@ -38,11 +48,41 @@ public class Main {
 		Integer[][][] classesByLevel = new Integer[][][] {classesLvl2, classesLvl3};
 		boolean softConstraint = true;
 		int timeout = 60;
+		int nbClasses = 3;
 		
 		int level = 1;
+		List<Thread> threads = new ArrayList<>();
+		List<LevelThread> lvlThreads = new ArrayList<>();
 		for (Integer[][] lvlClasses : classesByLevel) {
-			new Thread((new LevelThread(lvlClasses, level++, softConstraint, timeout))).start();
+			LevelThread lvlThread = new LevelThread(lvlClasses, level++, softConstraint, timeout);
+			Thread thread = new Thread(lvlThread);
+			thread.start();
+			threads.add(thread);
+			lvlThreads.add(lvlThread);
 		}
 		
+		for (Thread thread : threads) {
+			try {
+				thread.join();
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
+		List<Solution> solutions = new ArrayList<>();
+		for (LevelThread lvlThread : lvlThreads) {
+			solutions.add(lvlThread.getSolution());
+		}
+		
+		PdfGenerator pdfGen = new PdfGenerator(solutions, nbClasses);
+		try {
+			System.out.print("creating pdf... ");
+			pdfGen.createPdf();
+			System.out.println("done");
+		} catch (FileNotFoundException | DocumentException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 }

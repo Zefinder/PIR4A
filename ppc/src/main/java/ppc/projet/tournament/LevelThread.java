@@ -1,4 +1,4 @@
-package ppc.projet;
+package ppc.projet.tournament;
 
 public class LevelThread implements Runnable {
 	
@@ -6,6 +6,7 @@ public class LevelThread implements Runnable {
 	private int level;
 	private boolean softConstraint;
 	private int timeout;
+	private volatile Solution solution;
 	
 	public LevelThread(Integer[][] classes, int level, boolean softConstraint, int timeout) {
 		this.classes = classes;
@@ -14,9 +15,13 @@ public class LevelThread implements Runnable {
 		this.timeout = timeout;
 	}
 	
+	public Solution getSolution() {
+		return this.solution;
+	}
+	
 	@Override
 	public void run() {
 		Tournament tournament = new Tournament(classes, level, softConstraint);
-		tournament.solve(timeout);
+		this.solution = tournament.solve(timeout);
 	}
 }
