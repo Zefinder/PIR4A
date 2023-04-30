@@ -39,8 +39,9 @@ public class Main {
 		boolean softConstraint = true;
 		int timeout = 60;
 		
-		for (Integer[][] lvl : classesByLevel) {
-			new Thread((new LevelThread(lvl, softConstraint, timeout))).start();
+		int level = 1;
+		for (Integer[][] lvlClasses : classesByLevel) {
+			new Thread((new LevelThread(lvlClasses, level++, softConstraint, timeout))).start();
 		}
 		
 	}

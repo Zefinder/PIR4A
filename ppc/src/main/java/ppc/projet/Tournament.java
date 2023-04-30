@@ -22,6 +22,7 @@ import com.google.ortools.sat.Literal;
 public class Tournament {
 
 	private static final int NUMBER_MATCHES = 6;
+	private int level;
 	private int nbStudents;
 	private int nbClasses;
 	private int[] studentClasses;
@@ -30,6 +31,7 @@ public class Tournament {
 	private boolean paul = true;
 	private boolean allowMeetingSameStudent = false;
 	Map<Integer, Integer[]> classmates;
+	private Solution solution;
 	
 	private void initAttributes(Integer[][] listClasses) {
 		nbClasses = listClasses.length;
@@ -48,10 +50,15 @@ public class Tournament {
 		classmates = getClassmates(newIdClasses(listClasses));
 	}
 	
-	public Tournament(Integer[][] listClasses, boolean soft) {
+	public Tournament(Integer[][] listClasses, int level, boolean soft) {
+		this.level = level;
 		allowMeetingSameStudent = soft;
 		Loader.loadNativeLibraries();
 		initAttributes(listClasses);
+	}
+	
+	public void setSolution(Solution solution) {
+		this.solution = solution;
 	}
 	
 	public double solve(int timeout) {
@@ -153,12 +160,14 @@ public class Tournament {
 
 		CpSolver solver = new CpSolver();
 
-		SolutionPrinter sp = new SolutionPrinter(opponents, sameClassesMet, sameStudentsMet);
+		SolutionCallback sp = new SolutionCallback(opponents, sameClassesMet, sameStudentsMet);
 		solver.getParameters().setEnumerateAllSolutions(true);
 		solver.getParameters().setMaxTimeInSeconds(timeout);
 
 		solver.solve(model, sp);
-
+		
+		System.out.println("Final solution:");
+		System.out.println(this.solution);
 		System.out.println("Timed out after " + solver.wallTime());
 		return solver.wallTime();
 	}
@@ -339,13 +348,62 @@ public class Tournament {
 	}
 	
 	
-	private class SolutionPrinter extends CpSolverSolutionCallback {
+	private class Solution {
+		private int[][] matches;
+		private boolean[][] sameClassesMet;
+		private boolean[][] sameStudentsMet;
+		
+		public Solution(int[][] matches, boolean[][] sameClassesMet, boolean[][] sameStudentsMet) {
+			this.matches = matches;
+			this.sameClassesMet = sameClassesMet;
+			this.sameStudentsMet = sameStudentsMet;
+		}
+		
+		@Override
+		public String toString() {
+			String solutionString = new String();
+			for (int i = 0; i < matches.length; i++) {
+				int nbClassesMet = 1;
+				int nbStudentsMet = 1;
+				solutionString += String.format("Student %d (class %d): \t[", i, studentClasses[i]);
+				
+				for (int j = 0; j < NUMBER_MATCHES; j++) {
+					if (j < NUMBER_MATCHES - 1) {
+						nbClassesMet += sameClassesMet[i][j] ? 1 : 0;
+						nbStudentsMet += sameStudentsMet[i][j] ? 1 : 0;
+					}
+					
+					int opponent = matches[i][j];
+					if (j == matches[0].length - 1)
+						solutionString += opponent + " (" + studentClasses[opponent] + ")";
+					else
+						solutionString += opponent + " (" + studentClasses[opponent] + ")" + "\t";
+				}
+
+				if (i != ghost) {
+					solutionString += "]\t  -> ";
+					if (allowMeetingSameStudent) {
+						solutionString += "\t" + nbStudentsMet + " students met";
+					}
+					solutionString += "\t" + nbClassesMet + " classes met\n";
+				} else {
+					solutionString += "]\n";
+				}
+			}
+			if (ghost != -1)
+				solutionString += "Need a ghost player; id " + ghost + "\n";
+			return solutionString;
+		}
+	}
+	
+	
+	private class SolutionCallback extends CpSolverSolutionCallback {
 		private int solutionCount;
 		IntVar[][] opponents;
 		Literal[][] sameClassesMet;
 		Literal[][] sameStudentsMet;
 
-		public SolutionPrinter(IntVar[][] opponents, Literal[][] sameClassesMet, Literal[][] sameStudentsMet) {
+		public SolutionCallback(IntVar[][] opponents, Literal[][] sameClassesMet, Literal[][] sameStudentsMet) {
 			solutionCount = 0;
 			this.opponents = opponents;
 			this.sameClassesMet = sameClassesMet;
@@ -354,44 +412,36 @@ public class Tournament {
 
 		@Override
 		public void onSolutionCallback() {
-			System.out.println("Solution " + ++solutionCount);
+			System.out.println("Solution " + ++solutionCount + " of level " + level);
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
+			
+			int[][] solutionMatches = new int[opponents.length][opponents[0].length];
+			boolean[][] solutionClassesMet = new boolean[sameClassesMet.length][sameClassesMet[0].length];
+			boolean[][] solutionStudentsMet = new boolean[sameStudentsMet.length][sameStudentsMet[0].length];
+			
 			for (int i = 0; i < opponents.length; i++) {
 				int nbClassesMet = 1;
-				int nbStudentsMet = 1;
-				System.out.print(String.format("Student %d (class %d): \t[", i, studentClasses[i]));
-				
+				int nbStudentsMet = 1;				
 				for (int j = 0; j < NUMBER_MATCHES; j++) {
 					if (j < NUMBER_MATCHES - 1) {
-						nbClassesMet += booleanValue(sameClassesMet[i][j]) ? 1 : 0;
-						nbStudentsMet += booleanValue(sameStudentsMet[i][j]) ? 1 : 0;
+						solutionClassesMet[i][j] = booleanValue(sameClassesMet[i][j]);
+						nbClassesMet += (solutionClassesMet[i][j]) ? 1 : 0;
+						solutionStudentsMet[i][j] = booleanValue(sameStudentsMet[i][j]);
+						nbStudentsMet += (solutionStudentsMet[i][j]) ? 1 : 0;
 					}
-					
-					int opponent = (int) value(opponents[i][j]);
-					if (j == opponents[0].length - 1)
-						System.out.print(opponent + " (" + studentClasses[opponent] + ")");
-					else
-						System.out.print(opponent + " (" + studentClasses[opponent] + ")" + "\t");
+					solutionMatches[i][j] = (int) value(opponents[i][j]);
 				}
-
+				
 				if (i != ghost) {
 					sumClassesMet += nbClassesMet;
 					sumStudentsMet += nbStudentsMet;
-					System.out.print("]\t  -> ");
-					if (allowMeetingSameStudent) {
-						System.out.print("\t" + nbStudentsMet + " students met");
-					}
-					System.out.println("\t" + nbClassesMet + " classes met");
-				} else {
-					System.out.println("]");
 				}
 			}
-			if (ghost != -1)
-				System.out.println("Need a ghost player; id " + ghost);
 			
-			System.out.println("Problem for " + nbStudents + " students done!");
-			System.out.println("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")");
+			setSolution(new Solution(solutionMatches, solutionClassesMet, solutionStudentsMet));
+			
+			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
 			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + nbStudents * NUMBER_MATCHES + ")");
 			if (sumClassesMet == maxClassesMet) {
 				System.out.println("optimal solution found!");
