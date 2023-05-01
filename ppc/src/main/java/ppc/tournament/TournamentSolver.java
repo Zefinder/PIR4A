@@ -1,4 +1,4 @@
-package ppc.frame.tournament;
+package ppc.tournament;
 
 import java.util.ArrayList;
 import java.util.Arrays;

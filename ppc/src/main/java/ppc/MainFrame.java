@@ -1,4 +1,4 @@
-package ppc.frame;
+package ppc;
 
 import java.awt.CardLayout;
 import java.awt.Color;
@@ -132,11 +132,6 @@ public class MainFrame extends JFrame {
 		informationsPanel.add(settingsPanel, SETTINGS);
 
 		return informationsPanel;
-	}
-
-	// TODO Create a menu bar to go just faster
-	private void createJMenuBar() {
-
 	}
 
 	public void initFrame() {

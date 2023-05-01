@@ -1,4 +1,4 @@
-package ppc.frame.annotation;
+package ppc.annotation;
 
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
@@ -8,13 +8,12 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
 /**
- * This annotation indicates that the class is a manager that needs to be
- * initiated. Initialization order is given by its priority.
- *
+ * This annotation indicates that the class is an event and needs to be
+ * registered during init time.
  */
 @Documented
 @Retention(RUNTIME)
 @Target(TYPE)
-public @interface Manager {
-	ManagerPriority priority();
+public @interface Event {
+
 }

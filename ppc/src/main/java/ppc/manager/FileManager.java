@@ -1,6 +1,6 @@
-package ppc.frame.manager;
+package ppc.manager;
 
-import static ppc.frame.annotation.ManagerPriority.HIGH;
+import static ppc.annotation.ManagerPriority.HIGH;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -10,9 +10,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-import ppc.frame.manager.LogsManager.Message;
+import ppc.manager.LogsManager.Message;
 
-@ppc.frame.annotation.Manager(priority = HIGH)
+@ppc.annotation.Manager(priority = HIGH)
 public final class FileManager implements Manager {
 
 	private static final FileManager instance = new FileManager();

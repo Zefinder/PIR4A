@@ -1,15 +1,18 @@
-package ppc.frame.manager;
+package ppc.manager;
 
-import static ppc.frame.annotation.ManagerPriority.LOW;
+import static ppc.annotation.ManagerPriority.LOW;
 
 import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
-import ppc.frame.tournament.Tournament;
+import ppc.annotation.EventHandler;
+import ppc.event.Listener;
+import ppc.event.TournamentOpenEvent;
+import ppc.tournament.Tournament;
 
-@ppc.frame.annotation.Manager(priority = LOW)
-public final class TournamentManager implements Manager {
+@ppc.annotation.Manager(priority = LOW)
+public final class TournamentManager implements Manager, Listener {
 
 	private static final TournamentManager instance = new TournamentManager();
 
@@ -22,10 +25,12 @@ public final class TournamentManager implements Manager {
 	private TournamentManager() {
 		// TODO Auto-generated constructor stub
 	}
-	
+
 	@Override
 	public void initManager() {
 		logs.writeInformationMessage("Initialising TournamentManager...");
+
+		EventManager.getInstance().registerListener(this);
 
 		tournamentList = new HashMap<>();
 		tournamentDirectory = FileManager.getInstance().getTournamentDirectory();
@@ -82,16 +87,16 @@ public final class TournamentManager implements Manager {
 					logs.writeInformationMessage("Fatal error fixed!");
 				}
 			}
-			
+
 			if (!tournamentData.isDirectory()) {
-				logs.writeFatalErrorMessage(String
-						.format("Tournament data folder is not a folder for tournament %s... Trying to fix it...", fileName));
-				
+				logs.writeFatalErrorMessage(String.format(
+						"Tournament data folder is not a folder for tournament %s... Trying to fix it...", fileName));
+
 				if (!tournamentData.delete()) {
 					logs.writeFatalErrorMessage(String.format("Impossible to delete it... Need help..."));
 					System.exit(-1);
 				}
-				
+
 				if (!tournamentData.mkdir()) {
 					logs.writeFatalErrorMessage(String.format("Impossible to create it... Need help..."));
 					System.exit(-1);
@@ -99,7 +104,7 @@ public final class TournamentManager implements Manager {
 					logs.writeInformationMessage("Fatal error fixed!");
 				}
 			}
-			
+
 			Tournament tournament = new Tournament(fileName, tournamentData);
 			tournamentList.put(fileName, tournament);
 
@@ -108,16 +113,24 @@ public final class TournamentManager implements Manager {
 
 		logs.writeInformationMessage("TournamentManager initialised!");
 	}
-	
-	public void openTournament(String name, int maxSearchingTime, float studentsMetThreshold, float classesMetThreshold) {
-		Tournament tournament = tournamentList.get(name);
-		
+
+	@EventHandler
+	public void onOpenTournament(TournamentOpenEvent event) {
+		Tournament tournament = tournamentList.get(event.getName());
+
 		if (tournament == null) {
-			logs.writeFatalErrorMessage(String.format("Tournament does not exist!"));
+			System.err.println(String.format("Tournament %s does not exist!", event.getName()));
+			return;
 		}
-		
+
 		// TODO Do things here...
-		tournament.openTournament(maxSearchingTime, studentsMetThreshold, classesMetThreshold);
+		tournament.openTournament(event.getMaxSearchingTime(), event.getStudentsMetThreshold(),
+				event.getClassesMetThreshold());
+	}
+
+	public void onOpenTournament(String name, int maxSearchingTime, float studentsMetThreshold,
+			float classesMetThreshold) {
+
 	}
 
 	public static TournamentManager getInstance() {

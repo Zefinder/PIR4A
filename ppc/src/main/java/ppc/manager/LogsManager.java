@@ -1,6 +1,6 @@
-package ppc.frame.manager;
+package ppc.manager;
 
-import static ppc.frame.annotation.ManagerPriority.CRITICAL;
+import static ppc.annotation.ManagerPriority.MONITOR;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -9,7 +9,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
-@ppc.frame.annotation.Manager(priority = CRITICAL)
+@ppc.annotation.Manager(priority = MONITOR)
 public final class LogsManager implements Manager {
 
 	private static final LogsManager instance = new LogsManager();
@@ -56,8 +56,8 @@ public final class LogsManager implements Manager {
 	private List<Message> messagesList;
 	private ConsoleRedirection consoleInfo;
 //	private ConsoleRedirection consoleWarn;
-	private ConsoleRedirection consoleErr;
-//	private ConsoleRedirection consoleFatal;
+//	private ConsoleRedirection consoleErr;
+	private ConsoleRedirection consoleFatal;
 
 	private LogsManager() {
 	}
@@ -68,13 +68,13 @@ public final class LogsManager implements Manager {
 
 		consoleInfo = new ConsoleRedirection(System.out, MessageNature.INFO);
 //		consoleWarn = new ConsoleRedirection(System.out, MessageNature.WARN);
-		consoleErr = new ConsoleRedirection(System.out, MessageNature.ERROR);
-//		consoleFatal = new ConsoleRedirection(System.out, MessageNature.FATAL);
-		
+//		consoleErr = new ConsoleRedirection(System.out, MessageNature.ERROR);
+		consoleFatal = new ConsoleRedirection(System.out, MessageNature.FATAL);
+
 		// Replacing system out and err
 		System.setOut(consoleInfo);
-		System.setErr(consoleErr);
-		
+		System.setErr(consoleFatal);
+
 		writeInformationMessage("LogsManager initialised!");
 	}
 

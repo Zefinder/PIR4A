@@ -1,4 +1,4 @@
-package ppc.frame.manager;
+package ppc.manager;
 
 public interface Manager {
 

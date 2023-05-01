@@ -1,6 +1,6 @@
-package ppc.frame.manager;
+package ppc.manager;
 
-import static ppc.frame.annotation.ManagerPriority.MEDIUM;
+import static ppc.annotation.ManagerPriority.MEDIUM;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -10,7 +10,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
-@ppc.frame.annotation.Manager(priority = MEDIUM)
+@ppc.annotation.Manager(priority = MEDIUM)
 public final class SettingsManager implements Manager {
 
 	private static final SettingsManager instance = new SettingsManager();
@@ -170,8 +170,8 @@ public final class SettingsManager implements Manager {
 		props.setProperty(RESULTS_PATH_PROPERTY, FileManager.getInstance().getResDirectoryPath());
 		props.setProperty(PROGRESSBAR_COLOR_PROPERTY, "default");
 		props.setProperty(MAX_TIME_PROPERTY, "1800");
-		props.setProperty(MAX_STUDENTS_MET_TH_PROPERTY, "1.");
-		props.setProperty(MAX_CLASSES_MET_TH_PROPERTY, "1.");
+		props.setProperty(MAX_STUDENTS_MET_TH_PROPERTY, "1f");
+		props.setProperty(MAX_CLASSES_MET_TH_PROPERTY, "1f");
 	}
 
 	private void writeProperties() {
