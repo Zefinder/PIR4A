@@ -2,13 +2,13 @@ package ppc.projet.tournament;
 
 public class LevelThread implements Runnable {
 	
-	private Integer[][] classes;
+	private String[][] classes;
 	private int level;
 	private boolean softConstraint;
 	private int timeout;
 	private volatile Solution solution;
 	
-	public LevelThread(Integer[][] classes, int level, boolean softConstraint, int timeout) {
+	public LevelThread(String[][] classes, int level, boolean softConstraint, int timeout) {
 		this.classes = classes;
 		this.level = level;
 		this.softConstraint = softConstraint;
