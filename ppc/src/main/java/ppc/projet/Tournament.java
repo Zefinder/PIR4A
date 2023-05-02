@@ -5,7 +5,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -30,11 +29,12 @@ public class Tournament {
 	private int ghostClass = -1;
 	private int maxClassesMet = 0;
 	private int maxStudentsMet = 0;
-	private boolean paul = true;
 	private boolean allowMeetingSameStudent = false;
 	Map<Integer, Integer[]> classmates;
 	private Solution solution;
-	
+	private String stats = new String();
+	private boolean solvable = true;
+
 	private void initAttributes(Integer[][] listClasses) {
 		nbClasses = listClasses.length;
 
@@ -51,7 +51,7 @@ public class Tournament {
 		studentClasses = new int[nbStudents];
 		classmates = getClassmates(newIdClasses(listClasses));
 	}
-	
+
 	public Tournament(Integer[][] listClasses, int level, boolean soft) {
 		this.level = level;
 		allowMeetingSameStudent = soft;
@@ -59,10 +59,22 @@ public class Tournament {
 		initAttributes(listClasses);
 	}
 	
-	public void setSolution(Solution solution) {
-		this.solution = solution;
+	public boolean isSolvable() {
+		return this.solvable;
 	}
-	
+
+	public String getStats() {
+		return this.stats;
+	}
+
+	public int getMaxStudentsMet() {
+		return this.maxStudentsMet;
+	}
+
+	public int getMaxClassesMet() {
+		return this.maxClassesMet;
+	}
+
 	public double solve(int timeout) {
 		CpModel model = new CpModel();
 
@@ -94,12 +106,12 @@ public class Tournament {
 				// associating the opponent to their class
 				opponentsClasses[student][game] = model.newIntVar(0, nbClasses - 1, "class_" + game);
 				model.addElement(opponents[student][game], studentClasses, opponentsClasses[student][game]);
-
+				
 				for (int classmate : classmates.get(student)) {
 					model.addDifferent(opponents[student][game], classmate);
 				}
 			}
-			
+
 			if (!allowMeetingSameStudent)
 				model.addAllDifferent(opponents[student]);
 		}
@@ -140,7 +152,7 @@ public class Tournament {
 					BoolVar hasMetClass = model.newBoolVar("hasMet_" + curr);
 					sameClassesMet[student][curr - 1] = hasMetClass;
 					model.addBoolAnd(sameClasses).onlyEnforceIf(hasMetClass);
-					
+
 					BoolVar hasMetStudent = model.newBoolVar("hasMetStudent_" + curr);
 					sameStudentsMet[student][curr - 1] = hasMetStudent;
 					model.addBoolAnd(sameStudents).onlyEnforceIf(hasMetStudent);
@@ -157,7 +169,7 @@ public class Tournament {
 		}
 		for (int student = firstStudent; student < nbStudents; student++) {
 			if (allowMeetingSameStudent)
-				objectiveFunction.addWeightedSum(sameStudentsMet[student], new int[]{5, 5, 5, 5, 5});
+				objectiveFunction.addWeightedSum(sameStudentsMet[student], new int[] { 5, 5, 5, 5, 5 });
 			objectiveFunction.addSum(sameClassesMet[student]);
 		}
 		model.maximize(objectiveFunction);
@@ -169,13 +181,16 @@ public class Tournament {
 		solver.getParameters().setMaxTimeInSeconds(timeout);
 
 		solver.solve(model, sp);
-		
-		System.out.println("Final solution:");
-		System.out.println(this.solution);
+
+		if (this.solution != null) {
+			System.out.println("Final solution:");
+			System.out.println(this.solution);
+		} else {
+			System.out.println("No solution");
+		}
 		System.out.println("Timed out after " + solver.wallTime());
 		return solver.wallTime();
 	}
-
 
 	/**
 	 * Init of students' classes from a CSV file. Chooses which students will start
@@ -207,86 +222,45 @@ public class Tournament {
 			pawnDistribution[classes][1] = 0;
 		}
 
-		if (paul) {
-			// sorting the classes from biggest to smallest
-			List<Integer[]> tmpList = new ArrayList<>();
-			for (int i = 0; i < classes; i++) {
-				tmpList.add(listClasses[i]);
+		// sorting the classes from biggest to smallest
+		List<Integer[]> tmpList = new ArrayList<>();
+		for (int i = 0; i < classes; i++) {
+			tmpList.add(listClasses[i]);
+		}
+		Collections.sort(tmpList, new Comparator<Integer[]>() {
+			@Override
+			public int compare(Integer[] o1, Integer[] o2) {
+				return o2.length - o1.length;
 			}
-			Collections.sort(tmpList, new Comparator<Integer[]>() {
-				@Override
-				public int compare(Integer[] o1, Integer[] o2) {
-					return o2.length - o1.length;
-				}
-			});
-			Integer[][] orderedClasses = tmpList.toArray(new Integer[0][]);
-			System.out.println(Arrays.deepToString(orderedClasses));
+		});
+		Integer[][] orderedClasses = tmpList.toArray(new Integer[0][]);
+		System.out.println(Arrays.deepToString(orderedClasses));
 
-			boolean unbalanced = false;
-			for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
-				Integer[] c = orderedClasses[classNb];
-				for (int i = 0; i < c.length / 2; i++) {
-					int oldId = c[i];
+		boolean unbalanced = false;
+		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
+			Integer[] c = orderedClasses[classNb];
+			for (int i = 0; i < c.length / 2; i++) {
+				int oldId = c[i];
+				studentClasses[id] = classNb;
+				ids[oldId] = id++;
+				pawnDistribution[classNb][0]++;
+			}
+			if (c.length % 2 != 0) {
+				if (unbalanced) {
 					studentClasses[id] = classNb;
+					int oldId = c[c.length / 2];
 					ids[oldId] = id++;
-					pawnDistribution[classNb][0]++;
+					pawnDistribution[classNb][whitePawns]++;
 				}
-				if (c.length % 2 != 0) {
-					if (unbalanced) {
-						studentClasses[id] = classNb;
-						int oldId = c[c.length / 2];
-						ids[oldId] = id++;
-						pawnDistribution[classNb][whitePawns]++;
-					}
-					unbalanced = !unbalanced;
-				}
-			}
-
-			for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
-				for (int student : orderedClasses[classNb]) {
-					if (ids[student] == -1) {
-						studentClasses[id] = classNb;
-						ids[student] = id++;
-						pawnDistribution[classNb][blackPawns]++;
-					}
-				}
+				unbalanced = !unbalanced;
 			}
 		}
 
-		else {
-			// copying the classes to a list of lists
-			List<List<Integer>> studentsToBeAssigned = new ArrayList<>();
-			for (int i = 0; i < classes; i++) {
-				Integer[] currentClass = listClasses[i];
-				studentsToBeAssigned.add(new LinkedList<Integer>(Arrays.asList(currentClass)));
-			}
-
-			// The first numStudents/2 will start with the white pawns
-			// We are going to choose a student to start with the white pawns
-			// To choose them, we take a student from the class that has the most
-			// non assigned students
-			while (id < nbStudents / 2) {
-				int biggestClassId = 0;
-				List<Integer> biggestClass = studentsToBeAssigned.get(biggestClassId);
-				for (int classNb = 1; classNb < studentsToBeAssigned.size(); classNb++) {
-					if (studentsToBeAssigned.get(classNb).size() > biggestClass.size()) {
-						biggestClass = studentsToBeAssigned.get(classNb);
-						biggestClassId = classNb;
-					}
-				}
-				Integer initId = biggestClass.get(0);
-				biggestClass.remove(biggestClass.get(0));
-				studentClasses[id] = biggestClassId;
-				ids[initId] = id++;
-				pawnDistribution[biggestClassId][whitePawns]++;
-			}
-
-			// The last numStudents/2 will start with the black pawns
-			for (int classNb = 0; classNb < studentsToBeAssigned.size(); classNb++) {
-				List<Integer> c = studentsToBeAssigned.get(classNb);
-				for (Integer s : c) {
+		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
+			for (int student : orderedClasses[classNb]) {
+				if (ids[student] == -1) {
 					studentClasses[id] = classNb;
-					ids[s] = id++;
+					ids[student] = id++;
 					pawnDistribution[classNb][blackPawns]++;
 				}
 			}
@@ -302,6 +276,27 @@ public class Tournament {
 
 		// Debug
 		System.out.println(Arrays.deepToString(pawnDistribution));
+		
+		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
+			int whiteOpponents = 0;
+			for (int whiteClass = 0; whiteClass < pawnDistribution.length; whiteClass++) {
+				if (whiteClass != classNb)
+					whiteOpponents += pawnDistribution[whiteClass][0];
+			}
+			if (whiteOpponents < NUMBER_MATCHES) {
+				solvable = false;
+				break;
+			}
+			int blackOpponents = 0;
+			for (int blackClass = 0; blackClass < pawnDistribution.length; blackClass++) {
+				if (blackClass != classNb)
+					blackOpponents += pawnDistribution[blackClass][1];
+			}
+			if (blackOpponents < NUMBER_MATCHES) {
+				solvable = false;
+				break;
+			}
+		}
 
 		// computing maxClassesMet
 		for (int classNb = 0; classNb < classes; classNb++) {
@@ -352,22 +347,21 @@ public class Tournament {
 		}
 		return classmates;
 	}
-	
-	
+
 	private class Solution {
 		private int[][] matches;
-		
+
 		public Solution(int[][] matches) {
 			this.matches = matches;
 		}
-		
+
 		@Override
 		public String toString() {
 			String solutionString = new String();
 			for (int i = 0; i < matches.length; i++) {
 				List<Integer> classesMet = new ArrayList<>();
 				solutionString += String.format("Student %d (class %d): \t[", i, studentClasses[i]);
-				
+
 				for (int j = 0; j < NUMBER_MATCHES; j++) {
 					int opponent = matches[i][j];
 					if (opponent != ghost) {
@@ -394,8 +388,7 @@ public class Tournament {
 			return solutionString;
 		}
 	}
-	
-	
+
 	private class SolutionCallback extends CpSolverSolutionCallback {
 		private int solutionCount;
 		IntVar[][] opponents;
@@ -410,9 +403,12 @@ public class Tournament {
 			System.out.println("Solution " + ++solutionCount + " of level " + level);
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
-			
+
+			if (!stats.isEmpty())
+				stats += "; ";
+
 			int[][] solutionMatches = new int[opponents.length][opponents[0].length];
-			
+
 			for (int i = 0; i < opponents.length; i++) {
 				List<Integer> classesMet = new ArrayList<>();
 				List<Integer> studentsMet = new ArrayList<>();
@@ -424,21 +420,22 @@ public class Tournament {
 					studentsMet.add(opponent);
 					solutionMatches[i][j] = opponent;
 				}
-				
+
 				if (i != ghost) {
 					sumClassesMet += classesMet.stream().distinct().count();
 					sumStudentsMet += studentsMet.stream().distinct().count();
 				}
 			}
-			
-			setSolution(new Solution(solutionMatches));
-			
+
+			solution = new Solution(solutionMatches);
+
 			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
 			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + maxStudentsMet + ")");
 			if (sumClassesMet == maxClassesMet && sumStudentsMet == maxStudentsMet) {
 				System.out.println("optimal solution found!");
 				stopSearch();
 			}
+			stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			System.out.println("Time spent: " + wallTime());
 		}
 	}
