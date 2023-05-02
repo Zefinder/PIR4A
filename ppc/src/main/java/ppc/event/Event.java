@@ -59,6 +59,7 @@ import ppc.manager.EventManager;
  * @author Adrien Jakubiak
  * 
  * @see EventManager
+ * @see ppc.annotation.Event
  * @see Listener
  */
 public abstract class Event {

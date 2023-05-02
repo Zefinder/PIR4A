@@ -10,6 +10,19 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+/**
+ * <p>
+ * This manager saves and loads all settings used by the app. These settings
+ * include location of some directories, customization of the frame and default
+ * values when creating a tournament.
+ * </p>
+ * 
+ * @see Manager
+ * @see ppc.annotation.Manager
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 @ppc.annotation.Manager(priority = MEDIUM)
 public final class SettingsManager implements Manager {
 
@@ -162,7 +175,7 @@ public final class SettingsManager implements Manager {
 				logs.writeInformationMessage("Settings got reset!");
 			}
 		}
-		
+
 		logs.writeInformationMessage("SettingsManager initilised!");
 	}
 

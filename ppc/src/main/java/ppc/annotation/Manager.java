@@ -10,6 +10,9 @@ import java.lang.annotation.Target;
 /**
  * This annotation indicates that the class is a manager that needs to be
  * initiated. Initialization order is given by its priority.
+ * 
+ * @see ppc.manager.Manager
+ * @see ManagerPriority
  */
 @Documented
 @Retention(RUNTIME)

@@ -9,6 +9,29 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * <p>
+ * This manager registers all messages that needs to be printed to the console.
+ * It is the most important manager to initialize since it show all messages and
+ * store them.
+ * </p>
+ * 
+ * <p>
+ * Standard output and error printstreams are replaced by instances of this
+ * class (resp. INFO and FATAL messages) only when strings are printed.
+ * </p>
+ * 
+ * <p>
+ * Logs are formatted this way [dd/mm/yyyy hh:mm:ss] [MessageNature]: message
+ * </p>
+ * 
+ * @see Manager
+ * @see ppc.annotation.Manager
+ * @see Message
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 @ppc.annotation.Manager(priority = MONITOR)
 public final class LogsManager implements Manager {
 
@@ -35,11 +58,22 @@ public final class LogsManager implements Manager {
 		}
 	}
 
+	/**
+	 * Class representing a message. A message stores a String, a date and a nature.
+	 * 
+	 * @author Adrien Jakubiak
+	 */
 	public class Message {
 		private LocalDateTime date;
 		private MessageNature nature;
 		private String message;
 
+		/**
+		 * Create a message
+		 * 
+		 * @param nature  the nature of the message
+		 * @param message the message
+		 */
 		public Message(MessageNature nature, String message) {
 			this.date = LocalDateTime.now();
 			this.nature = nature;
@@ -78,18 +112,38 @@ public final class LogsManager implements Manager {
 		writeInformationMessage("LogsManager initialised!");
 	}
 
+	/**
+	 * Registers a message as INFO and display it in the console
+	 * 
+	 * @param messageString the message to print
+	 */
 	public void writeInformationMessage(String messageString) {
 		writeMessage(MessageNature.INFO, messageString);
 	}
 
+	/**
+	 * Registers a message as WARN and display it in the console
+	 * 
+	 * @param messageString the message to print
+	 */
 	public void writeWarningMessage(String messageString) {
 		writeMessage(MessageNature.WARN, messageString);
 	}
 
+	/**
+	 * Registers a message as ERROR and display it in the console
+	 * 
+	 * @param messageString the message to print
+	 */
 	public void writeErrorMessage(String messageString) {
 		writeMessage(MessageNature.ERROR, messageString);
 	}
 
+	/**
+	 * Registers a message as FATAL and display it in the console
+	 * 
+	 * @param messageString the message to print
+	 */
 	public void writeFatalErrorMessage(String messageString) {
 		writeMessage(MessageNature.FATAL, messageString);
 	}

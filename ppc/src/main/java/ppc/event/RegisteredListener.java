@@ -24,6 +24,11 @@ public class RegisteredListener {
 		this.method = method;
 	}
 
+	/**
+	 * Update the listener listening for this event.
+	 * 
+	 * @param event the listened event
+	 */
 	public void fireChange(Event event) {
 		try {
 			method.invoke(listener, event);

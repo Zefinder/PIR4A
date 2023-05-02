@@ -9,7 +9,7 @@ import java.util.Set;
 import org.reflections.Reflections;
 
 import ppc.annotation.ManagerPriority;
-import ppc.event.TournamentOpenEvent;
+import ppc.event.TournamentCreateEvent;
 import ppc.manager.EventManager;
 import ppc.manager.Manager;
 
@@ -77,10 +77,11 @@ public class Launch {
 			InvocationTargetException, NoSuchMethodException, SecurityException, IOException {
 		init();
 
-		TournamentOpenEvent t = new TournamentOpenEvent("Test1", 300, 1f, 1f);
-		TournamentOpenEvent t2 = new TournamentOpenEvent("AAAAAH", 300, 1f, 1f);
+		TournamentCreateEvent t = new TournamentCreateEvent("Test1", 300, 1f, 1f);
+		TournamentCreateEvent t2 = new TournamentCreateEvent("AAAAAH", 300, 1f, 1f);
 
 		EventManager.getInstance().callEvent(t);
+		EventManager.getInstance().callEvent(t2);
 		EventManager.getInstance().callEvent(t2);
 
 		MainFrame mf = new MainFrame();

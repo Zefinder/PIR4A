@@ -8,9 +8,17 @@ import java.util.Map;
 
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
-import ppc.event.TournamentOpenEvent;
+import ppc.event.TournamentCreateEvent;
 import ppc.tournament.Tournament;
 
+/**
+ * <p>
+ * This manager creates, loads and edits tournaments to generate results.
+ * </p>
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 @ppc.annotation.Manager(priority = LOW)
 public final class TournamentManager implements Manager, Listener {
 
@@ -115,22 +123,18 @@ public final class TournamentManager implements Manager, Listener {
 	}
 
 	@EventHandler
-	public void onOpenTournament(TournamentOpenEvent event) {
+	public void onCreateTournament(TournamentCreateEvent event) {
 		Tournament tournament = tournamentList.get(event.getName());
 
-		if (tournament == null) {
-			System.err.println(String.format("Tournament %s does not exist!", event.getName()));
+		if (tournament != null) {
+			System.err.println(String.format("Tournament %s already exists!", event.getName()));
 			return;
 		}
 
-		// TODO Do things here...
-		tournament.openTournament(event.getMaxSearchingTime(), event.getStudentsMetThreshold(),
-				event.getClassesMetThreshold());
-	}
-
-	public void onOpenTournament(String name, int maxSearchingTime, float studentsMetThreshold,
-			float classesMetThreshold) {
-
+		tournament = new Tournament(event.getName(), tournamentDataDirectory);
+		tournament.createTournament(event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold());
+		tournamentList.put(event.getName(), tournament);
+		// TODO create file, folder
 	}
 
 	public static TournamentManager getInstance() {

@@ -16,6 +16,44 @@ import ppc.event.Event;
 import ppc.event.Listener;
 import ppc.event.RegisteredListener;
 
+/**
+ * <p>
+ * This manager registers {@link Event}, {@link Listener}s and updates all
+ * {@link Listener}s when an event is called.
+ * </p>
+ * 
+ * <p>
+ * To register an event, use either the {@link #registerEvent(Event)} method or
+ * the {@link ppc.annotation.Event} annotation. The annotation is useful if you
+ * need to register the event during initialization. However you will need to
+ * declare a parameter-free constructor in order to construct an object during
+ * this manager's initialization. <br />
+ * A same event can not be instantiated twice.
+ * </p>
+ * 
+ * <p>
+ * To register a listener, use the {@link #registerListener(Listener)} method.
+ * Be sure that the event is already registered before registering your
+ * listener, else your registration will be ignored. Be also sure that the
+ * method to call when updating has the {@link EventHandler} annotation.
+ * </p>
+ * 
+ * <p>
+ * To call an event and to update all corresponding listeners, use the
+ * {@link #callEvent(Event)} method. Be sure that the event has been registered
+ * before calling it, else the call will be ignored.
+ * </p>
+ * 
+ * @see Manager
+ * @see ppc.annotation.Manager
+ * @see Event
+ * @see ppc.annotation.Event
+ * @see Listener
+ * @see EventHandler
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 @ppc.annotation.Manager(priority = CRITICAL)
 public final class EventManager implements Manager {
 
@@ -116,6 +154,11 @@ public final class EventManager implements Manager {
 		}
 	}
 
+	/**
+	 * Calls an event and notify all listeners listening for this event.
+	 * 
+	 * @param event the event to call
+	 */
 	public void callEvent(Event event) {
 		Class<?> eventClass = event.getClass();
 
@@ -124,7 +167,7 @@ public final class EventManager implements Manager {
 			System.err.println(String.format("Event %s has not been registered... Discarded!", eventClass.getName()));
 			return;
 		}
-		
+
 		// Call listeners
 		List<RegisteredListener> registeredListeners = eventMap.get(eventClass);
 		registeredListeners.forEach(listener -> listener.fireChange(event));

@@ -12,6 +12,19 @@ import java.util.List;
 
 import ppc.manager.LogsManager.Message;
 
+/**
+ * <p>
+ * This manager check data files, create them if they aren't created and gives
+ * their paths to other managers. It also generates the logs file.
+ * </p>
+ * 
+ * 
+ * @see Manager
+ * @see ppc.annotation.Manager
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 @ppc.annotation.Manager(priority = HIGH)
 public final class FileManager implements Manager {
 

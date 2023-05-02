@@ -2,6 +2,20 @@ package ppc.tournament;
 
 import java.io.File;
 
+import ppc.event.TournamentCreateEvent;
+import ppc.manager.TournamentManager;
+
+/**
+ * This class represents a tournament and will contain all data of a tournament
+ * once opened. When instantiated, it will only contain the tournament's name
+ * and the location of the folder where CSV files are.
+ * 
+ * @see TournamentManager
+ * @see TournamentCreateEvent
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 public class Tournament {
 
 	private String name;
@@ -24,14 +38,13 @@ public class Tournament {
 		return dataFolder;
 	}
 
-	public void openTournament(int maxSearchingTime, float studentsMetThreshold, float classesMetThreshold) {
+	public void createTournament(int maxSearchingTime, float studentsMetThreshold, float classesMetThreshold) {
 		this.maxSearchingTime = maxSearchingTime;
 		this.studentsMetThreshold = studentsMetThreshold;
 		this.classesMetThreshold = classesMetThreshold;
 
-		// TODO Open CSV files in dataFolder, load data and send them to the Frame !
 		System.out.println(String.format(
-				"Tournament opened with default options [maxSearchingTime=%d,studentsMetThreshold=%f,classesMetThreshold=%f]",
+				"Tournament created with default options [maxSearchingTime=%d,studentsMetThreshold=%f,classesMetThreshold=%f]",
 				maxSearchingTime, studentsMetThreshold, classesMetThreshold));
 	}
 
