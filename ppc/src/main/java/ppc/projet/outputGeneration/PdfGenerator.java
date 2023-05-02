@@ -527,9 +527,9 @@ public class PdfGenerator {
 			table.addCell(new PdfPCell(new Phrase("Table")));
 			for (int game = 0; game < Tournament.NUMBER_MATCHES; game++) {
 				if (studentId < matches.length / 2)
-					table.addCell(new PdfPCell(new Phrase(solution.getIdToTable(studentId))));
+					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(studentId))));
 				else
-					table.addCell(new PdfPCell(new Phrase(solution.getIdToTable(matches[studentId][game]))));
+					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(matches[studentId][game]))));
 			}
 			table.addCell(invisibleCell);
 			
