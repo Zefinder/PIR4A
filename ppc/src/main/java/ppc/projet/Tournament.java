@@ -21,6 +21,7 @@ import com.google.ortools.sat.Literal;
 public class Tournament {
 
 	private static final int NUMBER_MATCHES = 6;
+	private Integer[][] initClasses;
 	private int level;
 	private int nbStudents;
 	private int nbClasses;
@@ -35,16 +36,17 @@ public class Tournament {
 	private String stats = new String();
 	private boolean solvable = true;
 
-	private void initAttributes(Integer[][] listClasses) {
-		nbClasses = listClasses.length;
-
-		for (Integer[] classs : listClasses)
+	private void initAttributes() {
+		nbClasses = initClasses.length;
+		
+		Integer[][] listClasses = initClasses;
+		for (Integer[] classs : initClasses)
 			nbStudents += classs.length;
 		if (nbStudents % 2 == 1) {
 			System.out.println("adding ghost player");
 			ghost = nbStudents++;
 			nbClasses++;
-			listClasses = Arrays.copyOf(listClasses, listClasses.length + 1);
+			listClasses = Arrays.copyOf(initClasses, initClasses.length + 1);
 			listClasses[listClasses.length - 1] = new Integer[] { ghost };
 		}
 
@@ -53,10 +55,19 @@ public class Tournament {
 	}
 
 	public Tournament(Integer[][] listClasses, int level, boolean soft) {
+		this.initClasses = listClasses;
 		this.level = level;
 		allowMeetingSameStudent = soft;
 		Loader.loadNativeLibraries();
-		initAttributes(listClasses);
+		initAttributes();
+	}
+	
+	public Integer[][] getInitClasses() {
+		return this.initClasses;
+	}
+	
+	public boolean isAllowMeetingSameStudent() {
+		return this.allowMeetingSameStudent;
 	}
 	
 	public boolean isSolvable() {
@@ -201,11 +212,7 @@ public class Tournament {
 	 * @return classes with the new ids
 	 */
 	private Integer[][] newIdClasses(Integer[][] listClasses) {
-		// array that keeps track of which old id (the index)
-		// is turned into which new id (the value)
-		Integer[] ids = new Integer[nbStudents];
-		Arrays.fill(ids, -1);
-
+		Integer[][] listClassesId = new Integer[listClasses.length][];
 		int[][] pawnDistribution = new int[listClasses.length][2];
 		int whitePawns = 0;
 		int blackPawns = 1;
@@ -213,13 +220,13 @@ public class Tournament {
 		int id = 0;
 		int classes = listClasses.length;
 		if (ghost != -1) {
-			ids[ghost] = id;
 			ghost = id++;
 			ghostClass = classes - 1;
 			studentClasses[ghost] = ghostClass;
 			classes--;
 			pawnDistribution[classes][0] = 1;
 			pawnDistribution[classes][1] = 0;
+			listClassesId[classes] = new Integer[] { ghost };
 		}
 
 		// sorting the classes from biggest to smallest
@@ -239,38 +246,32 @@ public class Tournament {
 		boolean unbalanced = false;
 		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
 			Integer[] c = orderedClasses[classNb];
+			Integer[] listClassId = new Integer[c.length];
+			Arrays.fill(listClassId, -1);
 			for (int i = 0; i < c.length / 2; i++) {
-				int oldId = c[i];
 				studentClasses[id] = classNb;
-				ids[oldId] = id++;
+				listClassId[i] = id++;
 				pawnDistribution[classNb][0]++;
 			}
 			if (c.length % 2 != 0) {
 				if (unbalanced) {
 					studentClasses[id] = classNb;
-					int oldId = c[c.length / 2];
-					ids[oldId] = id++;
+					int middle = c.length / 2;
+					listClassId[middle] = id++;
 					pawnDistribution[classNb][whitePawns]++;
 				}
 				unbalanced = !unbalanced;
 			}
+			listClassesId[classNb] = listClassId;
 		}
 
 		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
-			for (int student : orderedClasses[classNb]) {
-				if (ids[student] == -1) {
+			for (int student = 0; student < listClassesId[classNb].length; student++) {
+				if (listClassesId[classNb][student] == -1) {
 					studentClasses[id] = classNb;
-					ids[student] = id++;
+					listClassesId[classNb][student] = id++;
 					pawnDistribution[classNb][blackPawns]++;
 				}
-			}
-		}
-
-		// updating the classes matrix
-		for (int classNb = 0; classNb < listClasses.length; classNb++) {
-			for (int student = 0; student < listClasses[classNb].length; student++) {
-				int oldId = listClasses[classNb][student];
-				listClasses[classNb][student] = ids[oldId];
 			}
 		}
 
@@ -290,30 +291,15 @@ public class Tournament {
 		
 		for (int classNb = 0; classNb < blackNumberPerClass.length; classNb++) {
 			int black = blackNumberPerClass[classNb];
-			int whiteClass = 0;
-			while (black != 0) {
-				if (classNb == whiteClass) {
-					whiteClass++;
-					if (whiteClass == whiteNumberPerClass.length) {
-						solvable = false;
-						break;
-					}
-				}
-				
-				int white = whiteNumberPerClass[whiteClass];
-				if (black >= white) {
-					black -= white;
-					whiteNumberPerClass[whiteClass] = 0;
-				} else {
-					black = 0;
-					whiteNumberPerClass[whiteClass] -= black;
-				}
-				
-				if (++whiteClass == whiteNumberPerClass.length) {
-					solvable = false;
-					System.out.println("Not everyone has an opponent!");
-					break;
-				}
+			int white = 0;
+			
+			for (int classNbW = 0; classNbW < whiteNumberPerClass.length; classNbW++)
+				if (classNbW != classNb)
+					white += whiteNumberPerClass[classNbW];
+			
+			if (black > white) {
+				this.solvable = false;
+				break;
 			}
 		}
 		
@@ -367,7 +353,7 @@ public class Tournament {
 			System.out.print(studentClasses[i] + " ");
 		System.out.println("]");
 
-		return listClasses;
+		return listClassesId;
 	}
 
 	/**
@@ -378,14 +364,10 @@ public class Tournament {
 	 */
 	private Map<Integer, Integer[]> getClassmates(Integer[][] listClasses) {
 		Map<Integer, Integer[]> classmates = new HashMap<>();
-
 		// creating the map
-		for (Integer[] classs : listClasses) {
-			for (int student : classs) {
-				if (student < nbStudents)
-					classmates.put(student, classs);
-			}
-		}
+		for (Integer[] classs : listClasses)
+			for (int student : classs)
+				classmates.put(student, classs);
 		return classmates;
 	}
 

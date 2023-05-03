@@ -10,7 +10,7 @@ import ppc.projet.Tournament;
 
 public class Benchmark {
 
-	private BlockingQueue<Elt<Integer[][], Boolean, Integer>> queue = new LinkedBlockingQueue<>();
+	private BlockingQueue<Elt<Tournament, Integer>> queue = new LinkedBlockingQueue<>();
 	private final int timeout = 20;
 	private int test = 1;
 	
@@ -18,18 +18,15 @@ public class Benchmark {
 		this.generateProblems();
 	}
 	
-	private class Elt<A,B,C> {
+	private class Elt<A,B> {
 	    private A a;
 	    private B b;
-	    private C c;
-	    public Elt(A a, B b, C c){
+	    public Elt(A a, B b){
 	        this.a = a;
 	        this.b = b;
-	        this.c = c;
 	    }
 	    public A getA(){ return a; }
 	    public B getB(){ return b; }
-	    public C getC(){ return c; }
 	}
 
 	private void generateProblems() {
@@ -41,18 +38,19 @@ public class Benchmark {
 		Integer[][][] initProblems = new Integer[][][] {initProblem3, initProblem4, initProblem5, initProblem6, initProblem7};
 		
 		for (Integer[][] initProblem : initProblems) {
-			queue.add(new Elt<Integer[][], Boolean, Integer>(initProblem, false, test));
-			queue.add(new Elt<Integer[][], Boolean, Integer>(initProblem, true, test++));
+			queue.add(new Elt<Tournament, Integer>(new Tournament(initProblem, 0, false), test));
+			queue.add(new Elt<Tournament, Integer>(new Tournament(initProblem, 0, true), test++));
 			
 			Integer[][] prevProblem = initProblem;
 			for (int randomFactor = 1; randomFactor <= 4; randomFactor++) {
 				for (int pbNb = 0; pbNb < 5; pbNb++) {
 					RandomProblem problem;
-					do 
+					do
 						problem = new RandomProblem(randomFactor, prevProblem);
 					while (!new Tournament(problem.getClasses(), 0, false).isSolvable());
-					queue.add(new Elt<Integer[][], Boolean, Integer>(problem.getClasses(), false, test));
-					queue.add(new Elt<Integer[][], Boolean, Integer>(problem.getClasses(), true, test++));
+					
+					queue.add(new Elt<Tournament, Integer>(new Tournament(problem.getClasses(), 0, false), test));
+					queue.add(new Elt<Tournament, Integer>(new Tournament(problem.getClasses(), 0, true), test++));
 					prevProblem = problem.getClasses();
 				}
 			}
@@ -73,16 +71,20 @@ public class Benchmark {
 		public void run() {
 			try {
 				while (!queue.isEmpty()) {
-					Elt<Integer[][], Boolean, Integer> problem = queue.take();
-					Tournament tournament = new Tournament(problem.getA(), 0, problem.getB());
+					Elt<Tournament, Integer> problem = queue.take();
+					Tournament tournament = problem.getA();
 					double walltime = tournament.solve(timeout);
 					
-					String fileName = "benchmark_" + problem.getA().length + "_" + problem.getC() + "_" + problem.getB() + ".txt";
-					String params = timeout + " " + problem.getB() + " " + tournament.getMaxStudentsMet() + " " + tournament.getMaxClassesMet();
+					String testNb = (problem.getB() < 10) ? "0" + problem.getB() : "" + problem.getB();
+					boolean soft = tournament.isAllowMeetingSameStudent();
+					String fileName = "benchmark_" + tournament.getInitClasses().length + "_" + testNb + "_" + soft + ".txt";
+					
+					String params = timeout + " " + soft + " " + tournament.getMaxStudentsMet() + " " + tournament.getMaxClassesMet();
 					String stats = tournament.getStats();
 					if (stats.isEmpty())
 						stats = walltime + " -1 -1";
-					writeStatsFile(fileName, problem.getA(), params, stats);
+					
+					writeStatsFile(fileName, tournament.getInitClasses(), params, stats);
 				}
 			} catch (InterruptedException | IOException e) {
 				// TODO Auto-generated catch block
