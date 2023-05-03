@@ -17,9 +17,8 @@ public class LevelThread implements Runnable {
 	@Override
 	public void run() {
 		Tournament tournament = new Tournament(classes, level, softConstraint);
-		if (tournament.isSolvable())
-			tournament.solve(timeout);
-		else
-			System.out.println("Tournament not solvable");
+		tournament.solve(timeout);
+		if (!tournament.isSolvable())
+			System.out.println("oops");
 	}
 }
