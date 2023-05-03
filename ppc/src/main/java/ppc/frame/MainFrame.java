@@ -1,16 +1,17 @@
-package ppc;
+package ppc.frame;
 
 import java.awt.CardLayout;
 import java.awt.Color;
-import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComponent;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
@@ -44,6 +45,7 @@ public class MainFrame extends JFrame {
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 		JPanel mainPanel = buildMainPanel();
+		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		this.setContentPane(mainPanel);
 		this.setVisible(false);
@@ -100,8 +102,6 @@ public class MainFrame extends JFrame {
 		settings.addActionListener(new OptionsButtonAction(SETTINGS_ACTION));
 		optionsPanel.add(settings, c);
 
-		optionsPanel.setPreferredSize(new Dimension(20, 20));
-
 		return optionsPanel;
 	}
 
@@ -112,8 +112,7 @@ public class MainFrame extends JFrame {
 		informationsPanel.setLayout(new CardLayout(10, 10));
 
 		// New tournament
-		JPanel newTournamentPanel = new JPanel();
-		newTournamentPanel.setBackground(Color.RED);
+		JPanel newTournamentPanel = new CreateNewTournamentPanel();
 		informationsPanel.add(newTournamentPanel, CREATE_NEW_TOURNAMENT);
 
 		// Load tournament

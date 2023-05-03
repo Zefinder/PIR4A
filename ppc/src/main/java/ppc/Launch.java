@@ -5,11 +5,14 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
 import org.reflections.Reflections;
 
 import ppc.annotation.ManagerPriority;
 import ppc.event.TournamentCreateEvent;
+import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 import ppc.manager.Manager;
 

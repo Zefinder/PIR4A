@@ -44,8 +44,8 @@ public class Tournament {
 		this.classesMetThreshold = classesMetThreshold;
 
 		System.out.println(String.format(
-				"Tournament created with default options [maxSearchingTime=%d,studentsMetThreshold=%f,classesMetThreshold=%f]",
-				maxSearchingTime, studentsMetThreshold, classesMetThreshold));
+				"Tournament created with options [name=%s,maxSearchingTime=%d,studentsMetThreshold=%f,classesMetThreshold=%f]",
+				name, maxSearchingTime, studentsMetThreshold, classesMetThreshold));
 	}
 
 }

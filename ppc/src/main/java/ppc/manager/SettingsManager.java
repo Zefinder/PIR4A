@@ -202,6 +202,14 @@ public final class SettingsManager implements Manager {
 		return Integer.valueOf(props.getProperty(MAX_TIME_PROPERTY));
 	}
 
+	public float getStudentsMetThreshold() {
+		return Float.valueOf(props.getProperty(MAX_STUDENTS_MET_TH_PROPERTY));
+	}
+	
+	public float getClassesMetThreshold() {
+		return Float.valueOf(props.getProperty(MAX_CLASSES_MET_TH_PROPERTY));
+	}
+
 	public static SettingsManager getInstance() {
 		return instance;
 	}
