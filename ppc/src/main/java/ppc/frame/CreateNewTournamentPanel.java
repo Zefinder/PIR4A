@@ -3,6 +3,8 @@ package ppc.frame;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -10,6 +12,8 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import ppc.event.TournamentCreateEvent;
+import ppc.manager.EventManager;
 import ppc.manager.SettingsManager;
 
 public class CreateNewTournamentPanel extends JPanel {
@@ -18,6 +22,11 @@ public class CreateNewTournamentPanel extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = -3391834139143580886L;
+
+	private JTextField tournamentName;
+	private JTextField timeValue;
+	private JTextField studentsValue;
+	private JTextField classesValue;
 
 	public CreateNewTournamentPanel() {
 		
@@ -38,6 +47,28 @@ public class CreateNewTournamentPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 1;
 		JButton button = new JButton("Créer le tournoi");
+		button.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				String name = tournamentName.getText();
+				String timeString = timeValue.getText();
+				String studentThresholdString = studentsValue.getText();
+				String classesThresholdString = classesValue.getText();
+				
+				int time = Integer.valueOf(timeString);
+				
+				studentThresholdString = studentThresholdString.substring(0, studentThresholdString.length()-1);
+				float studentThreshold = Float.valueOf(studentThresholdString);
+				studentThreshold /= 100f;
+				
+				classesThresholdString = classesThresholdString.substring(0, classesThresholdString.length()-1);
+				float classesThreshold = Float.valueOf(classesThresholdString);
+				classesThreshold /= 100f;
+				
+				TournamentCreateEvent event = new TournamentCreateEvent(name, time, studentThreshold, classesThreshold);
+				EventManager.getInstance().callEvent(event);
+			}
+		});
 		this.add(button, c);
 	}
 
@@ -61,7 +92,7 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 0;
-		JTextField tournamentName = new JTextField(10);
+		tournamentName = new JTextField(15);
 		panel.add(tournamentName, c);
 
 		c.gridx = 0;
@@ -71,7 +102,7 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 1;
-		JTextField timeValue = new JTextField(String.valueOf(SettingsManager.getInstance().getMaxTime()), 10);
+		timeValue = new JTextField(String.valueOf(SettingsManager.getInstance().getMaxTime()), 10);
 		panel.add(timeValue, c);
 
 		c.gridx = 0;
@@ -81,10 +112,10 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 2;
-		JTextField studentsValue = new JTextField(
+		studentsValue = new JTextField(
 				String.valueOf(SettingsManager.getInstance().getStudentsMetThreshold() * 100 + "%"), 10);
 		panel.add(studentsValue, c);
-		
+
 		c.gridx = 0;
 		c.gridy = 3;
 		JLabel classesLabel = new JLabel("Seuil de classes différentes rencontrées (en %)");
@@ -92,7 +123,7 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 3;
-		JTextField classesValue = new JTextField(
+		classesValue = new JTextField(
 				String.valueOf(SettingsManager.getInstance().getClassesMetThreshold() * 100 + "%"), 10);
 		panel.add(classesValue, c);
 
