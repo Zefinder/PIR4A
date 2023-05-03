@@ -277,6 +277,47 @@ public class Tournament {
 		// Debug
 		System.out.println(Arrays.deepToString(pawnDistribution));
 		
+		
+		// Checking if everyone has an opponent
+		int[] blackNumberPerClass = new int[pawnDistribution.length];
+		int[] whiteNumberPerClass = new int[pawnDistribution.length];
+		
+		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
+			whiteNumberPerClass[classNb] = pawnDistribution[classNb][0];
+			blackNumberPerClass[classNb] = pawnDistribution[classNb][1];
+		}
+		
+		
+		for (int classNb = 0; classNb < blackNumberPerClass.length; classNb++) {
+			int black = blackNumberPerClass[classNb];
+			int whiteClass = 0;
+			while (black != 0) {
+				if (classNb == whiteClass) {
+					whiteClass++;
+					if (whiteClass == whiteNumberPerClass.length) {
+						solvable = false;
+						break;
+					}
+				}
+				
+				int white = whiteNumberPerClass[whiteClass];
+				if (black >= white) {
+					black -= white;
+					whiteNumberPerClass[whiteClass] = 0;
+				} else {
+					black = 0;
+					whiteNumberPerClass[whiteClass] -= black;
+				}
+				
+				if (++whiteClass == whiteNumberPerClass.length) {
+					solvable = false;
+					System.out.println("Not everyone has an opponent!");
+					break;
+				}
+			}
+		}
+		
+		// Checking if each person has at least 6 opponents 
 		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
 			int whiteOpponents = 0;
 			for (int whiteClass = 0; whiteClass < pawnDistribution.length; whiteClass++) {
