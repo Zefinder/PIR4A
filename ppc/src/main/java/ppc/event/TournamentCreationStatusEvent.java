@@ -10,10 +10,20 @@ public class TournamentCreationStatusEvent extends Event {
 
 	public enum TournamentCreationStatus {
 		CREATED, FILE_EXIST, NEGATIVE_TIME, NEGATIVE_STUDENT_THRESHOLD, STUDENT_THRESHOLD_TOO_BIG,
-		NEGATIVE_CLASSES_THRESHOLD, STUDENT_CLASSES_TOO_BIG;
+		NEGATIVE_CLASSES_THRESHOLD, CLASSES_THRESHOLD_TOO_BIG;
 	}
 
+	private TournamentCreationStatus status;
+
 	public TournamentCreationStatusEvent() {
+	}
+
+	public TournamentCreationStatusEvent(TournamentCreationStatus status) {
+		this.status = status;
+	}
+	
+	public TournamentCreationStatus getStatus() {
+		return status;
 	}
 
 	@Override

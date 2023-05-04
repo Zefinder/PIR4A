@@ -11,13 +11,19 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
-import javax.swing.JComponent;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
 
-public class MainFrame extends JFrame {
+import ppc.annotation.EventHandler;
+import ppc.event.Listener;
+import ppc.event.TournamentCreationStatusEvent;
+import ppc.manager.EventManager;
+import ppc.manager.LogsManager;
+
+public class MainFrame extends JFrame implements Listener {
 
 	/**
 	 * 
@@ -39,11 +45,13 @@ public class MainFrame extends JFrame {
 	private JPanel optionsPanel, informationsPanel;
 
 	public MainFrame() {
+		EventManager.getInstance().registerListener(this);
+
 		this.setTitle("Tournois d'échecs");
 		this.setSize(1000, 600);
 		this.setLocationRelativeTo(null);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		
+
 		JPanel mainPanel = buildMainPanel();
 		mainPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
@@ -116,18 +124,15 @@ public class MainFrame extends JFrame {
 		informationsPanel.add(newTournamentPanel, CREATE_NEW_TOURNAMENT);
 
 		// Load tournament
-		JPanel loadTournamentPanel = new JPanel();
-		loadTournamentPanel.setBackground(Color.BLUE);
+		JPanel loadTournamentPanel = new ChooseTournamentPanel();
 		informationsPanel.add(loadTournamentPanel, LOAD_TOURNAMENT);
 
 		// Check results of tournament
-		JPanel checkResultsPanel = new JPanel();
-		checkResultsPanel.setBackground(Color.GREEN);
+		JPanel checkResultsPanel = new ChooseResultsPanel();
 		informationsPanel.add(checkResultsPanel, CHECK_TOURNAMENT);
 
 		// Settings
-		JPanel settingsPanel = new JPanel();
-		settingsPanel.setBackground(Color.BLACK);
+		JPanel settingsPanel = new SettingsPanel();
 		informationsPanel.add(settingsPanel, SETTINGS);
 
 		return informationsPanel;
@@ -173,6 +178,52 @@ public class MainFrame extends JFrame {
 				System.err.println("Error detected when chosing options (action=" + action + ")!");
 				break;
 			}
+		}
+	}
+
+	@EventHandler
+	public void onTournamentCreated(TournamentCreationStatusEvent event) {
+		switch (event.getStatus()) {
+		case CREATED:
+			System.out.println("Tournament created!");
+			JOptionPane.showMessageDialog(null, "Le tournoi a été créé !", "Tournoi créé",
+					JOptionPane.INFORMATION_MESSAGE);
+			break;
+
+		case FILE_EXIST:
+			LogsManager.getInstance().writeErrorMessage("Tournament's name already exists!");
+			JOptionPane.showMessageDialog(null, "Ce nom de tournoi existe déjà !", "Erreur", JOptionPane.ERROR_MESSAGE);
+			break;
+
+		case NEGATIVE_TIME:
+			LogsManager.getInstance().writeErrorMessage("Tournament's max time search can not be negative!");
+			JOptionPane.showMessageDialog(null, "Le temps maximal de recherche ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
+
+		case NEGATIVE_STUDENT_THRESHOLD:
+			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold can not be negative!");
+			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
+
+		case STUDENT_THRESHOLD_TOO_BIG:
+			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold can not be over 1!");
+			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être supérieur à 100% !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
+
+		case NEGATIVE_CLASSES_THRESHOLD:
+			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be negative!");
+			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
+
+		case CLASSES_THRESHOLD_TOO_BIG:
+			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be over 1!");
+			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être supérieur à 100% !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
 		}
 	}
 

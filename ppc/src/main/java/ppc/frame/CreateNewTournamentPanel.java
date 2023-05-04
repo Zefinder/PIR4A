@@ -9,11 +9,13 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import ppc.event.TournamentCreateEvent;
 import ppc.manager.EventManager;
+import ppc.manager.LogsManager;
 import ppc.manager.SettingsManager;
 
 public class CreateNewTournamentPanel extends JPanel {
@@ -29,7 +31,7 @@ public class CreateNewTournamentPanel extends JPanel {
 	private JTextField classesValue;
 
 	public CreateNewTournamentPanel() {
-		
+
 		this.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -54,17 +56,48 @@ public class CreateNewTournamentPanel extends JPanel {
 				String timeString = timeValue.getText();
 				String studentThresholdString = studentsValue.getText();
 				String classesThresholdString = classesValue.getText();
-				
-				int time = Integer.valueOf(timeString);
-				
-				studentThresholdString = studentThresholdString.substring(0, studentThresholdString.length()-1);
-				float studentThreshold = Float.valueOf(studentThresholdString);
+
+				if (name.isBlank()) {
+					LogsManager.getInstance().writeErrorMessage("Tournament's name cannot be empty");
+					JOptionPane.showMessageDialog(null, "Le nom du tournoi ne peut pas être vide !", "Error",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+				int time;
+				try {
+					time = Integer.valueOf(timeString);
+				} catch (Exception e1) {
+					LogsManager.getInstance().writeErrorMessage("Error when parsing searching time...");
+					JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du temps de recherche", "Erreur",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+				studentThresholdString = studentThresholdString.substring(0, studentThresholdString.length() - 1);
+				float studentThreshold;
+				try {
+					studentThreshold = Float.valueOf(studentThresholdString);
+				} catch (Exception e1) {
+					LogsManager.getInstance().writeErrorMessage("Error when parsing student's threshold...");
+					JOptionPane.showMessageDialog(null, "Impossible de lire la valeur de seuil d'étudiants", "Erreur",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
 				studentThreshold /= 100f;
-				
-				classesThresholdString = classesThresholdString.substring(0, classesThresholdString.length()-1);
-				float classesThreshold = Float.valueOf(classesThresholdString);
+
+				classesThresholdString = classesThresholdString.substring(0, classesThresholdString.length() - 1);
+				float classesThreshold;
+				try {
+					classesThreshold = Float.valueOf(classesThresholdString);
+				} catch (Exception e1) {
+					LogsManager.getInstance().writeErrorMessage("Error when parsing classes threshold...");
+					JOptionPane.showMessageDialog(null, "Impossible de lire la valeur de seuil de classes", "Erreur",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
 				classesThreshold /= 100f;
-				
+
 				TournamentCreateEvent event = new TournamentCreateEvent(name, time, studentThreshold, classesThreshold);
 				EventManager.getInstance().callEvent(event);
 			}

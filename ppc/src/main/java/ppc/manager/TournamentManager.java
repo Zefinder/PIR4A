@@ -9,6 +9,8 @@ import java.util.Map;
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.TournamentCreateEvent;
+import ppc.event.TournamentCreationStatusEvent;
+import ppc.event.TournamentCreationStatusEvent.TournamentCreationStatus;
 import ppc.tournament.Tournament;
 
 /**
@@ -125,16 +127,33 @@ public final class TournamentManager implements Manager, Listener {
 	@EventHandler
 	public void onCreateTournament(TournamentCreateEvent event) {
 		Tournament tournament = tournamentList.get(event.getName());
+		TournamentCreationStatusEvent createdEvent;
 
 		if (tournament != null) {
-			System.err.println(String.format("Tournament %s already exists!", event.getName()));
-			return;
-		}
+			createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.FILE_EXIST);
+		} else {
+			if (event.getMaxSearchingTime() < 0) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_TIME);
+			} else if (event.getStudentsMetThreshold() < 0f) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_STUDENT_THRESHOLD);
+			} else if (event.getStudentsMetThreshold() > 1f) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.STUDENT_THRESHOLD_TOO_BIG);
+			} else if (event.getClassesMetThreshold() < 0f) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_CLASSES_THRESHOLD);
+			} else if (event.getClassesMetThreshold() > 1f) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.CLASSES_THRESHOLD_TOO_BIG);
+			} else {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.CREATED);
+				tournament = new Tournament(event.getName(), tournamentDataDirectory);
 
-		tournament = new Tournament(event.getName(), tournamentDataDirectory);
-		tournament.createTournament(event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold());
-		tournamentList.put(event.getName(), tournament);
-		// TODO create file, folder
+				tournament.createTournament(event.getMaxSearchingTime(), event.getStudentsMetThreshold(),
+						event.getClassesMetThreshold());
+				tournamentList.put(event.getName(), tournament);
+				// TODO create file, folder
+			}
+		}
+		
+		EventManager.getInstance().callEvent(createdEvent);
 	}
 
 	public static TournamentManager getInstance() {
