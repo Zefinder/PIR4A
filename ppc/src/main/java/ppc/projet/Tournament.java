@@ -373,9 +373,21 @@ public class Tournament {
 
 	private class Solution {
 		private int[][] matches;
+		private int nbStudentsMet;
+		private int nbClassesMet;
 
-		public Solution(int[][] matches) {
+		public Solution(int[][] matches, int nbStudentsMet, int nbClassesMet) {
 			this.matches = matches;
+			this.nbStudentsMet = nbStudentsMet;
+			this.nbClassesMet = nbClassesMet;
+		}
+		
+		public int getNbClassesMet() {
+			return this.nbClassesMet;
+		}
+		
+		public int getNbStudentsMet() {
+			return this.nbStudentsMet;
 		}
 
 		@Override
@@ -449,8 +461,14 @@ public class Tournament {
 					sumStudentsMet += studentsMet.stream().distinct().count();
 				}
 			}
-
-			solution = new Solution(solutionMatches);
+			
+			// only storing the solution if it is better than the previous one
+			if (solution == null)
+				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
+			else if (sumStudentsMet > solution.getNbStudentsMet())
+				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
+			else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet())
+				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
 
 			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
 			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + maxStudentsMet + ")");
