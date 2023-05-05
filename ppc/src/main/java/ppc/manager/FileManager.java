@@ -125,12 +125,21 @@ public final class FileManager implements Manager {
 		this.resDirectory = resDirectory;
 	}
 
-	public File getTournamentDirectory() {
-		return tournamentDirectory;
+	public File[] getTournamentFiles() {
+		return tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
 	}
-
-	public File getTournamentDataDirectory() {
-		return tournamentDataDirectory;
+	
+	public File getTournamentData(String tournamentName) {
+		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
+	}
+	
+	public boolean createTournamentFile(String tournamentName) {
+		// TODO A faire
+		return true;
+	}
+	
+	public File[] getResultFiles() {
+		return resDirectory.listFiles(file -> file.isDirectory());
 	}
 
 	public void writeLogs() throws IOException {

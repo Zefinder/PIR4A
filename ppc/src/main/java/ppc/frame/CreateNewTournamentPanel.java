@@ -12,6 +12,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 
 import ppc.event.TournamentCreateEvent;
 import ppc.manager.EventManager;
@@ -26,6 +27,8 @@ public class CreateNewTournamentPanel extends JPanel {
 	private static final long serialVersionUID = -3391834139143580886L;
 
 	private JTextField tournamentName;
+	private JTextField matchesValue;
+	private JTextField levelsValue;
 	private JTextField timeValue;
 	private JTextField studentsValue;
 	private JTextField classesValue;
@@ -53,6 +56,8 @@ public class CreateNewTournamentPanel extends JPanel {
 			@Override
 			public void actionPerformed(ActionEvent e) {
 				String name = tournamentName.getText();
+				String matchesString = matchesValue.getText();
+				String levelsString = levelsValue.getText();
 				String timeString = timeValue.getText();
 				String studentThresholdString = studentsValue.getText();
 				String classesThresholdString = classesValue.getText();
@@ -61,6 +66,26 @@ public class CreateNewTournamentPanel extends JPanel {
 					LogsManager.getInstance().writeErrorMessage("Tournament's name cannot be empty");
 					JOptionPane.showMessageDialog(null, "Le nom du tournoi ne peut pas être vide !", "Error",
 							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+				int matches;
+				try {
+					matches = Integer.valueOf(matchesString);
+				} catch (Exception e1) {
+					LogsManager.getInstance().writeErrorMessage("Error when parsing matches' number...");
+					JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du nombre de parties", "Erreur",
+							JOptionPane.ERROR_MESSAGE);
+					return;
+				}
+
+				int levels;
+				try {
+					levels = Integer.valueOf(levelsString);
+				} catch (Exception e1) {
+					LogsManager.getInstance().writeErrorMessage("Error when parsing levels' number...");
+					JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du nombre de groupes de nievau",
+							"Erreur", JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 
@@ -98,17 +123,24 @@ public class CreateNewTournamentPanel extends JPanel {
 				}
 				classesThreshold /= 100f;
 
-				TournamentCreateEvent event = new TournamentCreateEvent(name, time, studentThreshold, classesThreshold);
+				TournamentCreateEvent event = new TournamentCreateEvent(name, matches, levels, time, studentThreshold,
+						classesThreshold);
 				EventManager.getInstance().callEvent(event);
 			}
 		});
 		this.add(button, c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		JLabel infoLabel = new JLabel("Tous les champs marqués par * ne pourront pas être modifiés après !");
+		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		this.add(infoLabel, c);
 	}
 
 	private JPanel createFormPanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("Create a new tournament"));
+		panel.setBorder(BorderFactory.createTitledBorder("Créer un nouveau tournoi"));
 
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -130,32 +162,52 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 0;
 		c.gridy = 1;
+		JLabel matchesLabel = new JLabel("Nombre de parties*");
+		panel.add(matchesLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 1;
+		matchesValue = new JTextField("6");
+		panel.add(matchesValue, c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		JLabel levelsLabel = new JLabel("Nombre de groupes*");
+		panel.add(levelsLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 2;
+		levelsValue = new JTextField("3");
+		panel.add(levelsValue, c);
+
+		c.gridx = 0;
+		c.gridy = 3;
 		JLabel timeLabel = new JLabel("Temps max de recherche (en s)");
 		panel.add(timeLabel, c);
 
 		c.gridx = 1;
-		c.gridy = 1;
+		c.gridy = 3;
 		timeValue = new JTextField(String.valueOf(SettingsManager.getInstance().getMaxTime()), 10);
 		panel.add(timeValue, c);
 
 		c.gridx = 0;
-		c.gridy = 2;
+		c.gridy = 4;
 		JLabel studentsLabel = new JLabel("Seuil d'élèves différents rencontrés (en %)");
 		panel.add(studentsLabel, c);
 
 		c.gridx = 1;
-		c.gridy = 2;
+		c.gridy = 4;
 		studentsValue = new JTextField(
 				String.valueOf(SettingsManager.getInstance().getStudentsMetThreshold() * 100 + "%"), 10);
 		panel.add(studentsValue, c);
 
 		c.gridx = 0;
-		c.gridy = 3;
+		c.gridy = 5;
 		JLabel classesLabel = new JLabel("Seuil de classes différentes rencontrées (en %)");
 		panel.add(classesLabel, c);
 
 		c.gridx = 1;
-		c.gridy = 3;
+		c.gridy = 5;
 		classesValue = new JTextField(
 				String.valueOf(SettingsManager.getInstance().getClassesMetThreshold() * 100 + "%"), 10);
 		panel.add(classesValue, c);

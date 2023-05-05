@@ -5,6 +5,7 @@ import java.awt.Component;
 
 import javax.swing.DefaultListCellRenderer;
 import javax.swing.JList;
+import javax.swing.SwingConstants;
 import javax.swing.UIManager;
 
 public class TournamentListRenderer extends DefaultListCellRenderer {
@@ -15,6 +16,7 @@ public class TournamentListRenderer extends DefaultListCellRenderer {
 	private static final long serialVersionUID = -7554051951927620728L;
 
 	public TournamentListRenderer() {
+		this.setHorizontalAlignment(SwingConstants.CENTER);
 	}
 
 	@Override

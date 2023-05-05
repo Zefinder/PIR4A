@@ -9,8 +9,8 @@ public class TournamentCreationStatusEvent extends Event {
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
 	public enum TournamentCreationStatus {
-		CREATED, FILE_EXIST, NEGATIVE_TIME, NEGATIVE_STUDENT_THRESHOLD, STUDENT_THRESHOLD_TOO_BIG,
-		NEGATIVE_CLASSES_THRESHOLD, CLASSES_THRESHOLD_TOO_BIG;
+		CREATED, FILE_EXIST, NEGATIVE_MATCHES, NEGATIVE_GROUPS, NEGATIVE_TIME, NEGATIVE_STUDENT_THRESHOLD,
+		STUDENT_THRESHOLD_TOO_BIG, NEGATIVE_CLASSES_THRESHOLD, CLASSES_THRESHOLD_TOO_BIG;
 	}
 
 	private TournamentCreationStatus status;
@@ -21,7 +21,7 @@ public class TournamentCreationStatusEvent extends Event {
 	public TournamentCreationStatusEvent(TournamentCreationStatus status) {
 		this.status = status;
 	}
-	
+
 	public TournamentCreationStatus getStatus() {
 		return status;
 	}

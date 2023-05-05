@@ -5,15 +5,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import org.reflections.Reflections;
 
 import ppc.annotation.ManagerPriority;
-import ppc.event.TournamentCreateEvent;
 import ppc.frame.MainFrame;
-import ppc.manager.EventManager;
 import ppc.manager.Manager;
 
 public class Launch {
@@ -79,13 +75,6 @@ public class Launch {
 	public static void main(String[] args) throws IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException, IOException {
 		init();
-
-		TournamentCreateEvent t = new TournamentCreateEvent("Test1", 300, 1f, 1f);
-		TournamentCreateEvent t2 = new TournamentCreateEvent("AAAAAH", 300, 1f, 1f);
-
-		EventManager.getInstance().callEvent(t);
-		EventManager.getInstance().callEvent(t2);
-		EventManager.getInstance().callEvent(t2);
 
 		MainFrame mf = new MainFrame();
 		mf.initFrame();

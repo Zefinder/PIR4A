@@ -11,6 +11,9 @@ import ppc.event.Listener;
 import ppc.event.TournamentCreateEvent;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentCreationStatusEvent.TournamentCreationStatus;
+import ppc.event.TournamentOpenEvent;
+import ppc.event.TournamentOpeningStatusEvent;
+import ppc.event.TournamentOpeningStatusEvent.TournamentOpeningStatus;
 import ppc.tournament.Tournament;
 
 /**
@@ -26,8 +29,6 @@ public final class TournamentManager implements Manager, Listener {
 
 	private static final TournamentManager instance = new TournamentManager();
 
-	private File tournamentDirectory;
-	private File tournamentDataDirectory;
 	private Map<String, Tournament> tournamentList;
 
 	private LogsManager logs = LogsManager.getInstance();
@@ -43,48 +44,15 @@ public final class TournamentManager implements Manager, Listener {
 		EventManager.getInstance().registerListener(this);
 
 		tournamentList = new HashMap<>();
-		tournamentDirectory = FileManager.getInstance().getTournamentDirectory();
-		tournamentDataDirectory = FileManager.getInstance().getTournamentDataDirectory();
 
-		// Reading files in tournament and tournamet data directory
-		if (!tournamentDirectory.isDirectory()) {
-			logs.writeFatalErrorMessage("Tournament directory is not a directory! Trying to fix error");
-
-			if (!tournamentDirectory.delete()) {
-				logs.writeFatalErrorMessage("Impossible to delete it... Need help...");
-				System.exit(1);
-			}
-
-			if (!tournamentDirectory.mkdir()) {
-				logs.writeFatalErrorMessage("Impossible to recreate it... Need help...");
-				System.exit(1);
-			} else
-				logs.writeInformationMessage("Fatal error fixed!");
-		}
-
-		if (!tournamentDataDirectory.isDirectory()) {
-			logs.writeFatalErrorMessage("Tournament data directory is not a directory! Trying to fix error");
-
-			if (!tournamentDataDirectory.delete()) {
-				logs.writeFatalErrorMessage("Impossible to delete it... Need help...");
-				System.exit(1);
-			}
-
-			if (!tournamentDataDirectory.mkdir()) {
-				logs.writeFatalErrorMessage("Impossible to recreate it... Need help...");
-				System.exit(1);
-			} else
-				logs.writeInformationMessage("Fatal error fixed!");
-		}
-
-		File[] tournamentFiles = tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
+		File[] tournamentFiles = FileManager.getInstance().getTournamentFiles();
 		logs.writeInformationMessage(String.format("Found %d tournament files", tournamentFiles.length));
 		for (File tournamentFile : tournamentFiles) {
 			String fileName = tournamentFile.getName();
 			fileName = fileName.substring(0, fileName.length() - 4);
 
 			// Checks if the tournament file has data associated to it
-			File tournamentData = new File(tournamentDataDirectory.getAbsolutePath() + "/" + fileName);
+			File tournamentData = FileManager.getInstance().getTournamentData(fileName);
 
 			if (!tournamentData.exists()) {
 				logs.writeFatalErrorMessage(String
@@ -132,7 +100,11 @@ public final class TournamentManager implements Manager, Listener {
 		if (tournament != null) {
 			createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.FILE_EXIST);
 		} else {
-			if (event.getMaxSearchingTime() < 0) {
+			if (event.getMatchesNumber() < 0) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_MATCHES);
+			} else if (event.getGroupsNumber() < 0) {
+				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_GROUPS);
+			} else if (event.getMaxSearchingTime() < 0) {
 				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_TIME);
 			} else if (event.getStudentsMetThreshold() < 0f) {
 				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_STUDENT_THRESHOLD);
@@ -144,16 +116,33 @@ public final class TournamentManager implements Manager, Listener {
 				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.CLASSES_THRESHOLD_TOO_BIG);
 			} else {
 				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.CREATED);
-				tournament = new Tournament(event.getName(), tournamentDataDirectory);
+				tournament = new Tournament(event.getName(),
+						FileManager.getInstance().getTournamentData(event.getName()));
 
-				tournament.createTournament(event.getMaxSearchingTime(), event.getStudentsMetThreshold(),
-						event.getClassesMetThreshold());
-				tournamentList.put(event.getName(), tournament);
-				// TODO create file, folder
+				tournament.createTournament(event.getMatchesNumber(), event.getGroupsNumber(),
+						event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold());
+
+				if (FileManager.getInstance().createTournamentFile(event.getName()))
+					tournamentList.put(event.getName(), tournament);
 			}
 		}
-		
+
 		EventManager.getInstance().callEvent(createdEvent);
+	}
+
+	@EventHandler
+	public void onOpenTournament(TournamentOpenEvent event) {
+		Tournament tournament = tournamentList.get(event.getTournamentName());
+		TournamentOpeningStatusEvent openingEvent;
+
+		if (tournament == null) {
+			openingEvent = new TournamentOpeningStatusEvent(TournamentOpeningStatus.ERROR);
+		} else {
+			tournament.openTournament();
+			openingEvent = new TournamentOpeningStatusEvent(TournamentOpeningStatus.OPENED);
+		}
+		
+		EventManager.getInstance().callEvent(openingEvent);
 	}
 
 	public static TournamentManager getInstance() {

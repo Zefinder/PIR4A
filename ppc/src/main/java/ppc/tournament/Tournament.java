@@ -21,6 +21,8 @@ public class Tournament {
 	private String name;
 	private File dataFolder;
 
+	private int matchesNumber;
+	private int groupsNumber;
 	private int maxSearchingTime;
 	private float studentsMetThreshold;
 	private float classesMetThreshold;
@@ -38,14 +40,20 @@ public class Tournament {
 		return dataFolder;
 	}
 
-	public void createTournament(int maxSearchingTime, float studentsMetThreshold, float classesMetThreshold) {
+	public void createTournament(int matchesNumber, int groupsNumber, int maxSearchingTime, float studentsMetThreshold,
+			float classesMetThreshold) {
+		this.matchesNumber = matchesNumber;
+		this.groupsNumber = groupsNumber;
 		this.maxSearchingTime = maxSearchingTime;
 		this.studentsMetThreshold = studentsMetThreshold;
 		this.classesMetThreshold = classesMetThreshold;
 
 		System.out.println(String.format(
-				"Tournament created with options [name=%s,maxSearchingTime=%d,studentsMetThreshold=%f,classesMetThreshold=%f]",
-				name, maxSearchingTime, studentsMetThreshold, classesMetThreshold));
+				"Tournament created with options [name=%s,matchesNumber=%d,groupsNumber=%d,maxSearchingTime=%d,studentsMetThreshold=%f,classesMetThreshold=%f]",
+				name, matchesNumber, groupsNumber, maxSearchingTime, studentsMetThreshold, classesMetThreshold));
 	}
 
+	public void openTournament() {
+		System.out.println("Loading tournament...");
+	}
 }

@@ -1,7 +1,6 @@
 package ppc.frame;
 
 import java.awt.CardLayout;
-import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -20,6 +19,7 @@ import javax.swing.SwingConstants;
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.TournamentCreationStatusEvent;
+import ppc.event.TournamentOpeningStatusEvent;
 import ppc.manager.EventManager;
 import ppc.manager.LogsManager;
 
@@ -195,26 +195,38 @@ public class MainFrame extends JFrame implements Listener {
 			JOptionPane.showMessageDialog(null, "Ce nom de tournoi existe déjà !", "Erreur", JOptionPane.ERROR_MESSAGE);
 			break;
 
+		case NEGATIVE_MATCHES:
+			LogsManager.getInstance().writeErrorMessage("Tournament's matches' number cannot be negative!");
+			JOptionPane.showMessageDialog(null, "Le nombre de parties ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
+
+		case NEGATIVE_GROUPS:
+			LogsManager.getInstance().writeErrorMessage("Tournament's groups' number cannot be negative!");
+			JOptionPane.showMessageDialog(null, "Le nombre de groupes ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			break;
+
 		case NEGATIVE_TIME:
-			LogsManager.getInstance().writeErrorMessage("Tournament's max time search can not be negative!");
+			LogsManager.getInstance().writeErrorMessage("Tournament's max time search cannot be negative!");
 			JOptionPane.showMessageDialog(null, "Le temps maximal de recherche ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
 			break;
 
 		case NEGATIVE_STUDENT_THRESHOLD:
-			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold can not be negative!");
+			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
 			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
 			break;
 
 		case STUDENT_THRESHOLD_TOO_BIG:
-			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold can not be over 1!");
+			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be over 1!");
 			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être supérieur à 100% !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
 			break;
 
 		case NEGATIVE_CLASSES_THRESHOLD:
-			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be negative!");
+			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be negative!");
 			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
 			break;
@@ -223,6 +235,20 @@ public class MainFrame extends JFrame implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be over 1!");
 			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être supérieur à 100% !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
+			break;
+		}
+	}
+
+	@EventHandler
+	public void onTournamentOpened(TournamentOpeningStatusEvent event) {
+		switch (event.getStatus()) {
+		case OPENED:
+			System.out.println("Tournament opened !");
+			break;
+
+		case ERROR:
+			System.err.println("Impossible to open tournament...");
+			JOptionPane.showMessageDialog(null, "Impossible d'ouvrir le tournoi", "Erreur", JOptionPane.ERROR_MESSAGE);
 			break;
 		}
 	}
