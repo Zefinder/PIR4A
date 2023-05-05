@@ -34,12 +34,14 @@ public class PdfGenerator {
 	private List<Solution> solutions;
 	private int nbClasses;
 	private final int listMatchesColumnNb = 2 + Tournament.NUMBER_MATCHES;
+	private String[] classNames;
 	private Map<Integer, BaseColor> colourMap = new HashMap<>();
 	private int lastLevelWithGhost;
 	private boolean needsGhosts = false;
 
-	public PdfGenerator(List<Solution> solutions, int nbClasses, int lastLevelWithGhost) {
+	public PdfGenerator(List<Solution> solutions, String[] classNames, int nbClasses, int lastLevelWithGhost) {
 		this.solutions = solutions;
+		this.classNames = classNames;
 		this.nbClasses = nbClasses;
 		this.lastLevelWithGhost = lastLevelWithGhost;
 		if (lastLevelWithGhost != -1) {
@@ -267,7 +269,7 @@ public class PdfGenerator {
 		PdfPTable table = new PdfPTable(new float[] { 1, 5, 1 });
 		table.setWidthPercentage(100);
 
-		PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1));
+		PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1) + " : " + classNames[classNb]);
 		classCell.setColspan(table.getNumberOfColumns());
 		classCell.setBackgroundColor(colourMap.get(classNb));
 		table.addCell(classCell);
@@ -359,10 +361,12 @@ public class PdfGenerator {
 
 			PdfPTable lvlTable = new PdfPTable(1 + nbClasses);
 			lvlTable.setWidthPercentage(100);
-
-			lvlTable.addCell(formatHeaderCell("Classe"));
+			
+			PdfPCell classHeader = formatHeaderCell("Classe");
+			classHeader.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
+			lvlTable.addCell(classHeader);
 			for (int classNb = 0; classNb < nbClasses; classNb++) {
-				PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1));
+				PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1) + " : " + classNames[classNb]);
 				classCell.setBackgroundColor(colourMap.get(classNb));
 				lvlTable.addCell(classCell);
 			}
@@ -390,7 +394,7 @@ public class PdfGenerator {
 		PdfPTable table = new PdfPTable(columns);
 		table.setWidthPercentage(100);
 		
-		PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1));
+		PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1) + " : " + classNames[classNb]);
 		classCell.setColspan(table.getNumberOfColumns());
 		classCell.setBackgroundColor(colourMap.get(classNb));
 		table.addCell(classCell);
