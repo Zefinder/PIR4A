@@ -18,7 +18,8 @@ for filename in glob.glob('*.txt'):
         
         listSolutions = []
         for stats in solutions.split(";"):
-            listSolutions.append([float(x) for x in stats.split()])
+            if stats.strip():  # Check if stats is not empty after removing whitespaces
+                listSolutions.append([float(x) for x in stats.split()])
         problem.append(listSolutions)
 
         key = int(nbClasses)*1000 + sum(classesList)
