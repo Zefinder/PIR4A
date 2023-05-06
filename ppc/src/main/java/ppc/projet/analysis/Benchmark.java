@@ -3,6 +3,9 @@ package ppc.projet.analysis;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -11,8 +14,8 @@ import ppc.projet.Tournament;
 public class Benchmark {
 
 	private BlockingQueue<Elt<Tournament, Integer>> queue = new LinkedBlockingQueue<>();
+	private Set<Integer[][]> generatedProblems = new HashSet<>();
 	private final int timeout = 20;
-	private int test = 1;
 	
 	public Benchmark() {
 		this.generateProblems();
@@ -36,7 +39,9 @@ public class Benchmark {
 		Integer[][] initProblem6  = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {9, 10, 11}, {12, 13}, {14, 15}};
 		Integer[][] initProblem7 = {{0, 1}, {2, 3}, {4, 5}, {6, 7}, {8, 9}, {10, 11}, {12, 13}};
 		Integer[][][] initProblems = new Integer[][][] {initProblem3, initProblem4, initProblem5, initProblem6, initProblem7};
+		generatedProblems = new HashSet<>(Arrays.asList(initProblems));
 		
+		int test = 1;
 		for (Integer[][] initProblem : initProblems) {
 			queue.add(new Elt<Tournament, Integer>(new Tournament(initProblem, 0, false), test));
 			queue.add(new Elt<Tournament, Integer>(new Tournament(initProblem, 0, true), test++));
@@ -44,14 +49,20 @@ public class Benchmark {
 			Integer[][] prevProblem = initProblem;
 			for (int randomFactor = 1; randomFactor <= 4; randomFactor++) {
 				for (int pbNb = 0; pbNb < 5; pbNb++) {
+					boolean sameProblem = false;
 					RandomProblem problem;
-					do
+					do {
 						problem = new RandomProblem(randomFactor, prevProblem);
-					while (!new Tournament(problem.getClasses(), 0, false).isSolvable());
+						if (generatedProblems.contains(problem.getClasses())) {
+							sameProblem = true;
+							prevProblem = problem.getClasses();
+						}
+					} while (!new Tournament(problem.getClasses(), 0, false).isSolvable() && !sameProblem);
 					
 					queue.add(new Elt<Tournament, Integer>(new Tournament(problem.getClasses(), 0, false), test));
 					queue.add(new Elt<Tournament, Integer>(new Tournament(problem.getClasses(), 0, true), test++));
 					prevProblem = problem.getClasses();
+					generatedProblems.add(prevProblem);
 				}
 			}
 		}
