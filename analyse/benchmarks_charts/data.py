@@ -4,9 +4,14 @@ global benchmarks
 global benchmarks_soft
 global benchmarks_hard
 
+global maxStudents
+global minStudents
+
 benchmarks = []
 benchmarks_soft = []
 benchmarks_hard = []
+
+nbStudents = []
 
 # parsing the data
 for filename in glob.glob('*.txt'):
@@ -14,6 +19,7 @@ for filename in glob.glob('*.txt'):
         [nbClasses, classes, paramsString, solutions] = benchmark.readlines()
         params = paramsString.split()
         classesList = [int(c) for c in classes.split()]
+        nbStudents.append(sum(classesList))
         problem = [int(nbClasses), classesList, int(params[0]), params[1] == 'true', int(params[2]), int(params[3])]
         
         listSolutions = []
@@ -29,3 +35,6 @@ for filename in glob.glob('*.txt'):
             benchmarks_soft.append((key, problem))
         else:
             benchmarks_hard.append((key, problem))
+
+maxStudents = max(nbStudents)
+minStudents = min(nbStudents)
