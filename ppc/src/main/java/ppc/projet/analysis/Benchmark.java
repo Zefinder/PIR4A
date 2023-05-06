@@ -15,10 +15,15 @@ public class Benchmark {
 
 	private BlockingQueue<Elt<Tournament, Integer>> queue = new LinkedBlockingQueue<>();
 	private Set<Integer[][]> generatedProblems = new HashSet<>();
+	private static int nbProblemsSolved = 0;
 	private final int timeout = 20;
 	
 	public Benchmark() {
 		this.generateProblems();
+	}
+	
+	private synchronized int incrementNbProblemsSolved() {
+		return nbProblemsSolved++;
 	}
 	
 	private class Elt<A,B> {
@@ -97,6 +102,7 @@ public class Benchmark {
 						stats = walltime + " -1 -1";
 					
 					writeStatsFile(fileName, tournament.getInitClasses(), params, stats);
+					System.out.println("Number of problems solved: " + incrementNbProblemsSolved());
 				}
 			} catch (InterruptedException | IOException e) {
 				// TODO Auto-generated catch block
