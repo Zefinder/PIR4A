@@ -86,7 +86,8 @@ public class Benchmark {
 					Tournament tournament = problem.getA();
 					double walltime = tournament.solve(timeout);
 					
-					String testNb = (problem.getB() < 10) ? "0" + problem.getB() : "" + problem.getB();
+					String testNb = (problem.getB() < 10) ? "0" : "";
+					testNb += (problem.getB() < 100) ? "0" + problem.getB() : problem.getB();
 					boolean soft = tournament.isAllowMeetingSameStudent();
 					String fileName = "benchmark_" + tournament.getInitClasses().length + "_" + testNb + "_" + soft + ".txt";
 					
