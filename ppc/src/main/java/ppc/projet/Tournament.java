@@ -463,12 +463,18 @@ public class Tournament {
 			}
 			
 			// only storing the solution if it is better than the previous one
-			if (solution == null)
+			if (solution == null) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-			else if (sumStudentsMet > solution.getNbStudentsMet())
+				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+			}
+			else if (sumStudentsMet > solution.getNbStudentsMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-			else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet())
+				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+			}
+			else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
+				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+			}
 
 			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
 			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + maxStudentsMet + ")");
@@ -476,7 +482,6 @@ public class Tournament {
 				System.out.println("optimal solution found!");
 				stopSearch();
 			}
-			stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			System.out.println("Time spent: " + wallTime());
 		}
 	}
