@@ -8,6 +8,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.util.stream.Stream;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -36,6 +37,7 @@ public class ChooseTournamentPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
+		JPanel panel = new JPanel();
 		JList<String> list = new JList<>(Stream.of(FileManager.getInstance().getTournamentFiles())
 				.map(file -> file.getName().substring(0, file.getName().length() - 4)).toArray(String[]::new));
 		list.setCellRenderer(new TournamentListRenderer());
@@ -49,7 +51,9 @@ public class ChooseTournamentPanel extends JPanel {
 				}
 			};
 		});
-		this.add(list, c);
+		panel.add(list);
+		panel.setBorder(BorderFactory.createTitledBorder("Choisir un tournoi"));
+		this.add(panel, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
@@ -63,11 +67,14 @@ public class ChooseTournamentPanel extends JPanel {
 			}
 		});
 		this.add(confirm, c);
+		
 	}
 
 	private void openTournament(String tournamentName) {
 		System.out.println("Opening tournament " + tournamentName + "...");
 		EventManager.getInstance().callEvent(new TournamentOpenEvent(tournamentName));
 	}
+	
+	// TODO Add creation listener here to add to list !
 
 }

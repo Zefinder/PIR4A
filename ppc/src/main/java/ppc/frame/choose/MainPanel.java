@@ -75,19 +75,19 @@ public class MainPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		JButton newTournament = new JButton("Créer un nouveau tournoi (WIP)");
+		JButton newTournament = new JButton("Créer un nouveau tournoi");
 		newTournament.addActionListener(new OptionsButtonAction(NEW_TOURNAMENT_ACTION));
 		optionsPanel.add(newTournament, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
-		JButton loadTournament = new JButton("Charger un tournoi (WIP)");
+		JButton loadTournament = new JButton("Charger un tournoi");
 		loadTournament.addActionListener(new OptionsButtonAction(LOAD_TOURNAMENT_ACTION));
 		optionsPanel.add(loadTournament, c);
 
 		c.gridx = 0;
 		c.gridy = 2;
-		JButton checkTournament = new JButton("Fichiers générés pour les tournois (WIP)");
+		JButton checkTournament = new JButton("Fichiers générés pour les tournois");
 		checkTournament.addActionListener(new OptionsButtonAction(CHECK_TOURNAMENT_ACTION));
 		optionsPanel.add(checkTournament, c);
 

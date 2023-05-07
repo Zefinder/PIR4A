@@ -20,7 +20,6 @@ public class MainFrame extends JFrame implements Listener {
 	private static final String MAIN_PANEL = "main";
 	private static final String OPENED_PANEL = "opened";
 
-	private int card = 0;
 	private JPanel cardPanel;
 
 	public MainFrame() {

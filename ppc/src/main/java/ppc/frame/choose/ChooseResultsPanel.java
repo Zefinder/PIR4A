@@ -9,6 +9,7 @@ import java.awt.event.MouseAdapter;
 import java.io.File;
 import java.util.stream.Stream;
 
+import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JList;
@@ -39,6 +40,7 @@ public class ChooseResultsPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
+		JPanel panel = new JPanel();
 		JList<String> list = new JList<>(Stream.of(FileManager.getInstance().getResultFiles())
 				.map(file -> file.getName()).toArray(String[]::new));
 		list.setCellRenderer(new TournamentListRenderer());
@@ -52,7 +54,9 @@ public class ChooseResultsPanel extends JPanel {
 				}
 			};
 		});
-		this.add(list, c);
+		panel.add(list);
+		panel.setBorder(BorderFactory.createTitledBorder("Copier les pdf générés"));
+		this.add(panel, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
@@ -69,6 +73,7 @@ public class ChooseResultsPanel extends JPanel {
 			}
 		});
 		this.add(confirm, c);
+		
 	}
 
 	private void copyTournamentResults(String tournamentName) {
