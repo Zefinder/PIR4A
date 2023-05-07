@@ -1,4 +1,4 @@
-package ppc.frame;
+package ppc.frame.choose;
 
 import javax.swing.JPanel;
 
