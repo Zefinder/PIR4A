@@ -8,8 +8,11 @@ bounds = []
 group_students_hard = {}
 for problemTuple in sorted(data.benchmarks_hard):
     nbStudents = sum(problemTuple[1][1])
-    group_students_hard.setdefault(int((nbStudents - data.minStudents) // delta), []).append(problemTuple[1])
+    key = int((nbStudents - data.minStudents) // delta)
+    if key == nbGroups: key -= 1
+    group_students_hard.setdefault(key, []).append(problemTuple[1])
 
+print('Groups for nb students graphs:')
 for idx, group_data in (sorted(group_students_hard.items())):
     # Find the lowest and highest values within the group
     min_students = min(sum(item[1]) for item in group_data)
@@ -21,7 +24,9 @@ for idx, group_data in (sorted(group_students_hard.items())):
 group_students_soft = {}
 for problemTuple in sorted(data.benchmarks_soft):
     nbStudents = sum(problemTuple[1][1])
-    group_students_soft.setdefault(int((nbStudents - data.minStudents) // delta), []).append(problemTuple[1])
+    key = int((nbStudents - data.minStudents) // delta)
+    if key == nbGroups: key -= 1
+    group_students_soft.setdefault(key, []).append(problemTuple[1])
 
 def createNbStudentsGroupsGraphsSoft():
     for groupNb, group_soft in group_students_soft.items():
@@ -41,7 +46,7 @@ def createNbStudentsGroupsGraphsSoft():
         ax2.set_title('Maximising classes met')
 
         fig.subplots_adjust(hspace=0.3)
-        plt.suptitle('Evolution of maximisations met over time for problems with ' + str(bounds[groupNb][0]) + '-' + str(bounds[groupNb][1]) + ' students')
+        plt.suptitle('Evolution of maximisations over time for problems with ' + str(bounds[groupNb][0]) + '-' + str(bounds[groupNb][1]) + ' students', fontsize=11, fontweight="bold")
         plt.xlabel('Time taken (seconds)')
         fig.text(0.04, 0.5, 'Maximisation rate for each solution', va='center', rotation='vertical')
         plt.savefig('groupedNbStudents' + str(bounds[groupNb][0]) + '-' + str(bounds[groupNb][1]) + '_soft_.png')
