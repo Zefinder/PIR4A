@@ -3,26 +3,22 @@ package ppc.event;
 import java.util.ArrayList;
 import java.util.List;
 
-@ppc.annotation.Event
-public class TournamentOpeningStatusEvent extends Event {
+import ppc.annotation.Event;
+
+@Event
+public class TournamentOpeningStatusEvent extends StatusEvent {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
-	public enum TournamentOpeningStatus {
-		OPENED, ERROR;
-	}
-
-	private TournamentOpeningStatus status;
-
 	public TournamentOpeningStatusEvent() {
 	}
-	
-	public TournamentOpeningStatusEvent(TournamentOpeningStatus status) {
-		this.status = status;
+
+	public TournamentOpeningStatusEvent(EventStatus status) {
+		super(status);
 	}
 
-	public TournamentOpeningStatus getStatus() {
-		return status;
+	public TournamentOpeningStatusEvent(EventStatus status, String errorMessage) {
+		super(status, errorMessage);
 	}
 
 	@Override

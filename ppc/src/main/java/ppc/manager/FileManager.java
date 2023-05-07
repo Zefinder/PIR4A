@@ -6,10 +6,17 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
+import ppc.event.Listener;
+import ppc.event.TournamentCopyEvent;
+import ppc.event.TournamentCopyStatusEvent;
 import ppc.manager.LogsManager.Message;
 
 /**
@@ -26,7 +33,7 @@ import ppc.manager.LogsManager.Message;
  *
  */
 @ppc.annotation.Manager(priority = HIGH)
-public final class FileManager implements Manager {
+public final class FileManager implements Manager, Listener {
 
 	private static final FileManager instance = new FileManager();
 
@@ -55,6 +62,8 @@ public final class FileManager implements Manager {
 	@Override
 	public void initManager() {
 		logs.writeInformationMessage("Initialising FileManager...");
+		EventManager.getInstance().registerListener(this);
+
 		String osName = System.getProperty("os.name");
 
 		if (osName.contains("Windows")) {
@@ -125,21 +134,72 @@ public final class FileManager implements Manager {
 		this.resDirectory = resDirectory;
 	}
 
+	public void copyResultsFile(File tournamentResultsFolder, File destinationFolder) throws IOException {
+		// TODO A faire
+		File[] files = tournamentResultsFolder.listFiles(file -> file.isFile() && file.getName().endsWith(".pdf"));
+		if (SettingsManager.getInstance().createFolderWhenCopy()) {
+			destinationFolder = new File(destinationFolder.getAbsolutePath() + "/" + tournamentResultsFolder.getName());
+			destinationFolder.mkdir();
+		}
+
+		for (File toCopy : files) {
+			System.out
+					.println("Copying file " + toCopy.getAbsolutePath() + " in " + destinationFolder.getAbsolutePath());
+			Files.copy(toCopy.toPath(), new File(destinationFolder.getAbsolutePath() + "/" + toCopy.getName()).toPath(),
+					StandardCopyOption.REPLACE_EXISTING);
+		}
+	}
+
+	public void copyResultsDirectory(File destinationFolder) {
+		// TODO A faire
+	}
+
 	public File[] getTournamentFiles() {
 		return tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
 	}
-	
+
 	public File getTournamentData(String tournamentName) {
 		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
 	}
-	
+
 	public boolean createTournamentFile(String tournamentName) {
 		// TODO A faire
 		return true;
 	}
-	
+
 	public File[] getResultFiles() {
 		return resDirectory.listFiles(file -> file.isDirectory());
+	}
+
+	@EventHandler
+	public void onCopyRequested(TournamentCopyEvent event) {
+		File tournamentResultsFolder = new File(resDirectory + "/" + event.getTournamentName());
+		File destinationFolder = event.getDestinationFolder();
+		TournamentCopyStatusEvent statusEvent;
+
+		if (!verifyDirectory(tournamentResultsFolder)) {
+			tournamentResultsFolder.delete();
+			System.err.println("Results do not exist for this tournament...");
+			statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR,
+					"Les résultats n'existent pas pour ce tournoi...");
+
+		} else if (!verifyDirectory(destinationFolder)) {
+			destinationFolder.delete();
+			System.err.println("Destination do not exist...");
+			statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR, "La destination n'existe pas...");
+			return;
+
+		} else
+			try {
+				copyResultsFile(tournamentResultsFolder, destinationFolder);
+				statusEvent = new TournamentCopyStatusEvent(EventStatus.SUCCESS);
+			} catch (IOException e) {
+				e.printStackTrace();
+				statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR,
+						"Erreur lors de la copie des fichiers :\n" + e.getMessage());
+			}
+
+		EventManager.getInstance().callEvent(statusEvent);
 	}
 
 	public void writeLogs() throws IOException {
@@ -157,13 +217,16 @@ public final class FileManager implements Manager {
 		writer.close();
 	}
 
-	private void verifyDirectory(File folder) {
+	private boolean verifyDirectory(File folder) {
+		boolean result = true;
+
 		if (!folder.exists()) {
 			logs.writeWarningMessage(folder.getName() + " directory not found! Creating folder...");
 			if (!folder.mkdir()) {
 				logs.writeFatalErrorMessage("Impossible to create it... Need help...");
 				System.exit(-1);
 			}
+			result = false;
 		}
 
 		if (!folder.isDirectory()) {
@@ -180,7 +243,11 @@ public final class FileManager implements Manager {
 			} else {
 				logs.writeInformationMessage("Fatal error fixed!");
 			}
+
+			result = false;
 		}
+
+		return result;
 	}
 
 	private void verifyFile(File file) {

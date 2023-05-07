@@ -18,10 +18,10 @@ import javax.swing.SwingConstants;
 
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
+import ppc.event.TournamentCopyStatusEvent;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpeningStatusEvent;
 import ppc.manager.EventManager;
-import ppc.manager.LogsManager;
 
 public class MainFrame extends JFrame implements Listener {
 
@@ -73,8 +73,6 @@ public class MainFrame extends JFrame implements Listener {
 		return mainPanel;
 	}
 
-	// TODO Buttons on the left : Create new/Load/Check results of tournament and
-	// settings ig
 	private JPanel buildChoosingOptionsPanel() {
 		JPanel optionsPanel = new JPanel();
 		optionsPanel.setLayout(new GridBagLayout());
@@ -113,8 +111,6 @@ public class MainFrame extends JFrame implements Listener {
 		return optionsPanel;
 	}
 
-	// TODO Panel on the right : CardLayout, used to put informations to create a
-	// tournament or to select a file...
 	private JPanel buildInformationsPanel() {
 		JPanel informationsPanel = new JPanel();
 		informationsPanel.setLayout(new CardLayout(10, 10));
@@ -184,57 +180,16 @@ public class MainFrame extends JFrame implements Listener {
 	@EventHandler
 	public void onTournamentCreated(TournamentCreationStatusEvent event) {
 		switch (event.getStatus()) {
-		case CREATED:
-			System.out.println("Tournament created!");
-			JOptionPane.showMessageDialog(null, "Le tournoi a été créé !", "Tournoi créé",
+		case SUCCESS:
+			System.out.println("Tournament successfully created!");
+			JOptionPane.showMessageDialog(null, "Le tournoi a été créé", "Tournoi créé",
 					JOptionPane.INFORMATION_MESSAGE);
+
+			// Propose to open newly created file
 			break;
 
-		case FILE_EXIST:
-			LogsManager.getInstance().writeErrorMessage("Tournament's name already exists!");
-			JOptionPane.showMessageDialog(null, "Ce nom de tournoi existe déjà !", "Erreur", JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case NEGATIVE_MATCHES:
-			LogsManager.getInstance().writeErrorMessage("Tournament's matches' number cannot be negative!");
-			JOptionPane.showMessageDialog(null, "Le nombre de parties ne peut pas être négatif !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case NEGATIVE_GROUPS:
-			LogsManager.getInstance().writeErrorMessage("Tournament's groups' number cannot be negative!");
-			JOptionPane.showMessageDialog(null, "Le nombre de groupes ne peut pas être négatif !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case NEGATIVE_TIME:
-			LogsManager.getInstance().writeErrorMessage("Tournament's max time search cannot be negative!");
-			JOptionPane.showMessageDialog(null, "Le temps maximal de recherche ne peut pas être négatif !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case NEGATIVE_STUDENT_THRESHOLD:
-			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
-			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être négatif !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case STUDENT_THRESHOLD_TOO_BIG:
-			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be over 1!");
-			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être supérieur à 100% !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case NEGATIVE_CLASSES_THRESHOLD:
-			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be negative!");
-			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être négatif !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
-			break;
-
-		case CLASSES_THRESHOLD_TOO_BIG:
-			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be over 1!");
-			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être supérieur à 100% !", "Erreur",
-					JOptionPane.ERROR_MESSAGE);
+		case ERROR:
+			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
 			break;
 		}
 	}
@@ -242,15 +197,29 @@ public class MainFrame extends JFrame implements Listener {
 	@EventHandler
 	public void onTournamentOpened(TournamentOpeningStatusEvent event) {
 		switch (event.getStatus()) {
-		case OPENED:
+		case SUCCESS:
 			System.out.println("Tournament opened !");
+			// Open panel
 			break;
 
 		case ERROR:
-			System.err.println("Impossible to open tournament...");
-			JOptionPane.showMessageDialog(null, "Impossible d'ouvrir le tournoi", "Erreur", JOptionPane.ERROR_MESSAGE);
+			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
 			break;
 		}
 	}
 
+	@EventHandler
+	public void onResultsCopied(TournamentCopyStatusEvent event) {
+		switch (event.getStatus()) {
+		case SUCCESS:
+			System.out.println("Files copied!");
+			JOptionPane.showMessageDialog(null, "Les fichiers de résultats ont bien été copiés !", "Fichiers copiés",
+					JOptionPane.INFORMATION_MESSAGE);
+			break;
+
+		case ERROR:
+			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+			break;
+		}
+	}
 }

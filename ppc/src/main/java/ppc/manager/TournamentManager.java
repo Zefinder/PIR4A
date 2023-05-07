@@ -7,13 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.TournamentCreateEvent;
 import ppc.event.TournamentCreationStatusEvent;
-import ppc.event.TournamentCreationStatusEvent.TournamentCreationStatus;
 import ppc.event.TournamentOpenEvent;
 import ppc.event.TournamentOpeningStatusEvent;
-import ppc.event.TournamentOpeningStatusEvent.TournamentOpeningStatus;
 import ppc.tournament.Tournament;
 
 /**
@@ -98,24 +97,39 @@ public final class TournamentManager implements Manager, Listener {
 		TournamentCreationStatusEvent createdEvent;
 
 		if (tournament != null) {
-			createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.FILE_EXIST);
+			LogsManager.getInstance().writeErrorMessage("Tournament's name already exists!");
+			createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR, "Ce nom de tournoi existe déjà !");
 		} else {
 			if (event.getMatchesNumber() < 0) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_MATCHES);
+				LogsManager.getInstance().writeErrorMessage("Tournament's matches' number cannot be negative!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le nombre de parties ne peut pas être négatif !");
 			} else if (event.getGroupsNumber() < 0) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_GROUPS);
+				LogsManager.getInstance().writeErrorMessage("Tournament's groups' number cannot be negative!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le nombre de groupes ne peut pas être négatif !");
 			} else if (event.getMaxSearchingTime() < 0) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_TIME);
+				LogsManager.getInstance().writeErrorMessage("Tournament's max time search cannot be negative!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le temps maximal de recherche ne peut pas être négatif !");
 			} else if (event.getStudentsMetThreshold() < 0f) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_STUDENT_THRESHOLD);
+				LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le seuil d'étudiants ne peut pas être négatif !");
 			} else if (event.getStudentsMetThreshold() > 1f) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.STUDENT_THRESHOLD_TOO_BIG);
+				LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be over 1!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le seuil d'étudiants ne peut pas être supérieur à 100% !");
 			} else if (event.getClassesMetThreshold() < 0f) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.NEGATIVE_CLASSES_THRESHOLD);
+				LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be negative!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le seuil de classes ne peut pas être négatif !");
 			} else if (event.getClassesMetThreshold() > 1f) {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.CLASSES_THRESHOLD_TOO_BIG);
+				LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be over 1!");
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
+						"Le seuil de classes ne peut pas être supérieur à 100% !");
 			} else {
-				createdEvent = new TournamentCreationStatusEvent(TournamentCreationStatus.CREATED);
+				createdEvent = new TournamentCreationStatusEvent(EventStatus.SUCCESS);
 				tournament = new Tournament(event.getName(),
 						FileManager.getInstance().getTournamentData(event.getName()));
 
@@ -136,12 +150,13 @@ public final class TournamentManager implements Manager, Listener {
 		TournamentOpeningStatusEvent openingEvent;
 
 		if (tournament == null) {
-			openingEvent = new TournamentOpeningStatusEvent(TournamentOpeningStatus.ERROR);
+			System.err.println("Impossible to open tournament (doesn't exist)...");
+			openingEvent = new TournamentOpeningStatusEvent(EventStatus.ERROR, "Le tournoi n'existe pas!");
 		} else {
 			tournament.openTournament();
-			openingEvent = new TournamentOpeningStatusEvent(TournamentOpeningStatus.OPENED);
+			openingEvent = new TournamentOpeningStatusEvent(EventStatus.SUCCESS);
 		}
-		
+
 		EventManager.getInstance().callEvent(openingEvent);
 	}
 
