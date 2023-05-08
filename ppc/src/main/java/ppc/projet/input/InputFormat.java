@@ -26,7 +26,7 @@ public class InputFormat {
 	 * CSV are formatted like
 	 * 
 	 * <pre>
-	 * name - surname - classNumber
+	 * name - surname - groupNumber
 	 * </pre>
 	 * </p>
 	 * 
