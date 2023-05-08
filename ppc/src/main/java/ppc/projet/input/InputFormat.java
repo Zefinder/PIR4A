@@ -134,10 +134,10 @@ public class InputFormat {
 		int lineNumber = 0;
 		for (List<String> line : csvParsed) {
 			// First line = prof name
-			if (lineNumber == 0)
+			if (lineNumber == 1)
 				profName = line.get(1);
 
-			else if (lineNumber > 2) {
+			else if (lineNumber > 3) {
 				// If not 3 arguments, error !
 				if (line.size() != 3)
 					throw new ParseException("Not enough arguments for line in CSV file", 0);
