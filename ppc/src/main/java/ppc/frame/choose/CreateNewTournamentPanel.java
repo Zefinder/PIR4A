@@ -14,12 +14,16 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 
+import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
+import ppc.event.Listener;
+import ppc.event.SettingsChangeStatusEvent;
 import ppc.event.TournamentCreateEvent;
 import ppc.manager.EventManager;
 import ppc.manager.LogsManager;
 import ppc.manager.SettingsManager;
 
-public class CreateNewTournamentPanel extends JPanel {
+public class CreateNewTournamentPanel extends JPanel implements Listener {
 
 	/**
 	 * 
@@ -34,7 +38,7 @@ public class CreateNewTournamentPanel extends JPanel {
 	private JTextField classesValue;
 
 	public CreateNewTournamentPanel() {
-
+		EventManager.getInstance().registerListener(this);
 		this.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -167,7 +171,7 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 1;
-		matchesValue = new JTextField("6");
+		matchesValue = new JTextField(String.valueOf(SettingsManager.getInstance().getMatchesNumber()));
 		panel.add(matchesValue, c);
 
 		c.gridx = 0;
@@ -177,7 +181,7 @@ public class CreateNewTournamentPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 2;
-		levelsValue = new JTextField("3");
+		levelsValue = new JTextField(String.valueOf(SettingsManager.getInstance().getGroupsNumber()));
 		panel.add(levelsValue, c);
 
 		c.gridx = 0;
@@ -213,6 +217,17 @@ public class CreateNewTournamentPanel extends JPanel {
 		panel.add(classesValue, c);
 
 		return panel;
+	}
+
+	@EventHandler
+	public void onSettingsValidated(SettingsChangeStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			matchesValue.setText(String.valueOf(SettingsManager.getInstance().getMatchesNumber()));
+			levelsValue.setText(String.valueOf(SettingsManager.getInstance().getGroupsNumber()));
+			timeValue.setText(String.valueOf(SettingsManager.getInstance().getMaxTime()));
+			studentsValue.setText(String.valueOf(SettingsManager.getInstance().getStudentsMetThreshold() * 100 + "%"));
+			classesValue.setText(String.valueOf(SettingsManager.getInstance().getClassesMetThreshold() * 100 + "%"));
+		}
 	}
 
 }

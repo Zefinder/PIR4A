@@ -1,6 +1,9 @@
 package ppc.frame;
 
 import java.awt.CardLayout;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
@@ -9,6 +12,7 @@ import ppc.event.Listener;
 import ppc.frame.choose.MainPanel;
 import ppc.frame.open.OpenedTournamentPanel;
 import ppc.manager.EventManager;
+import ppc.manager.FileManager;
 
 public class MainFrame extends JFrame implements Listener {
 
@@ -29,10 +33,27 @@ public class MainFrame extends JFrame implements Listener {
 		this.setSize(1000, 600);
 		this.setLocationRelativeTo(null);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		
+		this.addWindowListener(new WindowAdapter() {
+			
+			@Override
+			public void windowClosing(WindowEvent e) {
+				System.out.println("Closing frame and app...");
+				try {
+					System.out.println("Writing logs...");
+					FileManager.getInstance().writeLogs();
+				} catch (IOException e1) {
+					e1.printStackTrace();
+					System.err.println("Impossible to write logs...");
+				}
+				System.exit(0);
+			}
+			
+		});
 
 		cardPanel = buildCardPanel();
 
-		this.add(new MainPanel());
+		this.add(cardPanel);
 		this.setVisible(false);
 	}
 
@@ -60,6 +81,7 @@ public class MainFrame extends JFrame implements Listener {
 	}
 
 	public void initFrame() {
+		showMainPanel();
 		this.setVisible(true);
 	}
 

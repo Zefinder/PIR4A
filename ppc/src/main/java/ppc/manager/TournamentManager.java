@@ -2,9 +2,13 @@ package ppc.manager;
 
 import static ppc.annotation.ManagerPriority.LOW;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
@@ -29,11 +33,9 @@ public final class TournamentManager implements Manager, Listener {
 	private static final TournamentManager instance = new TournamentManager();
 
 	private Map<String, Tournament> tournamentList;
-
 	private LogsManager logs = LogsManager.getInstance();
 
 	private TournamentManager() {
-		// TODO Auto-generated constructor stub
 	}
 
 	@Override
@@ -82,10 +84,14 @@ public final class TournamentManager implements Manager, Listener {
 				}
 			}
 
-			Tournament tournament = new Tournament(fileName, tournamentData);
-			tournamentList.put(fileName, tournament);
+			try {
+				Tournament tournament = new Tournament(tournamentFile);
+				logs.writeInformationMessage(String.format("Tournament %s initialised", fileName));
+				tournamentList.put(fileName, tournament);
+			} catch (IOException e) {
+				System.err.println("Error when loading tournament file, ignored!");
+			}
 
-			logs.writeInformationMessage(String.format("Tournament %s initialised", fileName));
 		}
 
 		logs.writeInformationMessage("TournamentManager initialised!");
@@ -98,50 +104,46 @@ public final class TournamentManager implements Manager, Listener {
 
 		if (tournament != null) {
 			LogsManager.getInstance().writeErrorMessage("Tournament's name already exists!");
-			createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR, "Ce nom de tournoi existe déjà !");
+			createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.ERROR,
+					"Ce nom de tournoi existe déjà !");
 		} else {
-			if (event.getMatchesNumber() < 0) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's matches' number cannot be negative!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le nombre de parties ne peut pas être négatif !");
-			} else if (event.getGroupsNumber() < 0) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's groups' number cannot be negative!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le nombre de groupes ne peut pas être négatif !");
-			} else if (event.getMaxSearchingTime() < 0) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's max time search cannot be negative!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le temps maximal de recherche ne peut pas être négatif !");
-			} else if (event.getStudentsMetThreshold() < 0f) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le seuil d'étudiants ne peut pas être négatif !");
-			} else if (event.getStudentsMetThreshold() > 1f) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be over 1!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le seuil d'étudiants ne peut pas être supérieur à 100% !");
-			} else if (event.getClassesMetThreshold() < 0f) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be negative!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le seuil de classes ne peut pas être négatif !");
-			} else if (event.getClassesMetThreshold() > 1f) {
-				LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold can not be over 1!");
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.ERROR,
-						"Le seuil de classes ne peut pas être supérieur à 100% !");
+			String message = Tournament.verifyTournamentProperties(event.getName(), event.getMatchesNumber(),
+					event.getGroupsNumber(), event.getMaxSearchingTime(), event.getStudentsMetThreshold(),
+					event.getClassesMetThreshold());
+
+			if (!message.equals("")) {
+				createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.ERROR, message);
+
 			} else {
-				createdEvent = new TournamentCreationStatusEvent(EventStatus.SUCCESS);
-				tournament = new Tournament(event.getName(),
+				createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.SUCCESS);
+				tournament = new Tournament(event.getName(), event.getMatchesNumber(), event.getGroupsNumber(),
+						event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold(),
 						FileManager.getInstance().getTournamentData(event.getName()));
 
-				tournament.createTournament(event.getMatchesNumber(), event.getGroupsNumber(),
-						event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold());
-
-				if (FileManager.getInstance().createTournamentFile(event.getName()))
+				try {
+					File tournamentFile = FileManager.getInstance().createTournamentFile(event.getName());
 					tournamentList.put(event.getName(), tournament);
+					initTournamentFile(tournament, tournamentFile);
+
+					createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.SUCCESS);
+
+				} catch (IOException e) {
+					e.printStackTrace();
+					createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.ERROR,
+							String.format("Le fichier %s.trn n'a pas pu être créé...", event.getName()));
+				}
 			}
 		}
 
 		EventManager.getInstance().callEvent(createdEvent);
+	}
+
+	private void initTournamentFile(Tournament tournament, File tournamentFile) throws IOException {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(tournamentFile, false));
+		Properties properties = tournament.getTournamentProperties();
+
+		properties.store(writer, "Tournament File");
+		writer.close();
 	}
 
 	@EventHandler
@@ -158,6 +160,10 @@ public final class TournamentManager implements Manager, Listener {
 		}
 
 		EventManager.getInstance().callEvent(openingEvent);
+	}
+	
+	public String[] getTournaments() {
+		return tournamentList.keySet().toArray(String[]::new);
 	}
 
 	public static TournamentManager getInstance() {

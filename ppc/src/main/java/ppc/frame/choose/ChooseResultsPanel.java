@@ -10,10 +10,12 @@ import java.io.File;
 import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileSystemView;
 
 import ppc.event.TournamentCopyEvent;
@@ -26,6 +28,9 @@ public class ChooseResultsPanel extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = -4228356464166011904L;
+
+	private DefaultListModel<String> model;
+	private JList<String> list;
 
 	public ChooseResultsPanel() {
 		this.setLayout(new GridBagLayout());
@@ -40,9 +45,10 @@ public class ChooseResultsPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 
-		JPanel panel = new JPanel();
-		JList<String> list = new JList<>(Stream.of(FileManager.getInstance().getResultFiles())
-				.map(file -> file.getName()).toArray(String[]::new));
+		model = new DefaultListModel<>();
+		list = new JList<>(model);
+		model.addAll(Stream.of(FileManager.getInstance().getResultFiles()).map(file -> file.getName()).toList());
+
 		list.setCellRenderer(new TournamentListRenderer());
 		list.setFixedCellHeight(25);
 		list.addMouseListener(new MouseAdapter() {
@@ -54,9 +60,17 @@ public class ChooseResultsPanel extends JPanel {
 				}
 			};
 		});
-		panel.add(list);
-		panel.setBorder(BorderFactory.createTitledBorder("Copier les pdf générés"));
-		this.add(panel, c);
+
+		if (model.getSize() > 15)
+			list.setVisibleRowCount(15);
+		else
+			list.setVisibleRowCount(model.getSize());
+
+		JScrollPane scrollpane = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+		scrollpane.setBorder(BorderFactory.createTitledBorder("Copier les pdf générés"));
+		this.add(scrollpane, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
@@ -73,7 +87,7 @@ public class ChooseResultsPanel extends JPanel {
 			}
 		});
 		this.add(confirm, c);
-		
+
 	}
 
 	private void copyTournamentResults(String tournamentName) {

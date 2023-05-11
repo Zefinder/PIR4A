@@ -91,7 +91,11 @@ public final class FileManager implements Manager, Listener {
 			verifyDirectory(resDirectory);
 			verifyDirectory(tournamentDirectory);
 			verifyDirectory(tournamentDataDirectory);
-			verifyFile(settingsFile);
+			try {
+				verifyFile(settingsFile);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 
 		} else {
 			logs.writeWarningMessage("Not found! Creating data folders");
@@ -133,9 +137,15 @@ public final class FileManager implements Manager, Listener {
 	public void changeResDirectory(File resDirectory) {
 		this.resDirectory = resDirectory;
 	}
+	
+	public void changeCopyResDirectory(File resDirectory) {
+		if (!this.resDirectory.equals(resDirectory)) {
+			copyDirectory(this.resDirectory, resDirectory);
+			this.resDirectory = resDirectory;
+		}
+	}
 
 	public void copyResultsFile(File tournamentResultsFolder, File destinationFolder) throws IOException {
-		// TODO A faire
 		File[] files = tournamentResultsFolder.listFiles(file -> file.isFile() && file.getName().endsWith(".pdf"));
 		if (SettingsManager.getInstance().createFolderWhenCopy()) {
 			destinationFolder = new File(destinationFolder.getAbsolutePath() + "/" + tournamentResultsFolder.getName());
@@ -150,10 +160,6 @@ public final class FileManager implements Manager, Listener {
 		}
 	}
 
-	public void copyResultsDirectory(File destinationFolder) {
-		// TODO A faire
-	}
-
 	public File[] getTournamentFiles() {
 		return tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
 	}
@@ -162,9 +168,14 @@ public final class FileManager implements Manager, Listener {
 		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
 	}
 
-	public boolean createTournamentFile(String tournamentName) {
-		// TODO A faire
-		return true;
+	public File createTournamentFile(String tournamentName) throws IOException {
+		File tournamentFile = new File(tournamentDirectory.getAbsolutePath() + "/" + tournamentName + ".trn");
+		tournamentFile.createNewFile();
+		
+		File tournamentDataFile = new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
+		tournamentDataFile.mkdir();
+		
+		return tournamentFile;
 	}
 
 	public File[] getResultFiles() {
@@ -250,10 +261,10 @@ public final class FileManager implements Manager, Listener {
 		return result;
 	}
 
-	private void verifyFile(File file) {
+	private void verifyFile(File file) throws IOException {
 		if (!file.exists()) {
 			logs.writeWarningMessage(file.getName() + " file not found! Creating file...");
-			if (!file.mkdir()) {
+			if (!file.createNewFile()) {
 				logs.writeFatalErrorMessage("Impossible to create it... Need help...");
 				System.exit(-1);
 			}
@@ -267,7 +278,7 @@ public final class FileManager implements Manager, Listener {
 				System.exit(-1);
 			}
 
-			if (!file.mkdir()) {
+			if (!file.createNewFile()) {
 				logs.writeFatalErrorMessage(String.format("Impossible to create it... Need help..."));
 				System.exit(-1);
 			} else {
@@ -276,6 +287,25 @@ public final class FileManager implements Manager, Listener {
 		}
 	}
 
+	private void copyDirectory(File originFolder, File destinationFolder) {
+		File[] folders = originFolder.listFiles(file -> file.isDirectory());
+		
+		for (File folder : folders) {
+			// Create folder
+			File destination = new File(destinationFolder.getAbsolutePath() + "/" + folder.getName());
+			destination.mkdir();
+			
+			for (File file : folder.listFiles()) {
+				File newFile = new File(destination.getAbsolutePath() + "/" + file.getName());
+				try {
+					Files.copy(file.toPath(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
 	public static FileManager getInstance() {
 		return instance;
 	}

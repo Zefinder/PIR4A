@@ -3,13 +3,20 @@ package ppc.frame.choose;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.io.File;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileSystemView;
 
+import ppc.event.SettingsChangeEvent;
+import ppc.manager.EventManager;
 import ppc.manager.SettingsManager;
 
 public class SettingsPanel extends JPanel {
@@ -18,8 +25,11 @@ public class SettingsPanel extends JPanel {
 	 * 
 	 */
 	private static final long serialVersionUID = 1726322560210668868L;
-	
-	private JTextField tournamentName;
+
+	private JTextField resultsPath;
+	private JButton choosePath;
+	private JComboBox<String> colorBoxes;
+	private JCheckBox newFolderOnCopy;
 	private JTextField matchesValue;
 	private JTextField levelsValue;
 	private JTextField timeValue;
@@ -43,11 +53,12 @@ public class SettingsPanel extends JPanel {
 
 		c.gridx = 0;
 		c.gridy = 1;
-		JButton button = new JButton("Créer le tournoi");
+		JButton button = new JButton("Sauvegarder les changements");
+		button.addActionListener(e -> changeSettings());
 		this.add(button, c);
-		
+
 	}
-	
+
 	private JPanel createFormPanel() {
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
@@ -62,29 +73,79 @@ public class SettingsPanel extends JPanel {
 
 		JPanel generalSettingsPanel = new JPanel();
 		generalSettingsPanel.setLayout(new GridBagLayout());
-		
+
 		c.gridx = 0;
 		c.gridy = 0;
-		JLabel tournamentLabel = new JLabel("Nom du tournoi");
-		generalSettingsPanel.add(tournamentLabel, c);
-		
+		JLabel resultsLabel = new JLabel("Chemin du dossier résultats");
+		generalSettingsPanel.add(resultsLabel, c);
+
 		c.gridx = 1;
 		c.gridy = 0;
-		tournamentName = new JTextField(15);
-		generalSettingsPanel.add(tournamentName, c);
+		resultsPath = new JTextField(20);
+		resultsPath.setEditable(false);
+		resultsPath.setText(SettingsManager.getInstance().getResultsPath());
+		generalSettingsPanel.add(resultsPath, c);
+
+		c.gridx = 2;
+		c.gridy = 0;
+		choosePath = new JButton("...");
+		choosePath.addActionListener(e -> searchNewResultsFolder());
+		
+		generalSettingsPanel.add(choosePath, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		JLabel newFolderLabel = new JLabel("Créer un dossier avant de copier les fichiers");
+		generalSettingsPanel.add(newFolderLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 1;
+		newFolderOnCopy = new JCheckBox();
+		newFolderOnCopy.setSelected(SettingsManager.getInstance().createFolderWhenCopy());
+
+		generalSettingsPanel.add(newFolderOnCopy, c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		JLabel colorLabel = new JLabel("Couleur de la bar de progression");
+		generalSettingsPanel.add(colorLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 2;
+		colorBoxes = new JComboBox<>(new String[] { "Défaut", "Vert", "Violet" });
+		generalSettingsPanel.add(colorBoxes, c);
+		switch (SettingsManager.getInstance().getProgressBarColor().toLowerCase()) {
+		case "défaut":
+		case "default":
+			colorBoxes.setSelectedIndex(0);
+			break;
+
+		case "vert":
+		case "green":
+			colorBoxes.setSelectedIndex(1);
+			break;
+
+		case "violet":
+			colorBoxes.setSelectedIndex(2);
+			break;
+
+		default:
+			break;
+		}
 		generalSettingsPanel.setBorder(BorderFactory.createTitledBorder("Paramètres généraux"));
 
 		JPanel defaultValuesPanel = new JPanel();
 		defaultValuesPanel.setLayout(new GridBagLayout());
+		c.gridwidth = 1;
 
 		c.gridx = 0;
 		c.gridy = 0;
 		JLabel matchesLabel = new JLabel("Nombre de parties");
 		defaultValuesPanel.add(matchesLabel, c);
-		
+
 		c.gridx = 1;
 		c.gridy = 0;
-		matchesValue = new JTextField("6");
+		matchesValue = new JTextField(String.valueOf(SettingsManager.getInstance().getMatchesNumber()));
 		defaultValuesPanel.add(matchesValue, c);
 
 		c.gridx = 0;
@@ -94,7 +155,7 @@ public class SettingsPanel extends JPanel {
 
 		c.gridx = 1;
 		c.gridy = 1;
-		levelsValue = new JTextField("3");
+		levelsValue = new JTextField(String.valueOf(SettingsManager.getInstance().getGroupsNumber()));
 		defaultValuesPanel.add(levelsValue, c);
 
 		c.gridx = 0;
@@ -133,12 +194,35 @@ public class SettingsPanel extends JPanel {
 		c.gridx = 0;
 		c.gridy = 0;
 		panel.add(generalSettingsPanel, c);
-		
+
 		c.gridx = 0;
 		c.gridy = 1;
 		panel.add(defaultValuesPanel, c);
-		
+
 		return panel;
 	}
+
+	private void changeSettings() {
+		String createString = newFolderOnCopy.isSelected() ? "1" : "0";
+		String studentString = String.valueOf(Float.valueOf(studentsValue.getText().replace("%", "")) / 100);
+		String classesString = String.valueOf(Float.valueOf(classesValue.getText().replace("%", "")) / 100);
+
+		SettingsChangeEvent event = new SettingsChangeEvent(resultsPath.getText(), createString, matchesValue.getText(),
+				levelsValue.getText(), colorBoxes.getSelectedItem().toString(), timeValue.getText(), studentString,
+				classesString);
+
+		EventManager.getInstance().callEvent(event);
+	}
 	
+	private void searchNewResultsFolder() {
+		JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+
+		int choose = chooser.showOpenDialog(this);
+		if (choose == JFileChooser.APPROVE_OPTION) {
+			File chosenDir = chooser.getSelectedFile();
+			resultsPath.setText(chosenDir.getAbsolutePath());
+		}
+	}
+
 }

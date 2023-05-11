@@ -10,6 +10,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
 
+import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
+import ppc.event.Listener;
+import ppc.event.SettingsChangeEvent;
+import ppc.event.SettingsChangeStatusEvent;
+
 /**
  * <p>
  * This manager saves and loads all settings used by the app. These settings
@@ -24,7 +30,7 @@ import java.util.Properties;
  *
  */
 @ppc.annotation.Manager(priority = MEDIUM)
-public final class SettingsManager implements Manager {
+public final class SettingsManager implements Manager, Listener {
 
 	private static final SettingsManager instance = new SettingsManager();
 
@@ -49,6 +55,8 @@ public final class SettingsManager implements Manager {
 	public void initManager() {
 		logs.writeInformationMessage("Initialising SettingsManager...");
 
+		EventManager.getInstance().registerListener(this);
+
 		// Getting settings file
 		settingsFile = FileManager.getInstance().getSettingsFile();
 
@@ -70,157 +78,24 @@ public final class SettingsManager implements Manager {
 			resetProperties();
 			writeProperties();
 		} else {
-			boolean toReset = false;
-			// Checking if file not corrupted
-			if (props.size() == 5) {
-				// Checking results path
-				String resultsPath = props.getProperty(RESULTS_PATH_PROPERTY);
-				if (resultsPath == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + RESULTS_PATH_PROPERTY + "... Reseting settings...");
-					toReset = true;
-				} else {
-					File resDirectory = new File(resultsPath);
-					if (!resDirectory.exists() || !resDirectory.isDirectory()) {
-						logs.writeErrorMessage("Error with results path... Reseting settings...");
-						toReset = true;
-					} else {
-						FileManager.getInstance().changeResDirectory(resDirectory);
-						logs.writeInformationMessage("Results directory: " + resultsPath);
-					}
-				}
-
-				// Checking create folder when copying results
-				String createString = props.getProperty(CREATE_FOLDER_COPY_RESULTS);
-				if (createString == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + CREATE_FOLDER_COPY_RESULTS + "... Reseting settings...");
-					toReset = true;
-				} else {
-					int createValue = Integer.valueOf(createString);
-					if (createValue <= 0) {
-						logs.writeErrorMessage("Negative max time detected... Reseting settings...");
-						toReset = true;
-					} else
-						logs.writeInformationMessage("Maximum default searching time: " + createString);
-				}
-				
-				// Checking matches number
-				String matchesNumberString = props.getProperty(MATCHES_NUMBER);
-				if (matchesNumberString == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + MATCHES_NUMBER + "... Reseting settings...");
-					toReset = true;
-				} else {
-					int matchesNumber = Integer.valueOf(matchesNumberString);
-					if (matchesNumber <= 0) {
-						logs.writeErrorMessage("Negative max time detected... Reseting settings...");
-						toReset = true;
-					} else
-						logs.writeInformationMessage("Maximum default searching time: " + matchesNumberString);
-				}
-
-				// Checking matches number
-				String groupsNumberString = props.getProperty(GROUPS_NUMBER);
-				if (groupsNumberString == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + GROUPS_NUMBER + "... Reseting settings...");
-					toReset = true;
-				} else {
-					int groupsNumber = Integer.valueOf(groupsNumberString);
-					if (groupsNumber <= 0) {
-						logs.writeErrorMessage("Negative max time detected... Reseting settings...");
-						toReset = true;
-					} else
-						logs.writeInformationMessage("Maximum default searching time: " + groupsNumberString);
-				}
-				
-				// Checking progress bar color
-				String barColor = props.getProperty(PROGRESSBAR_COLOR_PROPERTY);
-				if (barColor == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + PROGRESSBAR_COLOR_PROPERTY + "... Reseting settings...");
-					toReset = true;
-				} else {
-					switch (barColor) {
-					case "default":
-						logs.writeInformationMessage("Default progress bar color set");
-						break;
-
-					case "green":
-						logs.writeInformationMessage("Green progress bar color set");
-						break;
-
-					case "violet":
-						logs.writeInformationMessage("Violet progress bar color set");
-						break;
-					default:
-						logs.writeErrorMessage("Error with progress bar color... Reseting settings...");
-						toReset = true;
-						break;
-					}
-				}
-
-				// Checking max time
-				String maxTimeString = props.getProperty(MAX_TIME_PROPERTY);
-				if (maxTimeString == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + MAX_TIME_PROPERTY + "... Reseting settings...");
-					toReset = true;
-				} else {
-					int maxTime = Integer.valueOf(maxTimeString);
-					if (maxTime <= 0) {
-						logs.writeErrorMessage("Negative max time detected... Reseting settings...");
-						toReset = true;
-					} else
-						logs.writeInformationMessage("Maximum default searching time: " + maxTimeString);
-				}
-
-				// Checking students threshold
-				String maxStudentsMetString = props.getProperty(MAX_STUDENTS_MET_TH_PROPERTY);
-				if (maxStudentsMetString == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + MAX_STUDENTS_MET_TH_PROPERTY + "... Reseting settings...");
-					toReset = true;
-				} else {
-					float maxStudentsMet = Float.valueOf(maxStudentsMetString);
-					if (maxStudentsMet <= 0.) {
-						logs.writeErrorMessage("Negative threshold detected for students... Reseting settings...");
-						toReset = true;
-					} else if (maxStudentsMet > 1.) {
-						logs.writeErrorMessage("Threshold over 100% detected for students... Reseting settings...");
-						toReset = true;
-					} else
-						logs.writeInformationMessage("Maximum students met threshold: " + maxStudentsMetString);
-				}
-
-				// Checking classes threshold
-				String maxClassesMetString = props.getProperty(MAX_CLASSES_MET_TH_PROPERTY);
-				if (maxClassesMetString == null) {
-					logs.writeErrorMessage(
-							"Error when reading property " + MAX_CLASSES_MET_TH_PROPERTY + "... Reseting settings...");
-					toReset = true;
-				} else {
-					float maxClassesMet = Float.valueOf(maxClassesMetString);
-					if (maxClassesMet <= 0.) {
-						logs.writeErrorMessage("Negative threshold detected for classes... Reseting settings...");
-						toReset = true;
-					} else if (maxClassesMet > 1.) {
-						logs.writeErrorMessage("Threshold over 100% detected for classes... Reseting settings...");
-						toReset = true;
-					} else
-						logs.writeInformationMessage("Maximum classes met threshold: " + maxClassesMetString);
-				}
-			} else {
-				System.err.println("Wrong number of properties, file corrupted! Reseting settings...");
+			boolean toReset;
+			if (props.size() != 8)
 				toReset = true;
-			}
+			else
+				toReset = verifyProperties(props.getProperty(RESULTS_PATH_PROPERTY),
+						props.getProperty(CREATE_FOLDER_COPY_RESULTS), props.getProperty(MATCHES_NUMBER),
+						props.getProperty(GROUPS_NUMBER), props.getProperty(PROGRESSBAR_COLOR_PROPERTY),
+						props.getProperty(MAX_TIME_PROPERTY), props.getProperty(MAX_STUDENTS_MET_TH_PROPERTY),
+						props.getProperty(MAX_CLASSES_MET_TH_PROPERTY));
 
 			// Reset if needed
 			if (toReset) {
 				resetProperties();
 				writeProperties();
 				logs.writeInformationMessage("Settings got reset!");
+			} else {
+				FileManager.getInstance().changeResDirectory(new File(props.getProperty(RESULTS_PATH_PROPERTY)));
+
 			}
 		}
 
@@ -228,6 +103,7 @@ public final class SettingsManager implements Manager {
 	}
 
 	private void resetProperties() {
+		props.clear();
 		props.setProperty(RESULTS_PATH_PROPERTY, FileManager.getInstance().getResDirectoryPath());
 		props.setProperty(CREATE_FOLDER_COPY_RESULTS, "1");
 		props.setProperty(MATCHES_NUMBER, "6");
@@ -248,8 +124,185 @@ public final class SettingsManager implements Manager {
 		}
 	}
 
+	@EventHandler
+	public void onSettingsUpdated(SettingsChangeEvent event) {
+		SettingsChangeStatusEvent statusEvent;
+		if (verifyProperties(event.getResultsPath(), event.getCreateString(), event.getMatchesNumberString(),
+				event.getGroupsNumberString(), event.getBarColor(), event.getMaxTimeString(),
+				event.getMaxStudentsMetString(), event.getMaxClassesMetString())) {
+			LogsManager.getInstance().writeFatalErrorMessage("Error when modifying settings!");
+			statusEvent = new SettingsChangeStatusEvent(EventStatus.ERROR,
+					"Erreur dans les champs pour modifier les paramètres !");
+		} else {
+			props.setProperty(RESULTS_PATH_PROPERTY, event.getResultsPath());
+			props.setProperty(CREATE_FOLDER_COPY_RESULTS, event.getCreateString());
+			props.setProperty(MATCHES_NUMBER, event.getMatchesNumberString());
+			props.setProperty(GROUPS_NUMBER, event.getGroupsNumberString());
+			props.setProperty(PROGRESSBAR_COLOR_PROPERTY, event.getBarColor());
+			props.setProperty(MAX_TIME_PROPERTY, event.getMaxTimeString());
+			props.setProperty(MAX_STUDENTS_MET_TH_PROPERTY, event.getMaxStudentsMetString());
+			props.setProperty(MAX_CLASSES_MET_TH_PROPERTY, event.getMaxClassesMetString());
+			FileManager.getInstance().changeCopyResDirectory(new File(props.getProperty(RESULTS_PATH_PROPERTY)));
+			statusEvent = new SettingsChangeStatusEvent(EventStatus.SUCCESS);
+			writeProperties();
+		}
+
+		EventManager.getInstance().callEvent(statusEvent);
+	}
+
+	public boolean verifyProperties(String resultsPath, String createString, String matchesNumberString,
+			String groupsNumberString, String barColor, String maxTimeString, String maxStudentsMetString,
+			String maxClassesMetString) {
+		boolean toReset = false;
+		// Checking if file not corrupted
+		if (props.size() == 8) {
+			// Checking results path
+			if (resultsPath == null) {
+				logs.writeErrorMessage("Error when reading property " + RESULTS_PATH_PROPERTY);
+				toReset = true;
+			} else {
+				File resDirectory = new File(resultsPath);
+				if (!resDirectory.exists() || !resDirectory.isDirectory()) {
+					logs.writeErrorMessage("Error with results path...");
+					logs.writeErrorMessage("Attempting to reset it...");
+					resDirectory = new File(FileManager.getInstance().getResDirectoryPath());
+					if (!resDirectory.exists() || !resDirectory.isDirectory()) {
+						System.err.println("Failed! Reseting settings...");
+						toReset = true;
+					} else {
+						props.setProperty(RESULTS_PATH_PROPERTY, FileManager.getInstance().getResDirectoryPath());
+						logs.writeInformationMessage("Reset! Results directory: " + resDirectory.getAbsolutePath());
+						writeProperties();
+					}
+				} else {
+					logs.writeInformationMessage("Results directory: " + resultsPath);
+				}
+			}
+
+			// Checking create folder when copying results
+			if (createString == null) {
+				logs.writeErrorMessage("Error when reading property " + CREATE_FOLDER_COPY_RESULTS);
+				toReset = true;
+			} else {
+				int createValue = Integer.valueOf(createString);
+				if (createValue != 0 && createValue != 1) {
+					logs.writeErrorMessage("Wrong boolean value for creating folder when copy...");
+					toReset = true;
+				} else
+					logs.writeInformationMessage("Creating folder when copy: " + createString);
+			}
+
+			// Checking matches number
+			if (matchesNumberString == null) {
+				logs.writeErrorMessage("Error when reading property " + MATCHES_NUMBER);
+				toReset = true;
+			} else {
+				int matchesNumber = Integer.valueOf(matchesNumberString);
+				if (matchesNumber <= 0) {
+					logs.writeErrorMessage("Negative number of rounds detected...");
+					toReset = true;
+				} else
+					logs.writeInformationMessage("Number of rounds: " + matchesNumberString);
+			}
+
+			// Checking matches number
+			if (groupsNumberString == null) {
+				logs.writeErrorMessage("Error when reading property " + GROUPS_NUMBER);
+				toReset = true;
+			} else {
+				int groupsNumber = Integer.valueOf(groupsNumberString);
+				if (groupsNumber <= 0) {
+					logs.writeErrorMessage("Negative number of groups detected...");
+					toReset = true;
+				} else
+					logs.writeInformationMessage("Number of groups: " + groupsNumberString);
+			}
+
+			// Checking progress bar color
+			if (barColor == null) {
+				logs.writeErrorMessage("Error when reading property " + PROGRESSBAR_COLOR_PROPERTY);
+				toReset = true;
+			} else {
+				switch (barColor.toLowerCase()) {
+				case "défaut":
+				case "default":
+					logs.writeInformationMessage("Default progress bar color set");
+					break;
+
+				case "vert":
+				case "green":
+					logs.writeInformationMessage("Green progress bar color set");
+					break;
+
+				case "violet":
+					logs.writeInformationMessage("Violet progress bar color set");
+					break;
+
+				default:
+					logs.writeErrorMessage("Error with progress bar color...");
+					toReset = true;
+					break;
+				}
+			}
+
+			// Checking max time
+			if (maxTimeString == null) {
+				logs.writeErrorMessage("Error when reading property " + MAX_TIME_PROPERTY);
+				toReset = true;
+			} else {
+				int maxTime = Integer.valueOf(maxTimeString);
+				if (maxTime <= 0) {
+					logs.writeErrorMessage("Negative max time detected...");
+					toReset = true;
+				} else
+					logs.writeInformationMessage("Maximum default searching time: " + maxTimeString);
+			}
+
+			// Checking students threshold
+			if (maxStudentsMetString == null) {
+				logs.writeErrorMessage("Error when reading property " + MAX_STUDENTS_MET_TH_PROPERTY);
+				toReset = true;
+			} else {
+				float maxStudentsMet = Float.valueOf(maxStudentsMetString);
+				if (maxStudentsMet <= 0.) {
+					logs.writeErrorMessage("Negative threshold detected for students...");
+					toReset = true;
+				} else if (maxStudentsMet > 1.) {
+					logs.writeErrorMessage("Threshold over 100% detected for students...");
+					toReset = true;
+				} else
+					logs.writeInformationMessage("Maximum students met threshold: " + maxStudentsMetString);
+			}
+
+			// Checking classes threshold
+			if (maxClassesMetString == null) {
+				logs.writeErrorMessage("Error when reading property " + MAX_CLASSES_MET_TH_PROPERTY);
+				toReset = true;
+			} else {
+				float maxClassesMet = Float.valueOf(maxClassesMetString);
+				if (maxClassesMet <= 0.) {
+					logs.writeErrorMessage("Negative threshold detected for classes...");
+					toReset = true;
+				} else if (maxClassesMet > 1.) {
+					logs.writeErrorMessage("Threshold over 100% detected for classes...");
+					toReset = true;
+				} else
+					logs.writeInformationMessage("Maximum classes met threshold: " + maxClassesMetString);
+			}
+		} else {
+			System.err.println("Wrong number of properties, file corrupted!");
+			toReset = true;
+		}
+
+		return toReset;
+	}
+
 	public boolean createFolderWhenCopy() {
 		return props.get(CREATE_FOLDER_COPY_RESULTS).equals("1");
+	}
+
+	public String getResultsPath() {
+		return props.getProperty(RESULTS_PATH_PROPERTY);
 	}
 
 	public int getMatchesNumber() {
@@ -270,6 +323,10 @@ public final class SettingsManager implements Manager {
 
 	public float getClassesMetThreshold() {
 		return Float.valueOf(props.getProperty(MAX_CLASSES_MET_TH_PROPERTY));
+	}
+
+	public String getProgressBarColor() {
+		return props.getProperty(PROGRESSBAR_COLOR_PROPERTY);
 	}
 
 	public static SettingsManager getInstance() {

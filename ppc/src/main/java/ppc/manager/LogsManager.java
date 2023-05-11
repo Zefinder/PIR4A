@@ -54,6 +54,7 @@ public final class LogsManager implements Manager {
 		@Override
 		public void println(String x) {
 			Message message = instance.new Message(nature, x);
+			instance.messagesList.add(message);
 			super.println(message.toString());
 		}
 	}

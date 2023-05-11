@@ -14,12 +14,15 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.TournamentCopyStatusEvent;
 import ppc.event.TournamentCreationStatusEvent;
+import ppc.event.TournamentOpenEvent;
 import ppc.event.TournamentOpeningStatusEvent;
+import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 
 public class MainPanel extends JPanel implements Listener {
@@ -136,22 +139,22 @@ public class MainPanel extends JPanel implements Listener {
 
 			switch (action) {
 			case NEW_TOURNAMENT_ACTION:
-				System.out.println("Create new tournament");
+				System.out.println("Showing new tournament panel");
 				cl.show(informationsPanel, CREATE_NEW_TOURNAMENT);
 				break;
 
 			case LOAD_TOURNAMENT_ACTION:
-				System.out.println("Load tournament");
+				System.out.println("Showing load tournament panel");
 				cl.show(informationsPanel, LOAD_TOURNAMENT);
 				break;
 
 			case CHECK_TOURNAMENT_ACTION:
-				System.out.println("Check tournaments' files");
+				System.out.println("Showing check tournament panel");
 				cl.show(informationsPanel, CHECK_TOURNAMENT);
 				break;
 
 			case SETTINGS_ACTION:
-				System.out.println("Settings");
+				System.out.println("Showing settings panel");
 				cl.show(informationsPanel, SETTINGS);
 				break;
 
@@ -167,10 +170,13 @@ public class MainPanel extends JPanel implements Listener {
 		switch (event.getStatus()) {
 		case SUCCESS:
 			System.out.println("Tournament successfully created!");
-			JOptionPane.showMessageDialog(null, "Le tournoi a été créé", "Tournoi créé",
-					JOptionPane.INFORMATION_MESSAGE);
+			int response = JOptionPane.showConfirmDialog(null, "Le tournoi a été créé, voulez-vous l'ouvrir ?", "Tournoi créé",
+					JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
 
-			// Propose to open newly created file
+			if (response == JOptionPane.YES_OPTION) {
+				System.out.println("Opening tournament " + event.getTournamentName() + "...");
+				EventManager.getInstance().callEvent(new TournamentOpenEvent(event.getTournamentName()));
+			}
 			break;
 
 		case ERROR:
@@ -184,7 +190,8 @@ public class MainPanel extends JPanel implements Listener {
 		switch (event.getStatus()) {
 		case SUCCESS:
 			System.out.println("Tournament opened !");
-			// Open panel
+			MainFrame frame = (MainFrame) SwingUtilities.getWindowAncestor(this);
+			frame.showOpenTournament();
 			break;
 
 		case ERROR:
