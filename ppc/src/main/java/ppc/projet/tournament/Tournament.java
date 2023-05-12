@@ -32,23 +32,23 @@ public class Tournament {
 	private boolean allowMeetingSameStudent = false;
 	private Integer[][] listClasses;
 	private Map<Integer, Integer[]> classmates = new HashMap<>();
-	private Map<Integer, String> idToName = new HashMap<>();
+	private Map<Integer, String[]> idToName = new HashMap<>();
 	private Integer[][] solution;
 
-	public Tournament(String[][] listClasses, int level, boolean soft) {
+	public Tournament(String[][][] listClasses, int level, boolean soft) {
 		Loader.loadNativeLibraries();
 		this.level = level;
 		allowMeetingSameStudent = soft;
 		nbClasses = listClasses.length;
 
-		for (String[] classs : listClasses)
+		for (String[][] classs : listClasses)
 			nbStudents += classs.length;
 		if (nbStudents % 2 == 1) {
 			System.out.println("adding ghost player");
 			ghost = nbStudents++;
 			nbClasses++;
 			listClasses = Arrays.copyOf(listClasses, listClasses.length + 1);
-			listClasses[listClasses.length - 1] = new String[] { ghost.toString() };
+			listClasses[listClasses.length - 1] = new String[][] { {ghost.toString(), ""} };
 		}
 
 		studentClasses = new int[nbStudents];
@@ -166,6 +166,10 @@ public class Tournament {
 		System.out.println("Final solution:");
 		System.out.println(this.toString());
 		System.out.println("Timed out after " + solver.wallTime());
+		for (Integer id: idToName.keySet()) {
+		    String name = Arrays.deepToString(idToName.get(id));
+		    System.out.println(id + " " + name);
+		}
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost);
 	}
 
@@ -176,7 +180,7 @@ public class Tournament {
 	 * @param listClasses
 	 * @return classes with the new ids
 	 */
-	private Integer[][] newIdClasses(String[][] listClasses) {
+	private Integer[][] newIdClasses(String[][][] listClasses) {
 		Integer[][] listClassesId = new Integer[listClasses.length][];
 
 		int[][] pawnDistribution = new int[listClasses.length][2];
@@ -197,22 +201,22 @@ public class Tournament {
 		}
 
 		// sorting the classes from biggest to smallest
-		List<String[]> tmpList = new ArrayList<>();
+		List<String[][]> tmpList = new ArrayList<>();
 		for (int i = 0; i < classes; i++) {
 			tmpList.add(listClasses[i]);
 		}
-		Collections.sort(tmpList, new Comparator<String[]>() {
+		Collections.sort(tmpList, new Comparator<String[][]>() {
 			@Override
-			public int compare(String[] o1, String[] o2) {
+			public int compare(String[][] o1, String[][] o2) {
 				return o2.length - o1.length;
 			}
 		});
-		String[][] orderedClasses = tmpList.toArray(new String[0][]);
+		String[][][] orderedClasses = tmpList.toArray(new String[0][][]);
 		System.out.println(Arrays.deepToString(orderedClasses));
 
 		boolean unbalanced = false;
 		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
-			String[] c = orderedClasses[classNb];
+			String[][] c = orderedClasses[classNb];
 			Integer[] listClassId = new Integer[c.length];
 			Arrays.fill(listClassId, -1);
 			for (int i = 0; i < c.length / 2; i++) {

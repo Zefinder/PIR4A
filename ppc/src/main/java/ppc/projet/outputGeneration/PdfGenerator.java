@@ -286,7 +286,8 @@ public class PdfGenerator {
 		for (int classNb = 0; classNb < nbClasses; classNb++) {
 			for (int student : listClasses[classNb]) {
 				PdfPCell idCell = new PdfPCell(new Phrase("" + (student + offset + nbStudentsPrevLevels)));
-				PdfPCell nameCell = new PdfPCell(new Phrase(solution.getIdToName(student)));
+				String[] name = solution.getIdToName(student);
+				PdfPCell nameCell = new PdfPCell(new Phrase(name[0] + " " + name[1]));
 				PdfPCell lvlCell = new PdfPCell(new Phrase("" + (level + 1)));
 
 				idCell.setHorizontalAlignment(Element.ALIGN_CENTER);
@@ -331,7 +332,8 @@ public class PdfGenerator {
 			for (int classNb = 0; classNb < nbClasses; classNb++) {
 				PdfPCell studentCell = new PdfPCell();
 				if (student < listClasses[classNb].length) {
-					studentCell.setPhrase(new Phrase(solution.getIdToName(listClasses[classNb][student])));
+					String[] name = solution.getIdToName(listClasses[classNb][student]);
+					studentCell.setPhrase(new Phrase(name[0] + " " + name[1]));
 				}
 				
 				studentCell.setBorderWidth(0.25f);
@@ -428,7 +430,8 @@ public class PdfGenerator {
 			for (int i = 0; i < currClass.length; i++) {
 				int id = currClass[i];
 				PdfPCell idCell = new PdfPCell(new Phrase("" + (id + nbStudentsPrevLevels)));
-				PdfPCell nameCell = new PdfPCell(new Phrase(solution.getIdToName(id)));
+				String[] name = solution.getIdToName(id);
+				PdfPCell nameCell = new PdfPCell(new Phrase(name[0] + " " + name[1]));
 
 				idCell.setBorderWidth(0.25f);
 				nameCell.setBorderWidth(0.25f);
@@ -522,7 +525,8 @@ public class PdfGenerator {
 			invisibleCell.setBorderWidth(0);
 			table.addCell(invisibleCell);
 			
-			PdfPCell nameCell = new PdfPCell(new Phrase(solution.getIdToName(studentId)));
+			String[] name = solution.getIdToName(studentId);
+			PdfPCell nameCell = new PdfPCell(new Phrase(name[0] + " " + name[1]));
 			nameCell.setRowspan(3);
 			nameCell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 			nameCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);

@@ -9,10 +9,10 @@ public class Solution {
 	private int[] studentClasses;
 	private Integer[][] listClasses;
 	private Map<Integer, Integer> idToTable;
-	private Map<Integer, String> idToName;
+	private Map<Integer, String[]> idToName;
 	private int ghost;
 	
-	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String> idToName, int ghost) {
+	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String[]> idToName, int ghost) {
 		this.matches = matches;
 		this.studentClasses = studentClasses;
 		this.listClasses = listClasses;
@@ -46,7 +46,7 @@ public class Solution {
 		return this.idToTable.get(id);
 	}
 	
-	public String getIdToName(int id) {
+	public String[] getIdToName(int id) {
 		return this.idToName.get(id);
 	}
 	
