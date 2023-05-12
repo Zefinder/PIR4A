@@ -71,6 +71,7 @@ public class Main {
 		List<Map<String, String[][]>> classesByLevel = new ArrayList<>(Arrays.asList(classesLvl1, classesLvl2, classesLvl3));
 		boolean softConstraint = false;
 		int timeout = 30;
+		int firstTable = 2;
 		
 		int nbClasses = classesByLevel.get(0).size();
 		int level = 1;
@@ -81,7 +82,7 @@ public class Main {
 			int classNb = 0;
 			for (String[][] classes : lvl.values())
 				lvlClasses[classNb++] = classes;
-			LevelThread lvlThread = new LevelThread(lvlClasses, level++, softConstraint, timeout);
+			LevelThread lvlThread = new LevelThread(lvlClasses, level++, softConstraint, timeout, firstTable);
 			Thread thread = new Thread(lvlThread);
 			thread.start();
 			threads.add(thread);

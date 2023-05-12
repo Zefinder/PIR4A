@@ -34,12 +34,14 @@ public class Tournament {
 	private Map<Integer, Integer[]> classmates = new HashMap<>();
 	private Map<Integer, String[]> idToName = new HashMap<>();
 	private Integer[][] solution;
-
-	public Tournament(String[][][] listClasses, int level, boolean soft) {
+	private int firstTable;
+	
+	public Tournament(String[][][] listClasses, int level, boolean soft, int firstTable) {
 		Loader.loadNativeLibraries();
 		this.level = level;
-		allowMeetingSameStudent = soft;
-		nbClasses = listClasses.length;
+		this.allowMeetingSameStudent = soft;
+		this.firstTable = firstTable;
+		this.nbClasses = listClasses.length;
 
 		for (String[][] classs : listClasses)
 			nbStudents += classs.length;
@@ -166,7 +168,7 @@ public class Tournament {
 		System.out.println("Final solution:");
 		System.out.println(this.toString());
 		System.out.println("Timed out after " + solver.wallTime());
-		return new Solution(solution, studentClasses, listClasses, idToName, ghost);
+		return new Solution(solution, studentClasses, listClasses, idToName, ghost, firstTable);
 	}
 
 	/**

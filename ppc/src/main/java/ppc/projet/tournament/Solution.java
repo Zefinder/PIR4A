@@ -11,13 +11,15 @@ public class Solution {
 	private Map<Integer, Integer> idToTable;
 	private Map<Integer, String[]> idToName;
 	private int ghost;
+	private int firstTable;
 	
-	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String[]> idToName, int ghost) {
+	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String[]> idToName, int ghost, int firstTable) {
 		this.matches = matches;
 		this.studentClasses = studentClasses;
 		this.listClasses = listClasses;
 		this.idToName = idToName;
 		this.ghost = ghost;
+		this.firstTable = firstTable;
 		this.initIdToTable();
 	}
 	
@@ -25,7 +27,7 @@ public class Solution {
 		this.idToTable = new HashMap<>();
 		int firstStudent = (this.ghost == -1) ? 0 : 1;
 		int offset = (this.ghost == -1) ? 1 : 0;
-		int table = 1;
+		int table = firstTable;
 		for (int student = firstStudent; student <= matches.length / 2 - offset; student++)
 			this.idToTable.put(student, table++);
 	}
