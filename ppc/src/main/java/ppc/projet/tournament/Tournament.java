@@ -166,10 +166,6 @@ public class Tournament {
 		System.out.println("Final solution:");
 		System.out.println(this.toString());
 		System.out.println("Timed out after " + solver.wallTime());
-		for (Integer id: idToName.keySet()) {
-		    String name = Arrays.deepToString(idToName.get(id));
-		    System.out.println(id + " " + name);
-		}
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost);
 	}
 
