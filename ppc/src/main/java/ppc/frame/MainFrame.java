@@ -64,7 +64,7 @@ public class MainFrame extends JFrame implements Listener {
 		MainPanel mainPanel = new MainPanel();
 		cardPanel.add(mainPanel, MAIN_PANEL);
 
-		OpenedTournamentPanel openPanel = new OpenedTournamentPanel(null);
+		OpenedTournamentPanel openPanel = new OpenedTournamentPanel();
 		cardPanel.add(openPanel, OPENED_PANEL);
 
 		return cardPanel;

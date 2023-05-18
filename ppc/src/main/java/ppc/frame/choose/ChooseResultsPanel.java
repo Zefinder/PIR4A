@@ -19,6 +19,7 @@ import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileSystemView;
 
 import ppc.event.TournamentCopyEvent;
+import ppc.frame.TournamentListRenderer;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
 

@@ -14,8 +14,11 @@ import java.util.Map;
 public class InputFormat {
 	public static void main(String[] args) throws IOException, ParseException {
 		File csv = new File(args[0]);
-		parseCsv(csv).stream()
-				.forEach(map -> map.values().forEach(names -> System.out.println(Arrays.deepToString(names))));
+		List<Map<String, String[][]>> mapData = parseCsv(csv);
+
+		System.out.println(mapData.toString());
+		
+		mapData.stream().forEach(map -> map.values().forEach(names -> System.out.println(Arrays.deepToString(names))));
 	}
 
 	/**
@@ -49,7 +52,7 @@ public class InputFormat {
 			}
 
 			List<String> words = new ArrayList<>();
-			String[] splited = line.split(",|;");
+			String[] splited = line.split(";|,");
 			String word = "";
 			boolean isQuoted = false;
 			for (String split : splited) {
@@ -131,6 +134,7 @@ public class InputFormat {
 
 		String profName = "";
 		int maxGroup = 0;
+		int minGroup = Integer.MAX_VALUE;
 		int lineNumber = 0;
 		for (List<String> line : csvParsed) {
 			// First line = prof name
@@ -146,6 +150,9 @@ public class InputFormat {
 				int groupNumber = Integer.valueOf(line.get(2));
 				if (groupNumber > maxGroup)
 					maxGroup = groupNumber;
+				
+				if (groupNumber < minGroup)
+					minGroup = groupNumber;
 
 				classes.put(new String[] { line.get(0), line.get(1) }, groupNumber);
 			}
@@ -157,7 +164,7 @@ public class InputFormat {
 		List<List<String[]>> namesList = new ArrayList<>();
 
 		// We init structures
-		for (int i = 0; i < maxGroup + 1; i++) {
+		for (int i = minGroup; i <= maxGroup; i++) {
 			listMap.add(new LinkedHashMap<>());
 			namesList.add(new ArrayList<>());
 		}
@@ -165,7 +172,7 @@ public class InputFormat {
 		// For each person we add him into the good list
 		for (Map.Entry<String[], Integer> entry : classes.entrySet()) {
 			String[] key = entry.getKey();
-			Integer val = entry.getValue();
+			Integer val = entry.getValue() - minGroup;
 			namesList.get(val).add(key);
 		}
 

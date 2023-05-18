@@ -32,7 +32,7 @@ public class Tournament {
 	private static final String STUDENT_THRESHOLD = "students";
 	private static final String CLASSES_THRESHOLD = "classes";
 
-	private File dataFolder;
+//	private File dataFolder;
 
 	private Properties properties;
 
@@ -48,7 +48,7 @@ public class Tournament {
 	}
 
 	public Tournament(String name, int matchesNumber, int groupsNumber, int maxSearchingTime,
-			float studentsMetThreshold, float classesMetThreshold, File dataFolder) {
+			float studentsMetThreshold, float classesMetThreshold) {
 		properties = new Properties();
 
 		properties.setProperty(NAME, name);
@@ -57,16 +57,34 @@ public class Tournament {
 		properties.setProperty(MAX_TIME, String.valueOf(maxSearchingTime));
 		properties.setProperty(STUDENT_THRESHOLD, String.valueOf(studentsMetThreshold));
 		properties.setProperty(CLASSES_THRESHOLD, String.valueOf(classesMetThreshold));
-
-		this.dataFolder = dataFolder;
-	}
-
-	public File getDataFolder() {
-		return dataFolder;
 	}
 
 	public Properties getTournamentProperties() {
 		return properties;
+	}
+
+	public String getTournamentName() {
+		return properties.getProperty(NAME);
+	}
+
+	public int getRoundsNumber() {
+		return Integer.valueOf(properties.getProperty(ROUNDS_NUMBER));
+	}
+
+	public int getGroupsNumber() {
+		return Integer.valueOf(properties.getProperty(GROUPS_NUMBER));
+	}
+
+	public int getMaxTime() {
+		return Integer.valueOf(properties.getProperty(MAX_TIME));
+	}
+
+	public float getStudentsThreshold() {
+		return Float.valueOf(properties.getProperty(STUDENT_THRESHOLD));
+	}
+
+	public float getClassesThreshold() {
+		return Float.valueOf(properties.getProperty(CLASSES_THRESHOLD));
 	}
 
 	public void openTournament() {

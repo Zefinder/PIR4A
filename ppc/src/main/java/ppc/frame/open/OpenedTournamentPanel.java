@@ -1,149 +1,362 @@
 package ppc.frame.open;
 
-import java.awt.BorderLayout;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.JList;
+import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JFileChooser;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTable;
-import javax.swing.table.DefaultTableModel;
+import javax.swing.JSeparator;
+import javax.swing.JTextField;
+import javax.swing.filechooser.FileFilter;
+import javax.swing.filechooser.FileSystemView;
 
-public class OpenedTournamentPanel extends JPanel {
+import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
+import ppc.event.Listener;
+import ppc.event.TournamentAddClassEvent;
+import ppc.event.TournamentAddClassStatusEvent;
+import ppc.event.TournamentOpeningStatusEvent;
+import ppc.manager.EventManager;
+import ppc.manager.FileManager;
+import ppc.manager.TournamentManager;
+import ppc.tournament.InputFormat;
+import ppc.tournament.Tournament;
+
+public class OpenedTournamentPanel extends JPanel implements Listener {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 2182862369280914967L;
-	private JList<String> listClasses;
-	private List<Map<String, String[][]>> data;
-	private List<JScrollPane> scrollPanes;
 
-	public OpenedTournamentPanel(List<Map<String, String[][]>> data) {
-		this.data = data;
-		this.scrollPanes = new ArrayList<>();
-		setLayout(new BorderLayout());
+	private String tournamentName;
+	private int roundsNumber;
+	private int groupsNumber;
+	private int classNumber;
 
-//		createListPane();
-//		createCSVPanes();
+	private CSVPanel csvPanel;
 
-		if (!scrollPanes.isEmpty()) {
-			JScrollPane firstScrollPane = scrollPanes.get(0);
-			add(firstScrollPane, BorderLayout.CENTER);
-			listClasses.setSelectedIndex(0);
-		}
+	private JLabel tournamentNameLabel;
+	private JLabel roundsNumberLabel;
+	private JLabel groupsNumberLabel;
+	private JLabel classesNumberLabel;
+
+	private JTextField studentsThreshold;
+	private JTextField classesThreshold;
+	private JTextField timeField;
+	private JTextField tableOffset;
+	private JCheckBox softBox;
+	private JCheckBox verboseBox;
+	private JButton estimateButton;
+	private JButton searchButton;
+
+	private int fileClassCount;
+
+	public OpenedTournamentPanel() {
+		EventManager.getInstance().registerListener(this);
+
+		fileClassCount = 0;
+		buildPanel();
+
+		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 	}
 
-	public void loadTournament(String tournamentName) {
+	private void buildPanel() {
+		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
+		JPanel leftPanel = new JPanel();
+		leftPanel.setLayout(new GridBagLayout());
+		GridBagConstraints c = new GridBagConstraints();
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(5, 5, 5, 5);
+		c.gridheight = 1;
+		c.gridwidth = 1;
+
+		c.gridx = 0;
+		c.gridy = 0;
+		leftPanel.add(buildInfoPanel(), c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		leftPanel.add(buildAddRemoveClassPanel(), c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		leftPanel.add(buildSearchPanel(), c);
+		this.add(leftPanel);
+
+		JSeparator separator = new JSeparator(JSeparator.VERTICAL);
+		this.add(separator);
+
+		csvPanel = new CSVPanel();
+		this.add(csvPanel);
 	}
 
-	private void createListPane() {
-		String[] classes = data.get(0).keySet().toArray(new String[0]);
-		listClasses = new JList<>(classes);
+	private JPanel buildInfoPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
 
-		listClasses.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent evt) {
-				if (evt.getClickCount() == 1) {
-					int index = listClasses.locationToIndex(evt.getPoint());
-					if (index >= 0 && index < scrollPanes.size()) {
-						JScrollPane selectedScrollPane = scrollPanes.get(index);
-						removeAll();
-						add(selectedScrollPane, BorderLayout.CENTER);
-						add(new JScrollPane(listClasses), BorderLayout.WEST);
-						revalidate();
-						repaint();
+		GridBagConstraints c = new GridBagConstraints();
+
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(5, 5, 5, 5);
+		c.gridheight = 1;
+		c.gridwidth = 1;
+
+		c.gridx = 0;
+		c.gridy = 0;
+		tournamentNameLabel = new JLabel("Nom du tournoi");
+		panel.add(tournamentNameLabel, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		roundsNumberLabel = new JLabel("Nombre de manches");
+		panel.add(roundsNumberLabel, c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		groupsNumberLabel = new JLabel("Nombre de groupes de niveau");
+		panel.add(groupsNumberLabel, c);
+
+		c.gridx = 0;
+		c.gridy = 3;
+		classesNumberLabel = new JLabel("Nombre de classes");
+		panel.add(classesNumberLabel, c);
+
+		panel.setBorder(BorderFactory.createTitledBorder("Informations générales"));
+
+		return panel;
+	}
+
+	private JPanel buildAddRemoveClassPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
+
+		GridBagConstraints c = new GridBagConstraints();
+
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(5, 0, 5, 0);
+		c.gridheight = 1;
+		c.gridwidth = 1;
+
+		c.gridx = 0;
+		c.gridy = 0;
+		JButton addClass = new JButton("Ajouter une classe...");
+		addClass.addActionListener(new ActionListener() {
+
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				System.out.println("Choosing a class file to add it...");
+
+				JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				chooser.setFileFilter(new FileFilter() {
+
+					@Override
+					public String getDescription() {
+						return "Fichiers CSV (.csv)";
 					}
+
+					@Override
+					public boolean accept(File f) {
+						return f.isDirectory() || f.getName().endsWith(".csv");
+					}
+				});
+				int answer = chooser.showOpenDialog(null);
+
+				if (answer == JFileChooser.APPROVE_OPTION) {
+					File chosen = chooser.getSelectedFile();
+					System.out.println("File choosen: " + chosen.getAbsolutePath());
+					EventManager.getInstance()
+							.callEvent(new TournamentAddClassEvent(tournamentName, chosen, fileClassCount));
+				} else {
+					System.out.println("Choosing class file canceled ");
 				}
+
 			}
 		});
+		panel.add(addClass, c);
 
-		JScrollPane listScrollPane = new JScrollPane(listClasses);
-		add(listScrollPane, BorderLayout.WEST);
+		c.gridx = 0;
+		c.gridy = 1;
+		JButton removeClass = new JButton("Retirer la classe");
+		removeClass.addActionListener(e -> csvPanel.removeClass());
+		panel.add(removeClass, c);
+
+		panel.setBorder(BorderFactory.createTitledBorder("Gestion des classes"));
+
+		return panel;
 	}
 
-	private void createCSVPanes() {
-		List<DefaultTableModel> tableModels = new ArrayList<>();
-		for (int i = 0; i < data.get(0).keySet().size(); i++) {
-			DefaultTableModel tableModel = new DefaultTableModel();
-			tableModel.addColumn("Prénom");
-			tableModel.addColumn("Nom");
-			tableModel.addColumn("Niveau");
-			tableModels.add(tableModel);
-		}
+	private JPanel buildSearchPanel() {
+		JPanel panel = new JPanel();
+		panel.setLayout(new GridBagLayout());
 
-		int level = 1;
-		for (Map<String, String[][]> levelMap : data) {
-			int classNb = 0;
-			for (String[][] students : levelMap.values()) {
-				DefaultTableModel tableModel = tableModels.get(classNb++);
-				for (String[] student : students) {
-					String firstName = student[0];
-					String lastName = student[1];
-					
-					tableModel.addRow(new String[] { firstName, lastName, level + "" });
-				}
+		GridBagConstraints c = new GridBagConstraints();
+
+		c.anchor = GridBagConstraints.CENTER;
+		c.fill = GridBagConstraints.BOTH;
+		c.insets = new Insets(5, 5, 5, 5);
+		c.gridheight = 1;
+		c.gridwidth = 1;
+
+		c.gridx = 0;
+		c.gridy = 0;
+		JLabel studentsThresholdLabel = new JLabel("Seuil d'étudiants pour arrêter la recherche");
+		panel.add(studentsThresholdLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 0;
+		studentsThreshold = new JTextField(10);
+		panel.add(studentsThreshold, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		JLabel classesThresholdLabel = new JLabel("Seuil de classes pour arrêter la recherche");
+		panel.add(classesThresholdLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 1;
+		classesThreshold = new JTextField(10);
+		panel.add(classesThreshold, c);
+
+		c.gridx = 0;
+		c.gridy = 2;
+		JLabel timeLabel = new JLabel("Temps maximal de recherche");
+		panel.add(timeLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 2;
+		timeField = new JTextField(10);
+		panel.add(timeField, c);
+
+		c.gridx = 0;
+		c.gridy = 3;
+		JLabel tableLabel = new JLabel("Numéro de la première table");
+		panel.add(tableLabel, c);
+		
+		c.gridx = 1;
+		c.gridy = 3;
+		tableOffset = new JTextField(10);
+		panel.add(tableOffset, c);
+
+		c.gridx = 0;
+		c.gridy = 4;
+		JLabel softLabel = new JLabel("Autoriser la rencontre de mêmes étudiants");
+		panel.add(softLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 4;
+		softBox = new JCheckBox();
+		softBox.setSelected(false);
+		panel.add(softBox, c);
+
+		c.gridx = 0;
+		c.gridy = 5;
+		JLabel verboseLabel = new JLabel("Afficher les résultats pendant la recherche");
+		panel.add(verboseLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 5;
+		verboseBox = new JCheckBox();
+		verboseBox.setSelected(true);
+		panel.add(verboseBox, c);
+
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 6;
+		estimateButton = new JButton("Estimer le résultat");
+		panel.add(estimateButton, c);
+
+		c.gridwidth = 2;
+		c.gridx = 0;
+		c.gridy = 7;
+		searchButton = new JButton("Lancer la recherche");
+		panel.add(searchButton, c);
+
+		panel.setBorder(BorderFactory.createTitledBorder("Paramètres de recherche"));
+
+		return panel;
+	}
+
+	@EventHandler
+	public void loadTournament(TournamentOpeningStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			System.out.println("Loading tournament properties");
+			Tournament tournament = TournamentManager.getInstance().getTournament(event.getTournamentName());
+			tournamentName = event.getTournamentName();
+			roundsNumber = tournament.getRoundsNumber();
+			groupsNumber = tournament.getGroupsNumber();
+			classNumber = 0;
+			csvPanel.setTounamentName(tournamentName);
+			
+			loadData(tournament);
+
+			tournamentNameLabel.setText("Nom du tournoi : " + tournamentName);
+			roundsNumberLabel.setText("Nombre de manches : " + roundsNumber);
+			groupsNumberLabel.setText("Nombre de groupes de niveau : " + groupsNumber);
+			classesNumberLabel.setText("Nombre de classes : " + classNumber);
+
+			studentsThreshold.setText(String.valueOf(tournament.getStudentsThreshold() * 100) + "%");
+			classesThreshold.setText(String.valueOf(tournament.getClassesThreshold() * 100) + "%");
+			timeField.setText(String.valueOf(tournament.getMaxTime()));
+			tableOffset.setText("0");
+		}
+	}
+
+	@EventHandler
+	public void onAddedClass(TournamentAddClassStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			classNumber++;
+			fileClassCount++;
+			classesNumberLabel.setText("Nombre de classes : " + classNumber);
+
+			try {
+				List<Map<String, String[][]>> classData = InputFormat.parseCsv(event.getCSVFile());
+				csvPanel.addClass(classData);
+				System.out.println("Class added");
+			} catch (IOException | ParseException e) {
+				e.printStackTrace();
+				System.err.println("An error occured when parsing file " + event.getCSVFile().getAbsolutePath());
 			}
-			level++;
-		}
 
-		for (DefaultTableModel tableModel : tableModels)
-			scrollPanes.add(new JScrollPane(new JTable(tableModel)));
+		} else {
+			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+		}
 	}
 
-//	public static void main(String[] args) {
-//		// Create the data for the levels
-//		// niveau 1 rencontre 2019
-//		Map<String, String[]> classesLvl1 = new LinkedHashMap<>();
-//		classesLvl1.put("Prof Avec un super long nom", new String[] { "Anthonin Lulu", "Lilian", "Nathan", "Maël" });
-//		classesLvl1.put("Prof 2", new String[] { "Gabi", "Guney", "Izye" });
-//		classesLvl1.put("Prof 3", new String[] { "Louna", "Maxine", "Enzo", "Maéva", "Alexandre", "Kaissy", "Elie" });
-//		classesLvl1.put("Prof 4",
-//				new String[] { "Adam", "Nathan", "Chloé", "Jules", "Lucile", "Brian", "Loan", "Lohenn" });
-//		classesLvl1.put("Prof 5", new String[] { "Amaury", "Noé", "Leïla", "Matylio" });
-//
-//		// niveau 2 rencontre 2019
-//		Map<String, String[]> classesLvl2 = new LinkedHashMap<>();
-//		classesLvl2.put("Prof Avec un super long nom",
-//				new String[] { "Valentin", "Vaea", "Thomas", "Manon", "Lucas", "Jeanne", "Juliette", "Romane", "Agnese",
-//						"Pauline", "Camille", "Loan", "Inès", "Manon", "Elsa", "Matéo" });
-//		classesLvl2.put("Prof 2",
-//				new String[] { "Lilou", "Lena", "Lucas", "Lilou", "Mirtille", "Judith", "Paul", "Pedago", "Kenji",
-//						"Tao", "Lison", "William", "Yaelle", "Yanis", "Kynian", "Sacha", "Gauthier", "Jules",
-//						"Erwan" });
-//		classesLvl2.put("Prof 3", new String[] { "Coraline", "Chloé", "Loan", "Charlot", "Lana", "Sans prénom", "Imène",
-//				"Loris", "Benjamin", "Re sans prénom" });
-//		classesLvl2.put("Prof 4", new String[] { "Rafael", "Pablo", "Léna", "Rafael", "Malon", "Lisa", "Lino", "Lilou",
-//				"Loane", "Bixente" });
-//		classesLvl2.put("Prof 5", new String[] { "Arnaud", "Matili", "Lyse", "Clément", "Julian", "Lou", "Elise",
-//				"Turis", "Célia", "Sans nom le retour", "Maxime" });
-//
-//		// niveau 3 rencontre 2019
-//		Map<String, String[]> classesLvl3 = new LinkedHashMap<>();
-//		classesLvl3.put("Prof Avec un super long nom",
-//				new String[] { "Milane", "Nathan", "Adrien", "Léna", "Abdellah" });
-//		classesLvl3.put("Prof 2", new String[] { "Céci", "Emma", "Luca", "Julian", "Manon" });
-//		classesLvl3.put("Prof 3", new String[] { "Dine", "Augustin", "Fay", "Nicolas", "Louane", "Rayan" });
-//		classesLvl3.put("Prof 4",
-//				new String[] { "Nayah", "Angie", "Erika", "Ela", "Mathias", "Périne", "Cécile", "Maylie" });
-//		classesLvl3.put("Prof 5", new String[] { "Thomas", "Maïssa", "Inès", "Lise", "Manon", "Maëly", "Johan",
-//				"Maïssane", "Lili", "Ella" });
-//
-//		List<Map<String, String[]>> classesByLevel = new ArrayList<>(
-//				Arrays.asList(classesLvl1, classesLvl2, classesLvl3));
-//
-//		SwingUtilities.invokeLater(() -> {
-//			JFrame frame = new JFrame("Listes classes");
-//			frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//			frame.setSize(800, 600);
-//
-////			OpenedTournamentPanel panel = new OpenedTournamentPanel(classesByLevel);
-//			frame.getContentPane().add(panel);
-//
-//			frame.setVisible(true);
-//		});
-//	}
+	private void loadData(Tournament tournament) {
+		System.out.println("Loading tournament data files");
+		File[] files = FileManager.getInstance().getTournamentData(tournament.getTournamentName());
+
+		for (File csvfile : files) {
+			System.out.println("Reading file " + csvfile.getName());
+			try {
+				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile);
+				csvPanel.addClass(classData);
+				System.out.println("File added");
+				fileClassCount++;
+				classNumber++;
+			} catch (IOException | ParseException e) {
+				e.printStackTrace();
+				System.err.println("An error occured when parsing file " + csvfile.getAbsolutePath());
+			}
+		}
+	}
 }

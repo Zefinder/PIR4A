@@ -1,4 +1,4 @@
-package ppc.frame.choose;
+package ppc.frame;
 
 import java.awt.Color;
 import java.awt.Component;

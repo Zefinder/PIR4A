@@ -15,8 +15,12 @@ import java.util.List;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
+import ppc.event.TournamentAddClassEvent;
+import ppc.event.TournamentAddClassStatusEvent;
 import ppc.event.TournamentCopyEvent;
 import ppc.event.TournamentCopyStatusEvent;
+import ppc.event.TournamentDeleteClassEvent;
+import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.manager.LogsManager.Message;
 
 /**
@@ -137,7 +141,7 @@ public final class FileManager implements Manager, Listener {
 	public void changeResDirectory(File resDirectory) {
 		this.resDirectory = resDirectory;
 	}
-	
+
 	public void changeCopyResDirectory(File resDirectory) {
 		if (!this.resDirectory.equals(resDirectory)) {
 			copyDirectory(this.resDirectory, resDirectory);
@@ -164,17 +168,21 @@ public final class FileManager implements Manager, Listener {
 		return tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
 	}
 
-	public File getTournamentData(String tournamentName) {
+	public File getTournamentDataFolder(String tournamentName) {
 		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
+	}
+
+	public File[] getTournamentData(String tournamentName) {
+		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName).listFiles();
 	}
 
 	public File createTournamentFile(String tournamentName) throws IOException {
 		File tournamentFile = new File(tournamentDirectory.getAbsolutePath() + "/" + tournamentName + ".trn");
 		tournamentFile.createNewFile();
-		
+
 		File tournamentDataFile = new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
 		tournamentDataFile.mkdir();
-		
+
 		return tournamentFile;
 	}
 
@@ -209,6 +217,59 @@ public final class FileManager implements Manager, Listener {
 				statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR,
 						"Erreur lors de la copie des fichiers :\n" + e.getMessage());
 			}
+
+		EventManager.getInstance().callEvent(statusEvent);
+	}
+
+	@EventHandler
+	public void onClassFileSelected(TournamentAddClassEvent event) {
+		File toCopy = event.getTournamentFile();
+		TournamentAddClassStatusEvent statusEvent;
+
+		if (!toCopy.exists()) {
+			System.err.println("Tournament file does not exist!");
+			statusEvent = new TournamentAddClassStatusEvent(null, EventStatus.ERROR,
+					"Le fichier de tournoi n'existe pas !");
+		} else if (!toCopy.isFile()) {
+			System.err.println("Tournament file is not a file!");
+			statusEvent = new TournamentAddClassStatusEvent(null, EventStatus.ERROR,
+					"Le fichier de tournoi n'est pas un fichier !");
+		} else {
+			File destinationFile = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName()
+					+ "/class" + event.getClassNumber() + ".csv");
+
+			try {
+				Files.copy(toCopy.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				statusEvent = new TournamentAddClassStatusEvent(destinationFile, EventStatus.SUCCESS);
+			} catch (IOException e) {
+				e.printStackTrace();
+				statusEvent = new TournamentAddClassStatusEvent(null, EventStatus.ERROR,
+						"Erreur lors de la copie du fichier de classe !\n" + e.getMessage());
+			}
+		}
+
+		EventManager.getInstance().callEvent(statusEvent);
+	}
+
+	// TODO Remove class (create events and handlers!)
+	@EventHandler
+	public void onDeleteClass(TournamentDeleteClassEvent event) {
+		File toDelete = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName() + "/class"
+				+ event.getClassIndex() + ".csv");
+		TournamentDeleteClassStatusEvent statusEvent;
+
+		if (!toDelete.exists()) {
+			System.err.println("Class file does not exist!");
+			statusEvent = new TournamentDeleteClassStatusEvent(event.getListIndex(), EventStatus.ERROR,
+					"Le fichier de classe n'existe pas !");
+		} else if (!toDelete.isFile()) {
+			System.err.println("Class file is not a file!");
+			statusEvent = new TournamentDeleteClassStatusEvent(event.getListIndex(), EventStatus.ERROR,
+					"Le fichier de classe n'est pas un fichier !");
+		} else {
+			toDelete.delete();
+			statusEvent = new TournamentDeleteClassStatusEvent(event.getListIndex(), EventStatus.SUCCESS);
+		}
 
 		EventManager.getInstance().callEvent(statusEvent);
 	}
@@ -289,12 +350,12 @@ public final class FileManager implements Manager, Listener {
 
 	private void copyDirectory(File originFolder, File destinationFolder) {
 		File[] folders = originFolder.listFiles(file -> file.isDirectory());
-		
+
 		for (File folder : folders) {
 			// Create folder
 			File destination = new File(destinationFolder.getAbsolutePath() + "/" + folder.getName());
 			destination.mkdir();
-			
+
 			for (File file : folder.listFiles()) {
 				File newFile = new File(destination.getAbsolutePath() + "/" + file.getName());
 				try {
@@ -305,7 +366,7 @@ public final class FileManager implements Manager, Listener {
 			}
 		}
 	}
-	
+
 	public static FileManager getInstance() {
 		return instance;
 	}

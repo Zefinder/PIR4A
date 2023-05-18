@@ -20,6 +20,7 @@ import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpenEvent;
+import ppc.frame.TournamentListRenderer;
 import ppc.manager.EventManager;
 import ppc.manager.TournamentManager;
 

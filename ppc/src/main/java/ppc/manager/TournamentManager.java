@@ -53,7 +53,7 @@ public final class TournamentManager implements Manager, Listener {
 			fileName = fileName.substring(0, fileName.length() - 4);
 
 			// Checks if the tournament file has data associated to it
-			File tournamentData = FileManager.getInstance().getTournamentData(fileName);
+			File tournamentData = FileManager.getInstance().getTournamentDataFolder(fileName);
 
 			if (!tournamentData.exists()) {
 				logs.writeFatalErrorMessage(String
@@ -117,8 +117,7 @@ public final class TournamentManager implements Manager, Listener {
 			} else {
 				createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.SUCCESS);
 				tournament = new Tournament(event.getName(), event.getMatchesNumber(), event.getGroupsNumber(),
-						event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold(),
-						FileManager.getInstance().getTournamentData(event.getName()));
+						event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold());
 
 				try {
 					File tournamentFile = FileManager.getInstance().createTournamentFile(event.getName());
@@ -153,15 +152,20 @@ public final class TournamentManager implements Manager, Listener {
 
 		if (tournament == null) {
 			System.err.println("Impossible to open tournament (doesn't exist)...");
-			openingEvent = new TournamentOpeningStatusEvent(EventStatus.ERROR, "Le tournoi n'existe pas!");
+			openingEvent = new TournamentOpeningStatusEvent(event.getTournamentName(), EventStatus.ERROR,
+					"Le tournoi n'existe pas!");
 		} else {
 			tournament.openTournament();
-			openingEvent = new TournamentOpeningStatusEvent(EventStatus.SUCCESS);
+			openingEvent = new TournamentOpeningStatusEvent(event.getTournamentName(), EventStatus.SUCCESS);
 		}
 
 		EventManager.getInstance().callEvent(openingEvent);
 	}
-	
+
+	public Tournament getTournament(String tournamentName) {
+		return tournamentList.get(tournamentName);
+	}
+
 	public String[] getTournaments() {
 		return tournamentList.keySet().toArray(String[]::new);
 	}
