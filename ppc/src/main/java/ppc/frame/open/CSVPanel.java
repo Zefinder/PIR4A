@@ -30,6 +30,7 @@ import javax.swing.JTextField;
 import javax.swing.JViewport;
 
 import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
@@ -49,16 +50,17 @@ public class CSVPanel extends JPanel implements Listener {
 	private DefaultListModel<String> model;
 	private JPanel csvPanel;
 
+	private JButton addStudent;
+	private JButton removeStudent;
+
 	private List<List<Map<String, String[][]>>> data;
 	private List<JScrollPane> scrollList;
 
-	private int classNumber;
 	private String tournamentName;
 
 	public CSVPanel() {
 		EventManager.getInstance().registerListener(this);
 
-		classNumber = 0;
 		data = new ArrayList<>();
 		scrollList = new ArrayList<>();
 		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
@@ -106,6 +108,10 @@ public class CSVPanel extends JPanel implements Listener {
 						System.out.println("Showing " + listClasses.getSelectedValue());
 						CardLayout cl = (CardLayout) csvPanel.getLayout();
 						cl.show(csvPanel, scrollList.get(selectedClass).getName());
+						addStudent.setEnabled(true);
+						removeStudent.setEnabled(true);
+
+						repaint();
 					}
 				}
 			}
@@ -119,10 +125,9 @@ public class CSVPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 1;
-
-		JButton addStudent = new JButton("Ajouter un élève");
+		addStudent = new JButton("Ajouter un élève");
+		addStudent.setEnabled(false);
 		panel.add(addStudent, c);
-
 		addStudent.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int selectedClass = listClasses.getSelectedIndex();
@@ -132,8 +137,7 @@ public class CSVPanel extends JPanel implements Listener {
 				} else {
 					JScrollPane selectedScrollPane = scrollList.get(selectedClass);
 					JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
-					AddStudentDialog dialog = new AddStudentDialog(selectedTable,
-							(TournamentTableModel) selectedTable.getModel());
+					AddStudentDialog dialog = new AddStudentDialog((TournamentTableModel) selectedTable.getModel());
 					dialog.setVisible(true);
 				}
 			}
@@ -141,9 +145,9 @@ public class CSVPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 2;
-		JButton removeStudent = new JButton("Retirer l'élève");
+		removeStudent = new JButton("Retirer l'élève");
+		removeStudent.setEnabled(false);
 		panel.add(removeStudent, c);
-
 		removeStudent.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int selectedClass = listClasses.getSelectedIndex();
@@ -196,7 +200,7 @@ public class CSVPanel extends JPanel implements Listener {
 		return csvPanel;
 	}
 
-	public void addClass(List<Map<String, String[][]>> classData) {
+	public void addClass(List<Map<String, String[][]>> classData, int classNumber) {
 		// Getting prof's name
 		String profName = classData.get(0).keySet().toArray(String[]::new)[0];
 
@@ -211,7 +215,8 @@ public class CSVPanel extends JPanel implements Listener {
 			listClasses.setVisibleRowCount(model.getSize());
 
 		// Adding table to CardLayout
-		addTableToPanel(classData, profName + " " + classNumber++);
+		addTableToPanel(classData, profName + " " + classNumber);
+
 	}
 
 	public void removeClass() {
@@ -220,7 +225,8 @@ public class CSVPanel extends JPanel implements Listener {
 			String[] panelName = scrollList.get(selectedIndex).getName().split(" ");
 			int classIndex = Integer.valueOf(panelName[panelName.length - 1]);
 
-			TournamentDeleteClassEvent event = new TournamentDeleteClassEvent(tournamentName, classIndex, classIndex);
+			TournamentDeleteClassEvent event = new TournamentDeleteClassEvent(tournamentName, classIndex,
+					selectedIndex);
 			EventManager.getInstance().callEvent(event);
 		} else
 			LogsManager.getInstance().writeWarningMessage("No class were selected before removing...");
@@ -232,31 +238,37 @@ public class CSVPanel extends JPanel implements Listener {
 
 	@EventHandler
 	public void onClassRemoved(TournamentDeleteClassStatusEvent event) {
-		int selectedIndex = event.getListIndex();
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			int selectedIndex = event.getListIndex();
 
-		System.out.println("AAAAAH");
+			System.out.println("AAAAAH");
 
-		// Remove from list
-		model.remove(selectedIndex);
+			// Remove from list
+			model.remove(selectedIndex);
 
-		// Remove from data
-		data.remove(selectedIndex);
+			// Remove from data
+			data.remove(selectedIndex);
 
-		// Remove from CardLayout
-		CardLayout cl = (CardLayout) csvPanel.getLayout();
-		cl.removeLayoutComponent(scrollList.get(selectedIndex));
+			// Remove from CardLayout
+			CardLayout cl = (CardLayout) csvPanel.getLayout();
+			cl.removeLayoutComponent(scrollList.get(selectedIndex));
 
-		// Remove from JPanel list
-		scrollList.remove(selectedIndex);
+			// Remove from JPanel list
+			scrollList.remove(selectedIndex);
 
-		// Resize list
-		if (model.getSize() > 15)
-			listClasses.setVisibleRowCount(15);
-		else
-			listClasses.setVisibleRowCount(model.getSize());
+			// Resize list
+			if (model.getSize() > 15)
+				listClasses.setVisibleRowCount(15);
+			else
+				listClasses.setVisibleRowCount(model.getSize());
 
-		// Revalidate frame
-		revalidate();
+			// Unselecting buttons
+			addStudent.setEnabled(false);
+			removeStudent.setEnabled(false);
+
+			// Revalidate frame
+			repaint();
+		}
 	}
 
 	private void addTableToPanel(List<Map<String, String[][]>> classData, String profName) {
@@ -284,20 +296,25 @@ public class CSVPanel extends JPanel implements Listener {
 		scrollList.add(defaultTablePanel);
 		csvPanel.add(defaultTablePanel, profName);
 	}
+	
+	private void tableModified() {
+		int editedTable = listClasses.getSelectedIndex();
+		System.out.println(String.format("Table n°%d edited!", editedTable));
+		
+		// TODO Save the modified table in a list, change the method's name, drink water
+	}
 
-	private static class AddStudentDialog extends JDialog {
+	private class AddStudentDialog extends JDialog {
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = 1665505915114573795L;
-		private JTable table;
 		private TournamentTableModel tableModel;
 		private JTextField firstNameField;
 		private JTextField lastNameField;
 		private JTextField levelField;
 
-		public AddStudentDialog(JTable table, TournamentTableModel tableModel) {
-			this.table = table;
+		public AddStudentDialog(TournamentTableModel tableModel) {
 			this.tableModel = tableModel;
 
 			this.setModal(true);
@@ -319,7 +336,7 @@ public class CSVPanel extends JPanel implements Listener {
 			gbc.anchor = GridBagConstraints.WEST;
 			gbc.insets = new Insets(5, 5, 5, 5);
 
-			JLabel firstNameLabel = new JLabel("Prénom:");
+			JLabel firstNameLabel = new JLabel("Prénom :");
 			gbc.gridx = 0;
 			gbc.gridy = 0;
 			inputPanel.add(firstNameLabel, gbc);
@@ -331,7 +348,7 @@ public class CSVPanel extends JPanel implements Listener {
 			gbc.weightx = 1.0;
 			inputPanel.add(firstNameField, gbc);
 
-			JLabel lastNameLabel = new JLabel("Nom:");
+			JLabel lastNameLabel = new JLabel("Nom :");
 			gbc.gridx = 0;
 			gbc.gridy = 1;
 			gbc.fill = GridBagConstraints.NONE;
@@ -345,7 +362,7 @@ public class CSVPanel extends JPanel implements Listener {
 			gbc.weightx = 1.0;
 			inputPanel.add(lastNameField, gbc);
 
-			JLabel levelLabel = new JLabel("Niveau:");
+			JLabel levelLabel = new JLabel("Niveau :");
 			gbc.gridx = 0;
 			gbc.gridy = 2;
 			gbc.fill = GridBagConstraints.NONE;
@@ -364,19 +381,11 @@ public class CSVPanel extends JPanel implements Listener {
 			contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
 			JButton addButton = new JButton("Ajouter");
-			addButton.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					addStudent();
-				}
-			});
+			addButton.addActionListener(e -> addStudent());
 			buttonPanel.add(addButton);
 
 			JButton cancelButton = new JButton("Annuler");
-			cancelButton.addActionListener(new ActionListener() {
-				public void actionPerformed(ActionEvent e) {
-					dispose();
-				}
-			});
+			cancelButton.addActionListener(e -> dispose());
 			buttonPanel.add(cancelButton);
 		}
 
@@ -386,20 +395,20 @@ public class CSVPanel extends JPanel implements Listener {
 			String levelText = levelField.getText();
 
 			if (firstName.isEmpty() || lastName.isEmpty() || levelText.isEmpty()) {
-				JOptionPane.showMessageDialog(this, "Veuillez remplir tous les champs.", "Erreur",
+				JOptionPane.showMessageDialog(this, "Tous les champs doivent être remplis !", "Erreur",
 						JOptionPane.ERROR_MESSAGE);
 			} else {
 				int level;
 				try {
 					level = Integer.parseInt(levelText);
 				} catch (NumberFormatException e) {
-					JOptionPane.showMessageDialog(this, "Le niveau doit être un entier.", "Erreur",
+					JOptionPane.showMessageDialog(this, "Le niveau doit être un nombre entier !", "Erreur",
 							JOptionPane.ERROR_MESSAGE);
 					return;
 				}
 
 				tableModel.addRow(new String[] { firstName, lastName, String.valueOf(level) });
-				table.revalidate();
+				tableModified();
 				dispose();
 			}
 		}

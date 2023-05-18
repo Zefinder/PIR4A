@@ -10,6 +10,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
 import java.util.List;
 
 import ppc.annotation.EventHandler;
@@ -235,8 +236,27 @@ public final class FileManager implements Manager, Listener {
 			statusEvent = new TournamentAddClassStatusEvent(null, EventStatus.ERROR,
 					"Le fichier de tournoi n'est pas un fichier !");
 		} else {
+			File[] tournamentDataFiles = getTournamentData(event.getTournamentName());
+			Arrays.sort(tournamentDataFiles);
+			int classNumber = 0;
+			for (File tournamentDataFile : tournamentDataFiles) {
+				try {
+					int classFile = Integer.parseInt(tournamentDataFile.getName().substring(5, 6));
+					if (classNumber == classFile)
+						classNumber++;
+					else
+						break;
+
+				} catch (NumberFormatException e) {
+					logs.writeWarningMessage(String.format("File %s isn't a regular tournament file, ignored...",
+							tournamentDataFile.getName()));
+				}
+			}
+
+			System.out.println(classNumber);
+
 			File destinationFile = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName()
-					+ "/class" + event.getClassNumber() + ".csv");
+					+ "/class" + classNumber + ".csv");
 
 			try {
 				Files.copy(toCopy.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
@@ -251,7 +271,6 @@ public final class FileManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(statusEvent);
 	}
 
-	// TODO Remove class (create events and handlers!)
 	@EventHandler
 	public void onDeleteClass(TournamentDeleteClassEvent event) {
 		File toDelete = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName() + "/class"

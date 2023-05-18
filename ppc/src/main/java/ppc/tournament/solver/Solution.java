@@ -1,4 +1,4 @@
-package ppc.projet.tournament;
+package ppc.tournament.solver;
 
 import java.util.HashMap;
 import java.util.Map;

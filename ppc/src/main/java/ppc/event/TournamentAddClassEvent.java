@@ -11,7 +11,6 @@ public class TournamentAddClassEvent extends Event {
 	
 	private String tournamentName;
 	private File tournamentFile;
-	private int classNumber;
 	
 	public TournamentAddClassEvent() {
 	}
@@ -19,7 +18,6 @@ public class TournamentAddClassEvent extends Event {
 	public TournamentAddClassEvent(String tournamentName, File tournamentFile, int classNumber) {
 		this.tournamentName = tournamentName;
 		this.tournamentFile = tournamentFile;
-		this.classNumber = classNumber;
 	}
 	
 	public String getTournamentName() {
@@ -28,10 +26,6 @@ public class TournamentAddClassEvent extends Event {
 	
 	public File getTournamentFile() {
 		return tournamentFile;
-	}
-	
-	public int getClassNumber() {
-		return classNumber;
 	}
 
 	@Override

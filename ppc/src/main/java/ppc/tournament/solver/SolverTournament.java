@@ -1,4 +1,4 @@
-package ppc.projet.tournament;
+package ppc.tournament.solver;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -18,7 +18,7 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
-public class Tournament {
+public class SolverTournament {
 
 	public static final int NUMBER_MATCHES = 6;
 	private int level;
@@ -36,7 +36,7 @@ public class Tournament {
 	private Integer[][] solution;
 	private int firstTable;
 	
-	public Tournament(String[][][] listClasses, int level, boolean soft, int firstTable) {
+	public SolverTournament(String[][][] listClasses, int level, boolean soft, int firstTable) {
 		Loader.loadNativeLibraries();
 		this.level = level;
 		this.allowMeetingSameStudent = soft;

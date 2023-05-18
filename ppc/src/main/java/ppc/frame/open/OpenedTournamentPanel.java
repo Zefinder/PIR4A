@@ -29,6 +29,7 @@ import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.TournamentAddClassEvent;
 import ppc.event.TournamentAddClassStatusEvent;
+import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.event.TournamentOpeningStatusEvent;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
@@ -250,7 +251,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridy = 3;
 		JLabel tableLabel = new JLabel("Numéro de la première table");
 		panel.add(tableLabel, c);
-		
+
 		c.gridx = 1;
 		c.gridy = 3;
 		tableOffset = new JTextField(10);
@@ -305,7 +306,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			groupsNumber = tournament.getGroupsNumber();
 			classNumber = 0;
 			csvPanel.setTounamentName(tournamentName);
-			
+
 			loadData(tournament);
 
 			tournamentNameLabel.setText("Nom du tournoi : " + tournamentName);
@@ -329,7 +330,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 			try {
 				List<Map<String, String[][]>> classData = InputFormat.parseCsv(event.getCSVFile());
-				csvPanel.addClass(classData);
+				csvPanel.addClass(classData, Integer.parseInt(event.getCSVFile().getName().substring(5, 6)));
 				System.out.println("Class added");
 			} catch (IOException | ParseException e) {
 				e.printStackTrace();
@@ -341,6 +342,15 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		}
 	}
 
+	@EventHandler
+	public void onRemovedClass(TournamentDeleteClassStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			classesNumberLabel.setText("Nombre de classes : " + --classNumber);
+		} else {
+			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+		}
+	}
+
 	private void loadData(Tournament tournament) {
 		System.out.println("Loading tournament data files");
 		File[] files = FileManager.getInstance().getTournamentData(tournament.getTournamentName());
@@ -349,7 +359,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			System.out.println("Reading file " + csvfile.getName());
 			try {
 				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile);
-				csvPanel.addClass(classData);
+				csvPanel.addClass(classData, Integer.parseInt(csvfile.getName().substring(5, 6)));
 				System.out.println("File added");
 				fileClassCount++;
 				classNumber++;

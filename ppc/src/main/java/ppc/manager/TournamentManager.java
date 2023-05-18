@@ -128,8 +128,8 @@ public final class TournamentManager implements Manager, Listener {
 
 				} catch (IOException e) {
 					e.printStackTrace();
-					createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.ERROR,
-							String.format("Le fichier %s.trn n'a pas pu être créé...", event.getName()));
+					createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.ERROR, String
+							.format("Le fichier %s.trn n'a pas pu être créé...\n" + e.getMessage(), event.getName()));
 				}
 			}
 		}

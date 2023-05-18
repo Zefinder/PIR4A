@@ -1,4 +1,4 @@
-package ppc.projet.tournament;
+package ppc.tournament.solver;
 
 public class LevelThread implements Runnable {
 	
@@ -30,7 +30,7 @@ public class LevelThread implements Runnable {
 	
 	@Override
 	public void run() {
-		Tournament tournament = new Tournament(classes, level, softConstraint, firstTable);
+		SolverTournament tournament = new SolverTournament(classes, level, softConstraint, firstTable);
 		this.solution = tournament.solve(timeout);
 	}
 }
