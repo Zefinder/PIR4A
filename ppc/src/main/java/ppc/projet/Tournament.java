@@ -38,7 +38,7 @@ public class Tournament {
 
 	private void initAttributes() {
 		nbClasses = initClasses.length;
-		
+
 		Integer[][] listClasses = initClasses;
 		for (Integer[] classs : initClasses)
 			nbStudents += classs.length;
@@ -61,15 +61,15 @@ public class Tournament {
 		Loader.loadNativeLibraries();
 		initAttributes();
 	}
-	
+
 	public Integer[][] getInitClasses() {
 		return this.initClasses;
 	}
-	
+
 	public boolean isAllowMeetingSameStudent() {
 		return this.allowMeetingSameStudent;
 	}
-	
+
 	public boolean isSolvable() {
 		return this.solvable;
 	}
@@ -84,6 +84,16 @@ public class Tournament {
 
 	public int getMaxClassesMet() {
 		return this.maxClassesMet;
+	}
+
+	public int[][] getRepartionSolution() {
+		if (solution == null) {
+			System.out.println("No solution for problem " + Arrays.deepToString(initClasses));
+			return null;
+		}
+			
+		
+		return solution.matches;
 	}
 
 	public double solve(int timeout) {
@@ -117,7 +127,7 @@ public class Tournament {
 				// associating the opponent to their class
 				opponentsClasses[student][game] = model.newIntVar(0, nbClasses - 1, "class_" + game);
 				model.addElement(opponents[student][game], studentClasses, opponentsClasses[student][game]);
-				
+
 				for (int classmate : classmates.get(student)) {
 					model.addDifferent(opponents[student][game], classmate);
 				}
@@ -277,33 +287,31 @@ public class Tournament {
 
 		// Debug
 		System.out.println(Arrays.deepToString(pawnDistribution));
-		
-		
+
 		// Checking if everyone has an opponent
 		int[] blackNumberPerClass = new int[pawnDistribution.length];
 		int[] whiteNumberPerClass = new int[pawnDistribution.length];
-		
+
 		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
 			whiteNumberPerClass[classNb] = pawnDistribution[classNb][0];
 			blackNumberPerClass[classNb] = pawnDistribution[classNb][1];
 		}
-		
-		
+
 		for (int classNb = 0; classNb < blackNumberPerClass.length; classNb++) {
 			int black = blackNumberPerClass[classNb];
 			int white = 0;
-			
+
 			for (int classNbW = 0; classNbW < whiteNumberPerClass.length; classNbW++)
 				if (classNbW != classNb)
 					white += whiteNumberPerClass[classNbW];
-			
+
 			if (black > white) {
 				this.solvable = false;
 				break;
 			}
 		}
-		
-		// Checking if each person has at least 6 opponents 
+
+		// Checking if each person has at least 6 opponents
 		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
 			int whiteOpponents = 0;
 			for (int whiteClass = 0; whiteClass < pawnDistribution.length; whiteClass++) {
@@ -381,11 +389,11 @@ public class Tournament {
 			this.nbStudentsMet = nbStudentsMet;
 			this.nbClassesMet = nbClassesMet;
 		}
-		
+
 		public int getNbClassesMet() {
 			return this.nbClassesMet;
 		}
-		
+
 		public int getNbStudentsMet() {
 			return this.nbStudentsMet;
 		}
@@ -461,17 +469,15 @@ public class Tournament {
 					sumStudentsMet += studentsMet.stream().distinct().count();
 				}
 			}
-			
+
 			// only storing the solution if it is better than the previous one
 			if (solution == null) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
 				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
-			}
-			else if (sumStudentsMet > solution.getNbStudentsMet()) {
+			} else if (sumStudentsMet > solution.getNbStudentsMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
 				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
-			}
-			else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet()) {
+			} else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
 				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			}

@@ -15,7 +15,7 @@ public class Benchmark {
 	private BlockingQueue<Elt<Tournament, Integer>> queue = new LinkedBlockingQueue<>();
 	private Set<Integer[][]> generatedProblems = new HashSet<>();
 	private static int nbProblemsSolved = 0;
-	private final int timeout = 900;
+	private final int timeout = 20;
 
 	public Benchmark() {
 		Integer[][] initProblem3 = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16, 17 } };
@@ -23,8 +23,8 @@ public class Benchmark {
 //		Integer[][] initProblem5 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13, 14, 15 } };
 //		Integer[][] initProblem6 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13 }, { 14, 15 } };
 //		Integer[][] initProblem7 = { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 }, { 12, 13 } };
-		
-		this.generateProblems(initProblem3, 1, 5, 20);
+
+		this.generateProblems(initProblem3, 1, 5, 2);
 	}
 
 	private synchronized int incrementNbProblemsSolved() {
@@ -79,11 +79,28 @@ public class Benchmark {
 		}
 	}
 
-	private void writeStatsFile(String fileName, Integer[][] classes, String params, String stats) throws IOException {
+	private void writeStatsFile(String fileName, Integer[][] classes, int[][] matches, String params, String stats)
+			throws IOException {
+
 		BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
 		writer.write(classes.length + "\n");
 		for (Integer[] c : classes)
 			writer.write(c.length + " ");
+
+		writer.write("\n");
+		if (matches == null) {
+			writer.write("null");
+		} else
+			for (int student = 0; student < matches.length; student++) {
+				for (int game = 0; game < matches[student].length; game++) {
+					if (game == matches[student].length - 1) {
+						writer.write(matches[student][game] + ";");
+					} else {
+						writer.write(matches[student][game] + " ");
+					}
+				}
+			}
+
 		writer.write("\n" + params + "\n" + stats);
 		writer.close();
 	}
@@ -109,7 +126,9 @@ public class Benchmark {
 					if (stats.isEmpty())
 						stats = walltime + " -1 -1";
 
-					writeStatsFile(fileName, tournament.getInitClasses(), params, stats);
+					int[][] matches = tournament.getRepartionSolution();
+
+					writeStatsFile(fileName, tournament.getInitClasses(), matches, params, stats);
 					System.out.println("Number of problems solved: " + incrementNbProblemsSolved());
 				}
 			} catch (InterruptedException | IOException e) {
