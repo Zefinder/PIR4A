@@ -2,18 +2,29 @@ package ppc.event;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class TournamentAddLevelGroupEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 	
-	// Variables you need here
+	private Map<String, String[][]> classes;
+	private int level;
 
-	public TournamentAddLevelGroupEvent() {
-		// KEEP IT LIKE THIS, CREATE ANOTHER CONSTRUCTOR !
+	public TournamentAddLevelGroupEvent() {}
+	
+	public TournamentAddLevelGroupEvent(Map<String, String[][]> classes, int level) {
+		this.classes = classes;
+		this.level = level;
 	}
 
-	// Getters here !
+	public Map<String, String[][]> getClasses() {
+		return classes;
+	}
+	
+	public int getLevel() {
+		return level;
+	}
 
 	@Override
 	public List<RegisteredListener> getHandlers() {

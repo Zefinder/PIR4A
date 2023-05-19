@@ -18,10 +18,9 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
-public class SolverTournament {
+public class TournamentSolver {
 
 	public static final int NUMBER_MATCHES = 6;
-	private int level;
 	private int nbStudents;
 	private int nbClasses;
 	private int[] studentClasses;
@@ -36,9 +35,8 @@ public class SolverTournament {
 	private Integer[][] solution;
 	private int firstTable;
 	
-	public SolverTournament(String[][][] listClasses, int level, boolean soft, int firstTable) {
+	public TournamentSolver(String[][][] listClasses, boolean soft, int firstTable) {
 		Loader.loadNativeLibraries();
-		this.level = level;
 		this.allowMeetingSameStudent = soft;
 		this.firstTable = firstTable;
 		this.nbClasses = listClasses.length;
@@ -344,7 +342,7 @@ public class SolverTournament {
 
 		@Override
 		public void onSolutionCallback() {
-			System.out.println("Solution " + ++solutionCount + " of level " + level);
+			System.out.println("Solution " + ++solutionCount);
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
 

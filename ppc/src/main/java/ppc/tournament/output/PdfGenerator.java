@@ -27,13 +27,13 @@ import com.itextpdf.text.pdf.PdfPTable;
 import com.itextpdf.text.pdf.PdfWriter;
 
 import ppc.tournament.solver.Solution;
-import ppc.tournament.solver.SolverTournament;
+import ppc.tournament.solver.TournamentSolver;
 
 public class PdfGenerator {
 
 	private List<Solution> solutions;
 	private int nbClasses;
-	private final int listMatchesColumnNb = 2 + SolverTournament.NUMBER_MATCHES;
+	private final int listMatchesColumnNb = 2 + TournamentSolver.NUMBER_MATCHES;
 	private String[] classNames;
 	private Map<Integer, BaseColor> colourMap = new HashMap<>();
 	private int lastLevelWithGhost;
@@ -109,12 +109,12 @@ public class PdfGenerator {
 		studentCell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 		table.addCell(studentCell);
 
-		for (int game = 1; game <= SolverTournament.NUMBER_MATCHES; game++) {
+		for (int game = 1; game <= TournamentSolver.NUMBER_MATCHES; game++) {
 			table.addCell(formatHeaderCell("Partie " + game));
 		}
 
 		PdfPCell adversaireCell = formatHeaderCell("Adversaire");
-		adversaireCell.setColspan(SolverTournament.NUMBER_MATCHES);
+		adversaireCell.setColspan(TournamentSolver.NUMBER_MATCHES);
 		table.addCell(adversaireCell);
 	}
 
@@ -122,7 +122,7 @@ public class PdfGenerator {
 		ghostTable.addCell(formatHeaderCell("Partie"));
 		ghostTable.addCell(formatHeaderCell("Niveau"));
 
-		for (int game = 1; game <= SolverTournament.NUMBER_MATCHES; game++)
+		for (int game = 1; game <= TournamentSolver.NUMBER_MATCHES; game++)
 			ghostTable.addCell(formatHeaderCell("Partie " + game));
 	}
 
@@ -156,7 +156,7 @@ public class PdfGenerator {
 			ghostTable.addCell(studentCell);
 			ghostTable.addCell(levelCell);
 		}
-		int[] ghostOpponents = new int[SolverTournament.NUMBER_MATCHES];
+		int[] ghostOpponents = new int[TournamentSolver.NUMBER_MATCHES];
 
 		Integer[][] matches = solution.getMatches();
 		int firstRealStudent = (solution.getGhost() == -1) ? 0 : 1;
@@ -387,12 +387,12 @@ public class PdfGenerator {
 	}
 	
 	private PdfPTable createFicheProfTables(int classNb, int level) {
-		float[] columns = new float[3 + SolverTournament.NUMBER_MATCHES];
+		float[] columns = new float[3 + TournamentSolver.NUMBER_MATCHES];
 		columns[0] = 3;
-		columns[1] = SolverTournament.NUMBER_MATCHES * 2;
-		for (int col = 2; col < 2 + SolverTournament.NUMBER_MATCHES; col++)
+		columns[1] = TournamentSolver.NUMBER_MATCHES * 2;
+		for (int col = 2; col < 2 + TournamentSolver.NUMBER_MATCHES; col++)
 			columns[col] = 2;
-		columns[2 + SolverTournament.NUMBER_MATCHES] = 3;
+		columns[2 + TournamentSolver.NUMBER_MATCHES] = 3;
 		PdfPTable table = new PdfPTable(columns);
 		table.setWidthPercentage(100);
 		
@@ -417,7 +417,7 @@ public class PdfGenerator {
 		table.addCell(formatHeaderCell("ID"));
 		table.addCell(formatHeaderCell("Nom de l'élève"));
 		
-		for (int game = 0; game < SolverTournament.NUMBER_MATCHES; game++)
+		for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++)
 			table.addCell(formatHeaderCell("" + (game + 1)));
 		
 		return table;
@@ -448,12 +448,12 @@ public class PdfGenerator {
 				nameCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
 				table.addCell(nameCell);
 				
-				for (int empty = 0; empty < SolverTournament.NUMBER_MATCHES + 1; empty++) {
+				for (int empty = 0; empty < TournamentSolver.NUMBER_MATCHES + 1; empty++) {
 					PdfPCell emptyCell = new PdfPCell();
 					emptyCell.setBorderWidth(0.25f);
 					if (i == currClass.length - 1)
 						emptyCell.setBorderWidthBottom(1);
-					if (empty == SolverTournament.NUMBER_MATCHES) 
+					if (empty == TournamentSolver.NUMBER_MATCHES) 
 						emptyCell.setBorderWidthRight(1);
 					table.addCell(emptyCell);
 				}
@@ -496,12 +496,12 @@ public class PdfGenerator {
 	}
 	
 	private void createStudentTables(Solution solution, List<List<PdfPTable>> studentTablesList, int nbStudentsPrevLevels) {
-		float[] columns = new float[3 + SolverTournament.NUMBER_MATCHES];
+		float[] columns = new float[3 + TournamentSolver.NUMBER_MATCHES];
 		columns[0] = 4;
 		columns[1] = 2;
-		for (int col = 2; col < 2 + SolverTournament.NUMBER_MATCHES; col++)
+		for (int col = 2; col < 2 + TournamentSolver.NUMBER_MATCHES; col++)
 			columns[col] = 1;
-		columns[2 + SolverTournament.NUMBER_MATCHES] = 2;
+		columns[2 + TournamentSolver.NUMBER_MATCHES] = 2;
 		
 		Integer[][] matches = solution.getMatches();
 		int firstRealStudent = (solution.getGhost() == -1) ? 0 : 1;
@@ -519,7 +519,7 @@ public class PdfGenerator {
 			
 			table.addCell(new PdfPCell(new Phrase("Partie")));
 			
-			for (int game = 1; game <= SolverTournament.NUMBER_MATCHES; game++)
+			for (int game = 1; game <= TournamentSolver.NUMBER_MATCHES; game++)
 				table.addCell(new PdfPCell(new Phrase("" + game)));
 			PdfPCell invisibleCell = new PdfPCell();
 			invisibleCell.setBorderWidth(0);
@@ -533,7 +533,7 @@ public class PdfGenerator {
 			table.addCell(nameCell);
 			
 			table.addCell(new PdfPCell(new Phrase("Table")));
-			for (int game = 0; game < SolverTournament.NUMBER_MATCHES; game++) {
+			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++) {
 				if (studentId < matches.length / 2)
 					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(studentId))));
 				else
@@ -542,7 +542,7 @@ public class PdfGenerator {
 			table.addCell(invisibleCell);
 			
 			table.addCell(new PdfPCell(new Phrase("Couleur")));
-			for (int game = 0; game < SolverTournament.NUMBER_MATCHES; game++) {
+			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++) {
 				PdfPCell colourCell = new PdfPCell();
 				if ((studentId < matches.length / 2 && game % 2 == 0) || (studentId >= matches.length / 2 && game % 2 == 1))
 					colourCell.setBackgroundColor(BaseColor.BLACK);
@@ -551,7 +551,7 @@ public class PdfGenerator {
 			table.addCell(new PdfPCell(new Phrase("Total")));
 			
 			table.addCell(new PdfPCell(new Phrase("Résultat")));
-			for (int game = 0; game < SolverTournament.NUMBER_MATCHES + 1; game++)
+			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES + 1; game++)
 				table.addCell(new PdfPCell());
 			
 			studentTablesList.get(studentClass).add(table);
