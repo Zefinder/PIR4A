@@ -67,8 +67,8 @@ public class TournamentSolverManager implements Manager, Listener {
 			for (String[][] classes : classesByLevel.get(key).values())
 				lvlClasses[classNb++] = classes;
 
-			LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getTimeout(),
-					event.getFirstTable());
+			LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
+					event.getStudentThreshold(), event.getTimeout(), event.getFirstTable(), event.isVerbose());
 			Thread thread = new Thread(lvlThread);
 			threads.add(thread);
 			lvlThreads.add(lvlThread);

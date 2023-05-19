@@ -18,37 +18,64 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
+import ppc.manager.LogsManager;
+
+/**
+ * <p>
+ * Solver for a level of the tournament.
+ * </p>
+ * 
+ * @author Adrien Jakubiak
+ * @author Sarah Mousset
+ *
+ */
 public class TournamentSolver {
 
 	public static final int NUMBER_MATCHES = 6;
 	private int nbStudents;
 	private int nbClasses;
+	private Integer[][] listClasses;
 	private int[] studentClasses;
+
 	private Integer ghost = -1;
 	private int ghostClass = -1;
+
+	private int bestNbStudentsMet = 0;
+	private int bestNbClassesMet = 0;
 	private int maxClassesMet = 0;
 	private int maxStudentsMet = 0;
-	private boolean allowMeetingSameStudent = false;
-	private Integer[][] listClasses;
+
+	private boolean allowMeetingSameStudent;
+	private int classThreshold;
+	private int studentThreshold;
+
 	private Map<Integer, Integer[]> classmates = new HashMap<>();
 	private Map<Integer, String[]> idToName = new HashMap<>();
 	private Integer[][] solution;
 	private int firstTable;
-	
-	public TournamentSolver(String[][][] listClasses, boolean soft, int firstTable) {
+
+	private LogsManager logs = LogsManager.getInstance();
+	private boolean verbose;
+
+	public TournamentSolver(String[][][] listClasses, boolean soft, int classThreshold, int studentThreshold,
+			int firstTable, boolean verbose) {
 		Loader.loadNativeLibraries();
 		this.allowMeetingSameStudent = soft;
+		this.classThreshold = classThreshold;
+		this.studentThreshold = studentThreshold;
 		this.firstTable = firstTable;
 		this.nbClasses = listClasses.length;
+		this.verbose = verbose;
 
 		for (String[][] classs : listClasses)
 			nbStudents += classs.length;
 		if (nbStudents % 2 == 1) {
-			System.out.println("adding ghost player");
+			if (verbose)
+				logs.writeInformationMessage("Adding ghost player");
 			ghost = nbStudents++;
 			nbClasses++;
 			listClasses = Arrays.copyOf(listClasses, listClasses.length + 1);
-			listClasses[listClasses.length - 1] = new String[][] { {ghost.toString(), ""} };
+			listClasses[listClasses.length - 1] = new String[][] { { ghost.toString(), "" } };
 		}
 
 		studentClasses = new int[nbStudents];
@@ -65,15 +92,12 @@ public class TournamentSolver {
 		Literal[][] sameStudentsMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
 
 		// Debug
-		/*System.out.print("camarades des joueurs : ");
-		for (Map.Entry<Integer, Integer[]> entry : classmates.entrySet()) {
-			System.out.print(entry.getKey() + ": [");
-			for (Integer id : entry.getValue()) {
-				System.out.print(id + " ");
-			}
-			System.out.print("] ");
-		}
-		System.out.println();*/
+		/*
+		 * System.out.print("camarades des joueurs : "); for (Map.Entry<Integer,
+		 * Integer[]> entry : classmates.entrySet()) { System.out.print(entry.getKey() +
+		 * ": ["); for (Integer id : entry.getValue()) { System.out.print(id + " "); }
+		 * System.out.print("] "); } System.out.println();
+		 */
 
 		for (int student = 0; student < opponents.length; student++) {
 			for (int game = 0; game < opponents[0].length; game++) {
@@ -163,18 +187,19 @@ public class TournamentSolver {
 
 		solver.solve(model, sp);
 
-		System.out.println("Final solution:");
-		System.out.println(this.toString());
-		System.out.println("Timed out after " + solver.wallTime());
+		if (verbose) {
+			String solutionMessage = "Final solution:\n" + this.toString() + "\nTimed out after " + solver.wallTime();
+			logs.writeInformationMessage(solutionMessage);
+		}
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost, firstTable);
 	}
 
 	/**
-	 * Init of students' classes from a CSV file. Chooses which students will start
-	 * with white/black pawns
+	 * Init of students' new ids. Chooses which students will start with white/black
+	 * pawns
 	 * 
 	 * @param listClasses
-	 * @return classes with the new ids
+	 * @return classes matrix with the new ids
 	 */
 	private Integer[][] newIdClasses(String[][][] listClasses) {
 		Integer[][] listClassesId = new Integer[listClasses.length][];
@@ -208,7 +233,8 @@ public class TournamentSolver {
 			}
 		});
 		String[][][] orderedClasses = tmpList.toArray(new String[0][][]);
-		System.out.println(Arrays.deepToString(orderedClasses));
+		// debug:
+		// System.out.println(Arrays.deepToString(orderedClasses));
 
 		boolean unbalanced = false;
 		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
@@ -246,7 +272,7 @@ public class TournamentSolver {
 		}
 
 		// Debug
-		System.out.println(Arrays.deepToString(pawnDistribution));
+		// System.out.println(Arrays.deepToString(pawnDistribution));
 
 		// computing maxClassesMet
 		for (int classNb = 0; classNb < classes; classNb++) {
@@ -262,27 +288,26 @@ public class TournamentSolver {
 		maxStudentsMet = (ghost == -1) ? nbStudents * NUMBER_MATCHES : (nbStudents - 1) * NUMBER_MATCHES;
 
 		// Debug
-		System.out.println("classes : ");
-		for (Integer[] classs : listClassesId) {
-			System.out.print("[ ");
-			for (Integer s : classs)
-				System.out.print(s + " ");
-			System.out.println("]");
-		}
+		/*
+		 * System.out.println("classes : "); for (Integer[] classs : listClassesId) {
+		 * System.out.print("[ "); for (Integer s : classs) System.out.print(s + " ");
+		 * System.out.println("]"); }
+		 */
 
 		// debug, printing studentClasses
-		System.out.print("studentClasses: [");
-		for (int i = 0; i < studentClasses.length; i++)
-			System.out.print(studentClasses[i] + " ");
-		System.out.println("]");
+		/*
+		 * System.out.print("studentClasses: ["); for (int i = 0; i <
+		 * studentClasses.length; i++) System.out.print(studentClasses[i] + " ");
+		 * System.out.println("]");
+		 */
 
 		return listClassesId;
 	}
 
 	/**
-	 * associates each student to its classmates (including themselves) for the
-	 * first half of students
+	 * Associates each student to its classmates (including themselves).
 	 * 
+	 * @param listClasses the classes of the tournament
 	 * @return the {@link HashMap} (idStudent -> classmates)
 	 */
 	private Map<Integer, Integer[]> getClassmates(Integer[][] listClasses) {
@@ -331,6 +356,16 @@ public class TournamentSolver {
 		return solutionString;
 	}
 
+	/**
+	 * <p>
+	 * Callback on each solution found. Stores the solution if better than the
+	 * previous one. Stops the search if the solution is optimal, or if the
+	 * thresholds are met.
+	 * </p>
+	 * 
+	 * @author Sarah Mousset
+	 *
+	 */
 	private class SolutionCallback extends CpSolverSolutionCallback {
 		private int solutionCount;
 		IntVar[][] opponents;
@@ -342,7 +377,7 @@ public class TournamentSolver {
 
 		@Override
 		public void onSolutionCallback() {
-			System.out.println("Solution " + ++solutionCount);
+			String solutionMessage = "Solution " + ++solutionCount;
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
 
@@ -366,15 +401,38 @@ public class TournamentSolver {
 				}
 			}
 
-			solution = solutionMatches;
+			// only storing the solution if it is better than the previous one
+			if (solution == null) {
+				solution = solutionMatches;
+				bestNbStudentsMet = sumStudentsMet;
+				bestNbClassesMet = sumClassesMet;
+			} else if (sumStudentsMet > bestNbStudentsMet) {
+				solution = solutionMatches;
+				bestNbStudentsMet = sumStudentsMet;
+				bestNbClassesMet = sumClassesMet;
+			} else if (sumStudentsMet == bestNbStudentsMet && sumClassesMet > bestNbClassesMet) {
+				solution = solutionMatches;
+				bestNbClassesMet = sumClassesMet;
+			}
 
-			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
-			System.out.println("Total students met: " + sumStudentsMet + " (maxmax: " + maxStudentsMet + ")");
+			solutionMessage += "Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t";
+			solutionMessage += "Total students met: " + sumStudentsMet + " (maxmax: " + maxStudentsMet + ")\n";
+
 			if (sumClassesMet == maxClassesMet && sumStudentsMet == maxStudentsMet) {
-				System.out.println("optimal solution found!");
+				solutionMessage += "Optimal solution found!\n";
+				stopSearch();
+			} else if (!allowMeetingSameStudent && (sumClassesMet / maxClassesMet) > classThreshold) {
+				solutionMessage += "Over threshold solution found!\n";
+				stopSearch();
+			} else if ((sumStudentsMet / maxStudentsMet) > studentThreshold
+					&& (sumClassesMet / maxClassesMet) > classThreshold) {
+				solutionMessage += "Over thresholds solution found!\n";
 				stopSearch();
 			}
-			System.out.println("Time spent: " + wallTime());
+
+			solutionMessage += "Time spent: " + wallTime();
+			if (verbose)
+				logs.writeInformationMessage(solutionMessage);
 		}
 	}
 
