@@ -24,7 +24,7 @@ public class Benchmark {
 //		Integer[][] initProblem6 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13 }, { 14, 15 } };
 //		Integer[][] initProblem7 = { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 }, { 12, 13 } };
 
-		this.generateProblems(initProblem3, 1, 5, 2);
+		this.generateProblems(initProblem3, 1, 2, 1);
 	}
 
 	private synchronized int incrementNbProblemsSolved() {
@@ -94,7 +94,10 @@ public class Benchmark {
 			for (int student = 0; student < matches.length; student++) {
 				for (int game = 0; game < matches[student].length; game++) {
 					if (game == matches[student].length - 1) {
-						writer.write(matches[student][game] + ";");
+						if (student == matches.length - 1)
+							writer.write(String.valueOf(matches[student][game]));
+						else
+							writer.write(matches[student][game] + ";");
 					} else {
 						writer.write(matches[student][game] + " ");
 					}

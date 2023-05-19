@@ -91,8 +91,7 @@ public class Tournament {
 			System.out.println("No solution for problem " + Arrays.deepToString(initClasses));
 			return null;
 		}
-			
-		
+
 		return solution.matches;
 	}
 
@@ -447,8 +446,9 @@ public class Tournament {
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
 
-			if (!stats.isEmpty())
-				stats += "; ";
+			if (stats == null) {
+				stats = "";
+			}
 
 			int[][] solutionMatches = new int[opponents.length][opponents[0].length];
 
@@ -473,13 +473,22 @@ public class Tournament {
 			// only storing the solution if it is better than the previous one
 			if (solution == null) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				if (stats.isEmpty())
+					stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				else
+					stats += ";" + wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			} else if (sumStudentsMet > solution.getNbStudentsMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				if (stats.isEmpty())
+					stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				else
+					stats += ";" + wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			} else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-				stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				if (stats.isEmpty())
+					stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				else
+					stats += ";" + wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			}
 
 			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
