@@ -2,6 +2,8 @@ package ppc.manager;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +41,7 @@ public class TournamentSolverManager implements Manager, Listener {
 	private static final TournamentSolverManager instance = new TournamentSolverManager();
 
 	private Map<Integer, Map<String, String[][]>> classesByLevel;
+	private Map<Integer[], Solution> precalculatedSolutions;
 	private LogsManager logs = LogsManager.getInstance();
 
 	public TournamentSolverManager() {
@@ -50,6 +53,20 @@ public class TournamentSolverManager implements Manager, Listener {
 		EventManager.getInstance().registerListener(this);
 
 		this.classesByLevel = new HashMap<>();
+		this.loadPreData();
+	}
+
+	private void loadPreData() {
+		this.precalculatedSolutions = new HashMap<>();
+		// TODO Ouvrir le fichier et mettre dans la map
+	}
+
+	private Integer[] getClassesConfiguration(String[][][] levelClasses) {
+		Integer[] configuration = new Integer[levelClasses.length];
+		for (int classNb = 0; classNb < levelClasses.length; classNb++)
+			configuration[classNb] = levelClasses[classNb].length;
+		Arrays.sort(configuration, Collections.reverseOrder());
+		return configuration;
 	}
 
 	@EventHandler
@@ -58,21 +75,34 @@ public class TournamentSolverManager implements Manager, Listener {
 		int nbClasses = classesByLevel.values().iterator().next().size();
 		List<Thread> threads = new ArrayList<>();
 		List<LevelThread> lvlThreads = new ArrayList<>();
+		List<Solution> solutions = new ArrayList<>();
+		int lastLevelWithGhost = -1;
 
 		// so that the levels are in increasing order
 		SortedSet<Integer> keys = new TreeSet<>(classesByLevel.keySet());
+		int lvl = 0;
 		for (Integer key : keys) {
 			String[][][] lvlClasses = new String[nbClasses][][];
 			int classNb = 0;
-			for (String[][] classes : classesByLevel.get(key).values())
-				lvlClasses[classNb++] = classes;
+			for (String[][] currentClass : classesByLevel.get(key).values())
+				lvlClasses[classNb++] = currentClass;
 
-			LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
-					event.getStudentThreshold(), event.getTimeout(), event.getFirstTable(), event.isVerbose());
-			Thread thread = new Thread(lvlThread);
-			threads.add(thread);
-			lvlThreads.add(lvlThread);
-			thread.start();
+			Integer[] configuration = getClassesConfiguration(lvlClasses);
+			if (precalculatedSolutions.containsKey(configuration)) {
+				// TODO: also check soft constraint and maximisations
+				Solution currentSolution = precalculatedSolutions.get(configuration);
+				solutions.add(currentSolution);
+				if (currentSolution.getGhost() != -1)
+					lastLevelWithGhost = lvl;
+			} else {
+				LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
+						event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
+				Thread thread = new Thread(lvlThread);
+				threads.add(thread);
+				lvlThreads.add(lvlThread);
+				thread.start();
+			}
+			lvl++;
 		}
 
 		// waiting for all threads to be done
@@ -84,19 +114,17 @@ public class TournamentSolverManager implements Manager, Listener {
 			}
 		}
 
-		// retrieving solutions
-		int lastLevelWithGhost = -1;
-		List<Solution> solutions = new ArrayList<>();
-		for (int lvl = 0; lvl < lvlThreads.size(); lvl++) {
-			Solution currentSolution = lvlThreads.get(lvl).getSolution();
+		// retrieving solutions from threads
+		for (LevelThread lvlThread : lvlThreads) {
+			Solution currentSolution = lvlThread.getSolution();
 			solutions.add(currentSolution);
-			if (currentSolution.getGhost() != -1)
-				lastLevelWithGhost = lvl;
+			if (currentSolution.getGhost() != -1 && lvlThread.getLevel() > lastLevelWithGhost)
+				lastLevelWithGhost = lvlThread.getLevel();
 		}
 
 		// generating the PDF files
 		String[] classNames = classesByLevel.values().iterator().next().keySet().toArray(new String[0]);
-		PdfGenerator pdfGen = new PdfGenerator(solutions, classNames, nbClasses, lastLevelWithGhost);
+		PdfGenerator pdfGen = new PdfGenerator(solutions, classNames, nbClasses, event.getFirstTable(), lastLevelWithGhost);
 		try {
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
 			pdfGen.createPdfListeMatches();

@@ -40,6 +40,7 @@ public class TournamentSolver {
 	private Integer ghost = -1;
 	private int ghostClass = -1;
 
+	private double bestRuntime = 0;
 	private int bestNbStudentsMet = 0;
 	private int bestNbClassesMet = 0;
 	private int maxClassesMet = 0;
@@ -52,18 +53,16 @@ public class TournamentSolver {
 	private Map<Integer, Integer[]> classmates = new HashMap<>();
 	private Map<Integer, String[]> idToName = new HashMap<>();
 	private Integer[][] solution;
-	private int firstTable;
 
 	private LogsManager logs = LogsManager.getInstance();
 	private boolean verbose;
 
 	public TournamentSolver(String[][][] listClasses, boolean soft, int classThreshold, int studentThreshold,
-			int firstTable, boolean verbose) {
+			boolean verbose) {
 		Loader.loadNativeLibraries();
 		this.allowMeetingSameStudent = soft;
 		this.classThreshold = classThreshold;
 		this.studentThreshold = studentThreshold;
-		this.firstTable = firstTable;
 		this.nbClasses = listClasses.length;
 		this.verbose = verbose;
 
@@ -191,7 +190,8 @@ public class TournamentSolver {
 			String solutionMessage = "Final solution:\n" + this.toString() + "\nTimed out after " + solver.wallTime();
 			logs.writeInformationMessage(solutionMessage);
 		}
-		return new Solution(solution, studentClasses, listClasses, idToName, ghost, firstTable);
+		return new Solution(solution, studentClasses, listClasses, idToName, ghost, allowMeetingSameStudent,
+				bestRuntime, bestNbStudentsMet, bestNbClassesMet);
 	}
 
 	/**
@@ -406,13 +406,16 @@ public class TournamentSolver {
 				solution = solutionMatches;
 				bestNbStudentsMet = sumStudentsMet;
 				bestNbClassesMet = sumClassesMet;
+				bestRuntime = wallTime();
 			} else if (sumStudentsMet > bestNbStudentsMet) {
 				solution = solutionMatches;
 				bestNbStudentsMet = sumStudentsMet;
 				bestNbClassesMet = sumClassesMet;
+				bestRuntime = wallTime();
 			} else if (sumStudentsMet == bestNbStudentsMet && sumClassesMet > bestNbClassesMet) {
 				solution = solutionMatches;
 				bestNbClassesMet = sumClassesMet;
+				bestRuntime = wallTime();
 			}
 
 			solutionMessage += "Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t";

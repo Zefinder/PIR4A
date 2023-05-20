@@ -16,30 +16,34 @@ public class LevelThread implements Runnable {
 	private int classThreshold;
 	private int studentThreshold;
 	private int timeout;
-	private int firstTable = 1;
+	private int level;
 	private volatile Solution solution;
 
 	private boolean verbose;
 
 	public LevelThread(String[][][] classes, boolean softConstraint, int classThreshold, int studentThreshold,
-			int timeout, int firstTable, boolean verbose) {
+			int timeout, int level, boolean verbose) {
 		this.classes = classes;
 		this.softConstraint = softConstraint;
 		this.classThreshold = classThreshold;
 		this.studentThreshold = studentThreshold;
 		this.timeout = timeout;
-		this.firstTable = firstTable;
+		this.level = level;
 		this.verbose = verbose;
 	}
 
 	public Solution getSolution() {
 		return this.solution;
 	}
+	
+	public int getLevel() {
+		return level;
+	}
 
 	@Override
 	public void run() {
 		TournamentSolver tournament = new TournamentSolver(classes, softConstraint, classThreshold, studentThreshold,
-				firstTable, verbose);
+				verbose);
 		this.solution = tournament.solve(timeout);
 	}
 }

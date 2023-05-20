@@ -1,5 +1,7 @@
 package ppc.tournament.solver;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -17,28 +19,48 @@ public class Solution {
 	private Integer[][] matches;
 	private int[] studentClasses;
 	private Integer[][] listClasses;
+
 	private Map<Integer, Integer> idToTable;
 	private Map<Integer, String[]> idToName;
+	private Integer[] classesConfiguration;
+
 	private int ghost;
-	private int firstTable;
+	private boolean softConstraint;
+	private double runtime;
+	private int maxStudentsMet;
+	private int maxClassesMet;
 
 	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String[]> idToName,
-			int ghost, int firstTable) {
+			int ghost, boolean softConstraint, double runtime, int maxStudentsMet, int maxClassesMet) {
 		this.matches = matches;
 		this.studentClasses = studentClasses;
 		this.listClasses = listClasses;
 		this.idToName = idToName;
 		this.ghost = ghost;
-		this.firstTable = firstTable;
+		this.softConstraint = softConstraint;
+		this.runtime = runtime;
+		this.maxStudentsMet = maxStudentsMet;
+		this.maxClassesMet = maxClassesMet;
 	}
 
 	private void initIdToTable() {
 		this.idToTable = new HashMap<>();
 		int firstStudent = (this.ghost == -1) ? 0 : 1;
 		int offset = (this.ghost == -1) ? 1 : 0;
-		int table = firstTable;
+		int table = 1;
 		for (int student = firstStudent; student <= matches.length / 2 - offset; student++)
 			this.idToTable.put(student, table++);
+	}
+	
+	public Integer[] getClassesConfiguration() {
+		if (this.classesConfiguration == null) {
+			classesConfiguration = new Integer[listClasses.length];
+			for (int classNb = 0; classNb < listClasses.length; classNb++) {
+				classesConfiguration[classNb] = listClasses[classNb].length;
+			}
+			Arrays.sort(classesConfiguration, Collections.reverseOrder());
+		}
+		return this.classesConfiguration;
 	}
 
 	public Integer[][] getMatches() {
@@ -53,6 +75,13 @@ public class Solution {
 		return this.listClasses;
 	}
 
+	/**
+	 * Returns the table number to which is associated a student id. The student id
+	 * must be in the first half of the students.
+	 * 
+	 * @param id the student id
+	 * @return the table to which is associated the student id
+	 */
 	public int getIdToTable(int id) {
 		if (this.idToTable == null)
 			this.initIdToTable();
@@ -65,5 +94,21 @@ public class Solution {
 
 	public int getGhost() {
 		return this.ghost;
+	}
+
+	public boolean isSoftConstraint() {
+		return softConstraint;
+	}
+
+	public double getRuntime() {
+		return runtime;
+	}
+
+	public int getMaxStudentsMet() {
+		return maxStudentsMet;
+	}
+
+	public int getMaxClassesMet() {
+		return maxClassesMet;
 	}
 }

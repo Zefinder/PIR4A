@@ -36,13 +36,15 @@ public class PdfGenerator {
 	private final int listMatchesColumnNb = 2 + TournamentSolver.NUMBER_MATCHES;
 	private String[] classNames;
 	private Map<Integer, BaseColor> colourMap = new HashMap<>();
+	private int firstTable;
 	private int lastLevelWithGhost;
 	private boolean needsGhosts = false;
 
-	public PdfGenerator(List<Solution> solutions, String[] classNames, int nbClasses, int lastLevelWithGhost) {
+	public PdfGenerator(List<Solution> solutions, String[] classNames, int nbClasses, int firstTable, int lastLevelWithGhost) {
 		this.solutions = solutions;
 		this.classNames = classNames;
 		this.nbClasses = nbClasses;
+		this.firstTable = firstTable;
 		this.lastLevelWithGhost = lastLevelWithGhost;
 		if (lastLevelWithGhost != -1) {
 			this.needsGhosts = true;
@@ -234,7 +236,7 @@ public class PdfGenerator {
 		addGhostTableHeader(ghostTable);
 
 		int nbStudents = 0;
-		int nbTables = 0;
+		int nbTables = firstTable;
 		for (int level = 0; level < solutions.size(); level++) {
 			Solution solution = solutions.get(level);
 			PdfPTable table = new PdfPTable(listMatchesColumnNb);
@@ -535,9 +537,9 @@ public class PdfGenerator {
 			table.addCell(new PdfPCell(new Phrase("Table")));
 			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++) {
 				if (studentId < matches.length / 2)
-					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(studentId))));
+					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(studentId) + firstTable)));
 				else
-					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(matches[studentId][game]))));
+					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(matches[studentId][game]) + firstTable)));
 			}
 			table.addCell(invisibleCell);
 			
