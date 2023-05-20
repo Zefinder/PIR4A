@@ -124,6 +124,11 @@ public final class SettingsManager implements Manager, Listener {
 		}
 	}
 
+	/**
+	 * Listener called when settings are updated in the main panel.
+	 * 
+	 * @param event the called event
+	 */
 	@EventHandler
 	public void onSettingsUpdated(SettingsChangeEvent event) {
 		SettingsChangeStatusEvent statusEvent;
@@ -150,7 +155,7 @@ public final class SettingsManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(statusEvent);
 	}
 
-	public boolean verifyProperties(String resultsPath, String createString, String matchesNumberString,
+	private boolean verifyProperties(String resultsPath, String createString, String matchesNumberString,
 			String groupsNumberString, String barColor, String maxTimeString, String maxStudentsMetString,
 			String maxClassesMetString) {
 		boolean toReset = false;
@@ -297,34 +302,74 @@ public final class SettingsManager implements Manager, Listener {
 		return toReset;
 	}
 
+	/**
+	 * Returns if a folder needs to be created when copying the results' directory.
+	 * 
+	 * @return true if a folder needs to be created
+	 */
 	public boolean createFolderWhenCopy() {
 		return props.get(CREATE_FOLDER_COPY_RESULTS).equals("1");
 	}
 
+	/**
+	 * Returns the path of the results' folder.
+	 * 
+	 * @return the path of the results' folder
+	 */
 	public String getResultsPath() {
 		return props.getProperty(RESULTS_PATH_PROPERTY);
 	}
 
+	/**
+	 * Returns the default number of rounds when creating a new tournament.
+	 * 
+	 * @return the default number of rounds
+	 */
 	public int getMatchesNumber() {
 		return Integer.valueOf(props.getProperty(MATCHES_NUMBER));
 	}
 
+	/**
+	 * Returns the default number of level groups when creating a new tournament.
+	 * 
+	 * @return the default number of level groups
+	 */
 	public int getGroupsNumber() {
 		return Integer.valueOf(props.getProperty(GROUPS_NUMBER));
 	}
 
+	/**
+	 * Returns the default search time when creating a new tournament.
+	 * 
+	 * @return the default search time
+	 */
 	public int getMaxTime() {
 		return Integer.valueOf(props.getProperty(MAX_TIME_PROPERTY));
 	}
 
+	/**
+	 * Returns the default threshold of students met when creating a new tournament.
+	 * 
+	 * @return the default threshold of students met
+	 */
 	public float getStudentsMetThreshold() {
 		return Float.valueOf(props.getProperty(MAX_STUDENTS_MET_TH_PROPERTY));
 	}
 
+	/**
+	 * Returns the default threshold of classes met when creating a new tournament.
+	 * 
+	 * @return the default threshold of classes met
+	 */
 	public float getClassesMetThreshold() {
 		return Float.valueOf(props.getProperty(MAX_CLASSES_MET_TH_PROPERTY));
 	}
 
+	/**
+	 * Returns the color of the progress bar.
+	 * 
+	 * @return the default color of the progress bar
+	 */
 	public String getProgressBarColor() {
 		return props.getProperty(PROGRESSBAR_COLOR_PROPERTY);
 	}

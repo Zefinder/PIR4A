@@ -97,6 +97,11 @@ public final class TournamentManager implements Manager, Listener {
 		logs.writeInformationMessage("TournamentManager initialised!");
 	}
 
+	/**
+	 * Listener called when a tournament is created in the main frame.
+	 * 
+	 * @param event the called event
+	 */
 	@EventHandler
 	public void onCreateTournament(TournamentCreateEvent event) {
 		Tournament tournament = tournamentList.get(event.getName());
@@ -145,6 +150,11 @@ public final class TournamentManager implements Manager, Listener {
 		writer.close();
 	}
 
+	/**
+	 * Listener called when a tournament is opened in the main frame.
+	 * 
+	 * @param event the called event
+	 */
 	@EventHandler
 	public void onOpenTournament(TournamentOpenEvent event) {
 		Tournament tournament = tournamentList.get(event.getTournamentName());
@@ -162,10 +172,21 @@ public final class TournamentManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(openingEvent);
 	}
 
+	/**
+	 * Returns the {@link Tournament} class from the tournament name.
+	 * 
+	 * @param tournamentName the tournament name
+	 * @return the tournament class corresponding to the name or {@code null} if not present
+	 */
 	public Tournament getTournament(String tournamentName) {
 		return tournamentList.get(tournamentName);
 	}
 
+	/**
+	 * Returns the list of registered tournaments (ie. tournaments without any errors)
+	 * 
+	 * @return the list of registered tournaments
+	 */
 	public String[] getTournaments() {
 		return tournamentList.keySet().toArray(String[]::new);
 	}

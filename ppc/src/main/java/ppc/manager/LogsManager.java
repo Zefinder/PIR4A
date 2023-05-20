@@ -149,6 +149,11 @@ public final class LogsManager implements Manager {
 		writeMessage(MessageNature.FATAL, messageString);
 	}
 
+	/**
+	 * Returns the list of all registered messages.
+	 * 
+	 * @return the list of all registered messages
+	 */
 	public List<Message> getMessages() {
 		return messagesList;
 	}

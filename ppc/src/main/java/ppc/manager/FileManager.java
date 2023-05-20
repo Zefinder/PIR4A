@@ -131,26 +131,47 @@ public final class FileManager implements Manager, Listener {
 		logs.writeInformationMessage("FileManager initialised!");
 	}
 
-	public File getSettingsFile() {
+	/**
+	 * Returns the settings file for the {@link SettingsManager}.
+	 * 
+	 * @return the settings file
+	 */
+	File getSettingsFile() {
 		return settingsFile;
 	}
 
-	public String getResDirectoryPath() {
+	/**
+	 * Returns the results' directory path for the {@link SettingsManager}.
+	 * 
+	 * @return the results' directory path
+	 */
+	String getResDirectoryPath() {
 		return resDirectory.getAbsolutePath();
 	}
 
-	public void changeResDirectory(File resDirectory) {
+	/**
+	 * Changes the results' directory during {@link SettingsManager}'s init.
+	 * 
+	 * @param resDirectory the new directory
+	 */
+	void changeResDirectory(File resDirectory) {
 		this.resDirectory = resDirectory;
 	}
 
-	public void changeCopyResDirectory(File resDirectory) {
+	/**
+	 * Changes the results' directory and copy all files in it into the new
+	 * directory.
+	 * 
+	 * @param resDirectory the new directory
+	 */
+	void changeCopyResDirectory(File resDirectory) {
 		if (!this.resDirectory.equals(resDirectory)) {
 			copyDirectory(this.resDirectory, resDirectory);
 			this.resDirectory = resDirectory;
 		}
 	}
 
-	public void copyResultsFile(File tournamentResultsFolder, File destinationFolder) throws IOException {
+	private void copyResultsFile(File tournamentResultsFolder, File destinationFolder) throws IOException {
 		File[] files = tournamentResultsFolder.listFiles(file -> file.isFile() && file.getName().endsWith(".pdf"));
 		if (SettingsManager.getInstance().createFolderWhenCopy()) {
 			destinationFolder = new File(destinationFolder.getAbsolutePath() + "/" + tournamentResultsFolder.getName());
@@ -165,19 +186,44 @@ public final class FileManager implements Manager, Listener {
 		}
 	}
 
-	public File[] getTournamentFiles() {
+	/**
+	 * Return all tournament files present in the tournament directory.
+	 * 
+	 * @return the list of tournament files
+	 */
+	File[] getTournamentFiles() {
 		return tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
 	}
 
-	public File getTournamentDataFolder(String tournamentName) {
+	/**
+	 * Return the tournament data directory for the specified tournament.
+	 * 
+	 * @param tournamentName the name of the tournament
+	 * @return the tournament data folder
+	 */
+	File getTournamentDataFolder(String tournamentName) {
 		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName);
 	}
 
+	/**
+	 * Get CSV files in the data folder of the specified tournament.
+	 * 
+	 * @param tournamentName the name of the tournament
+	 * @return the list of CSV files
+	 */
 	public File[] getTournamentData(String tournamentName) {
 		return new File(tournamentDataDirectory.getAbsolutePath() + "/" + tournamentName).listFiles();
 	}
 
-	public File createTournamentFile(String tournamentName) throws IOException {
+	/**
+	 * Creates a tournament file and a data folder for the specified tournament
+	 * name.
+	 * 
+	 * @param tournamentName the name of the tournament
+	 * @return the newly-created tournament file
+	 * @throws IOException if an error occurs
+	 */
+	File createTournamentFile(String tournamentName) throws IOException {
 		File tournamentFile = new File(tournamentDirectory.getAbsolutePath() + "/" + tournamentName + ".trn");
 		tournamentFile.createNewFile();
 
@@ -187,10 +233,21 @@ public final class FileManager implements Manager, Listener {
 		return tournamentFile;
 	}
 
+	/**
+	 * Lists all tournament for which results have been generated.
+	 * 
+	 * @return a list of tournament
+	 */
 	public File[] getResultFiles() {
 		return resDirectory.listFiles(file -> file.isDirectory());
 	}
 
+	/**
+	 * Listener called when a result has been chosen and needs to be copied
+	 * somewhere.
+	 * 
+	 * @param event the called event
+	 */
 	@EventHandler
 	public void onCopyRequested(TournamentCopyEvent event) {
 		File tournamentResultsFolder = new File(resDirectory + "/" + event.getTournamentName());
@@ -222,6 +279,12 @@ public final class FileManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(statusEvent);
 	}
 
+	/**
+	 * Listener called when a class file has been chosen when adding a class for an
+	 * opened tournament.
+	 * 
+	 * @param event the called event
+	 */
 	@EventHandler
 	public void onClassFileSelected(TournamentAddClassEvent event) {
 		File toCopy = event.getTournamentFile();
@@ -271,6 +334,12 @@ public final class FileManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(statusEvent);
 	}
 
+	/**
+	 * Listener called when a class file has been chosen to be deleted for an opened
+	 * tournament.
+	 * 
+	 * @param event the called event
+	 */
 	@EventHandler
 	public void onDeleteClass(TournamentDeleteClassEvent event) {
 		File toDelete = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName() + "/class"
@@ -293,6 +362,11 @@ public final class FileManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(statusEvent);
 	}
 
+	/**
+	 * Writes logs into a file in the logs directory.
+	 * 
+	 * @throws IOException if an error occurs
+	 */
 	public void writeLogs() throws IOException {
 		DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyyyy'_'HHmmss");
 

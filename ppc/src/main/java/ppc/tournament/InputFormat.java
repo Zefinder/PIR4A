@@ -6,20 +6,18 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Class that parses a CSV file and returns everything in the format used by the
+ * tournament solver.
+ * 
+ * @author Adrien Jakubiak
+ *
+ */
 public class InputFormat {
-	public static void main(String[] args) throws IOException, ParseException {
-		File csv = new File(args[0]);
-		List<Map<String, String[][]>> mapData = parseCsv(csv);
-
-		System.out.println(mapData.toString());
-		
-		mapData.stream().forEach(map -> map.values().forEach(names -> System.out.println(Arrays.deepToString(names))));
-	}
 
 	/**
 	 * <p>
@@ -150,7 +148,7 @@ public class InputFormat {
 				int groupNumber = Integer.valueOf(line.get(2));
 				if (groupNumber > maxGroup)
 					maxGroup = groupNumber;
-				
+
 				if (groupNumber < minGroup)
 					minGroup = groupNumber;
 

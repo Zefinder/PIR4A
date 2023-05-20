@@ -7,9 +7,18 @@ import java.lang.annotation.Documented;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 
+import ppc.manager.EventManager;
+
 /**
- * This annotation indicates that the class is a listener and needs
- * to be registered during init time.
+ * <p>
+ * This annotation indicates that the class is a listener and needs to be
+ * registered during init time.
+ * </p>
+ * 
+ * <p>
+ * All methods annotated with this should not be invoked by the user. Methods
+ * are called asynchronously by the {@link EventManager}
+ * </p>
  */
 @Documented
 @Retention(RUNTIME)
