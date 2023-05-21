@@ -75,7 +75,7 @@ public class Launch {
 	public static void main(String[] args) throws IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, NoSuchMethodException, SecurityException, IOException {
 		init();
-
+		
 		MainFrame mf = new MainFrame();
 		mf.initFrame();
 	}

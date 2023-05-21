@@ -2,6 +2,7 @@ package ppc.manager;
 
 import static ppc.annotation.ManagerPriority.MEDIUM;
 
+import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
@@ -9,6 +10,8 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Properties;
+
+import javax.swing.UIManager;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
@@ -46,6 +49,38 @@ public final class SettingsManager implements Manager, Listener {
 	private File settingsFile;
 	private Properties props;
 	private LogsManager logs = LogsManager.getInstance();
+	private ColorBar[] barColors;
+	private int colorBarChosen;
+
+	private static class ColorBar {
+		private Color background;
+		private Color foreground;
+		private Color selectionBackground;
+		private Color selectionForeground;
+
+		public ColorBar(Color background, Color foreground, Color selectionBackground, Color selectionForeground) {
+			this.background = background;
+			this.foreground = foreground;
+			this.selectionBackground = selectionBackground;
+			this.selectionForeground = selectionForeground;
+		}
+
+		public Color getBackground() {
+			return background;
+		}
+
+		public Color getForeground() {
+			return foreground;
+		}
+
+		public Color getSelectionBackground() {
+			return selectionBackground;
+		}
+
+		public Color getSelectionForeground() {
+			return selectionForeground;
+		}
+	}
 
 	private SettingsManager() {
 
@@ -56,6 +91,24 @@ public final class SettingsManager implements Manager, Listener {
 		logs.writeInformationMessage("Initialising SettingsManager...");
 
 		EventManager.getInstance().registerListener(this);
+
+		// Creating bar colors
+		barColors = new ColorBar[3];
+
+		ColorBar defaultColor = new ColorBar((Color) UIManager.get("ProgressBar.background"),
+				(Color) UIManager.get("ProgressBar.foreground"),
+				(Color) UIManager.get("ProgressBar.selectionBackground"),
+				(Color) UIManager.get("ProgressBar.selectionForeground"));
+
+		ColorBar greenColor = new ColorBar(new Color(255, 255, 255), new Color(164, 198, 136), new Color(164, 198, 136),
+				new Color(255, 255, 255));
+
+		ColorBar violetColor = new ColorBar(new Color(255, 255, 255), new Color(150, 141, 163),
+				new Color(150, 141, 163), new Color(255, 255, 255));
+		
+		barColors[0] = defaultColor;
+		barColors[1] = greenColor;
+		barColors[2] = violetColor;
 
 		// Getting settings file
 		settingsFile = FileManager.getInstance().getSettingsFile();
@@ -76,7 +129,13 @@ public final class SettingsManager implements Manager, Listener {
 		if (props.isEmpty()) {
 			logs.writeWarningMessage("Empty settings file... Creating one with default parameters!");
 			resetProperties();
-			writeProperties();
+			try {
+				writeProperties();
+			} catch (IOException e) {
+				System.out.println(
+						"Error when first creating the settings file... Settings can't be updated nor stored!");
+				e.printStackTrace();
+			}
 		} else {
 			boolean toReset;
 			if (props.size() != 8)
@@ -91,11 +150,21 @@ public final class SettingsManager implements Manager, Listener {
 			// Reset if needed
 			if (toReset) {
 				resetProperties();
-				writeProperties();
+				try {
+					writeProperties();
+				} catch (IOException e) {
+					System.err.println("Error when writing properties");
+					System.err.println("Seek for help...");
+					e.printStackTrace();
+				}
 				logs.writeInformationMessage("Settings got reset!");
 			} else {
 				FileManager.getInstance().changeResDirectory(new File(props.getProperty(RESULTS_PATH_PROPERTY)));
 
+				UIManager.put("ProgressBar.background", barColors[colorBarChosen].getBackground());
+				UIManager.put("ProgressBar.foreground", barColors[colorBarChosen].getForeground());
+				UIManager.put("ProgressBar.selectionBackground", barColors[colorBarChosen].getSelectionBackground());
+				UIManager.put("ProgressBar.selectionForeground", barColors[colorBarChosen].getSelectionForeground());
 			}
 		}
 
@@ -112,16 +181,13 @@ public final class SettingsManager implements Manager, Listener {
 		props.setProperty(MAX_TIME_PROPERTY, "1800");
 		props.setProperty(MAX_STUDENTS_MET_TH_PROPERTY, "1f");
 		props.setProperty(MAX_CLASSES_MET_TH_PROPERTY, "1f");
+		colorBarChosen = 0;
 	}
 
-	private void writeProperties() {
-		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(settingsFile));
-			props.store(writer, "Settings file");
-			writer.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+	private void writeProperties() throws IOException {
+		BufferedWriter writer = new BufferedWriter(new FileWriter(settingsFile));
+		props.store(writer, "Settings file");
+		writer.close();
 	}
 
 	/**
@@ -148,8 +214,18 @@ public final class SettingsManager implements Manager, Listener {
 			props.setProperty(MAX_STUDENTS_MET_TH_PROPERTY, event.getMaxStudentsMetString());
 			props.setProperty(MAX_CLASSES_MET_TH_PROPERTY, event.getMaxClassesMetString());
 			FileManager.getInstance().changeCopyResDirectory(new File(props.getProperty(RESULTS_PATH_PROPERTY)));
-			statusEvent = new SettingsChangeStatusEvent(EventStatus.SUCCESS);
-			writeProperties();
+			UIManager.put("ProgressBar.background", barColors[colorBarChosen].getBackground());
+			UIManager.put("ProgressBar.foreground", barColors[colorBarChosen].getForeground());
+			UIManager.put("ProgressBar.selectionBackground", barColors[colorBarChosen].getSelectionBackground());
+			UIManager.put("ProgressBar.selectionForeground", barColors[colorBarChosen].getSelectionForeground());
+			try {
+				writeProperties();
+				statusEvent = new SettingsChangeStatusEvent(EventStatus.SUCCESS);
+			} catch (IOException e) {
+				e.printStackTrace();
+				statusEvent = new SettingsChangeStatusEvent(EventStatus.ERROR,
+						"Erreur lors de l'écriture des paramètres dans le fichier !\n" + e.getMessage());
+			}
 		}
 
 		EventManager.getInstance().callEvent(statusEvent);
@@ -176,8 +252,14 @@ public final class SettingsManager implements Manager, Listener {
 						toReset = true;
 					} else {
 						props.setProperty(RESULTS_PATH_PROPERTY, FileManager.getInstance().getResDirectoryPath());
-						logs.writeInformationMessage("Reset! Results directory: " + resDirectory.getAbsolutePath());
-						writeProperties();
+						try {
+							writeProperties();
+							logs.writeInformationMessage("Reset! Results directory: " + resDirectory.getAbsolutePath());
+						} catch (IOException e) {
+							System.out.println(
+									"Error when writing results' directory path in settings file... Maybe ask for help...");
+							e.printStackTrace();
+						}
 					}
 				} else {
 					logs.writeInformationMessage("Results directory: " + resultsPath);
@@ -232,15 +314,18 @@ public final class SettingsManager implements Manager, Listener {
 				case "défaut":
 				case "default":
 					logs.writeInformationMessage("Default progress bar color set");
+					colorBarChosen = 0;
 					break;
 
 				case "vert":
 				case "green":
 					logs.writeInformationMessage("Green progress bar color set");
+					colorBarChosen = 1;
 					break;
 
 				case "violet":
 					logs.writeInformationMessage("Violet progress bar color set");
+					colorBarChosen = 2;
 					break;
 
 				default:
