@@ -18,7 +18,7 @@ import javax.swing.SwingUtilities;
 
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
-import ppc.event.TournamentCopyStatusEvent;
+import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpenEvent;
 import ppc.event.TournamentOpeningStatusEvent;
@@ -201,7 +201,7 @@ public class MainPanel extends JPanel implements Listener {
 	}
 
 	@EventHandler
-	public void onResultsCopied(TournamentCopyStatusEvent event) {
+	public void onResultsCopied(TournamentResultsCopyStatusEvent event) {
 		switch (event.getStatus()) {
 		case SUCCESS:
 			System.out.println("Files copied!");

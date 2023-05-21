@@ -18,7 +18,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.filechooser.FileSystemView;
 
-import ppc.event.TournamentCopyEvent;
+import ppc.event.TournamentResultsCopyEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
@@ -102,7 +102,7 @@ public class ChooseResultsPanel extends JPanel {
 			File chosenDir = chooser.getSelectedFile();
 			System.out.println("Directory choosen: " + chosenDir.getAbsolutePath());
 
-			TournamentCopyEvent event = new TournamentCopyEvent(tournamentName, chosenDir);
+			TournamentResultsCopyEvent event = new TournamentResultsCopyEvent(tournamentName, chosenDir);
 			EventManager.getInstance().callEvent(event);
 
 		} else {

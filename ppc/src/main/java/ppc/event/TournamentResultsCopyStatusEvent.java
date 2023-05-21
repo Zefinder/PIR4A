@@ -6,18 +6,18 @@ import java.util.List;
 import ppc.annotation.Event;
 
 @Event
-public class TournamentCopyStatusEvent extends StatusEvent {
+public class TournamentResultsCopyStatusEvent extends StatusEvent {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
-	public TournamentCopyStatusEvent() {
+	public TournamentResultsCopyStatusEvent() {
 	}
 
-	public TournamentCopyStatusEvent(EventStatus status) {
+	public TournamentResultsCopyStatusEvent(EventStatus status) {
 		super(status);
 	}
 
-	public TournamentCopyStatusEvent(EventStatus status, String errorMessage) {
+	public TournamentResultsCopyStatusEvent(EventStatus status, String errorMessage) {
 		super(status, errorMessage);
 	}
 

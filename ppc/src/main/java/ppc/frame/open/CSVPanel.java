@@ -10,6 +10,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,12 +34,16 @@ import javax.swing.JViewport;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
+import ppc.event.TournamentClassCopyEvent;
+import ppc.event.TournamentClassCopyStatusEvent;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.frame.TournamentTableModel;
 import ppc.manager.EventManager;
+import ppc.manager.FileManager;
 import ppc.manager.LogsManager;
+import ppc.tournament.InputFormat;
 
 public class CSVPanel extends JPanel implements Listener {
 
@@ -241,8 +247,6 @@ public class CSVPanel extends JPanel implements Listener {
 		if (event.getStatus() == EventStatus.SUCCESS) {
 			int selectedIndex = event.getListIndex();
 
-			System.out.println("AAAAAH");
-
 			// Remove from list
 			model.remove(selectedIndex);
 
@@ -271,6 +275,16 @@ public class CSVPanel extends JPanel implements Listener {
 		}
 	}
 
+	@EventHandler
+	public void onClassCopied(TournamentClassCopyStatusEvent event) {
+		if (event.getStatus() == EventStatus.ERROR) {
+			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+		}
+
+		// Deleting temp file
+		FileManager.getInstance().deleteTemporaryFile(event.getFileToCopy().getName());
+	}
+
 	private void addTableToPanel(List<Map<String, String[][]>> classData, String profName) {
 		TournamentTableModel tableModel = new TournamentTableModel();
 		tableModel.addColumn("Prénom");
@@ -296,12 +310,35 @@ public class CSVPanel extends JPanel implements Listener {
 		scrollList.add(defaultTablePanel);
 		csvPanel.add(defaultTablePanel, profName);
 	}
-	
-	private void tableModified() {
+
+	private void tableModified(TournamentTableModel model) throws IOException {
 		int editedTable = listClasses.getSelectedIndex();
 		System.out.println(String.format("Table n°%d edited!", editedTable));
-		
-		// TODO Save the modified table in a list, change the method's name, drink water
+
+		String[] panelName = scrollList.get(editedTable).getName().split(" ");
+		String profName = "";
+		for (int i = 0; i < panelName.length - 1; i++)
+			profName += panelName[i] + " ";
+
+		profName = profName.strip();
+
+		int classIndex = Integer.valueOf(panelName[panelName.length - 1]);
+		File tmpFile = FileManager.getInstance().createTemporaryFile();
+
+		// Put elements of table in an matrix of Strings
+		String[][] elements = new String[model.getRowCount()][model.getColumnCount()];
+
+		for (int row = 0; row < model.getRowCount(); row++) {
+			for (int column = 0; column < model.getColumnCount(); column++) {
+				elements[row][column] = model.getValueAt(row, column).toString();
+			}
+		}
+
+		InputFormat.writeCSV(tmpFile, elements, profName);
+
+		// Call event
+		TournamentClassCopyEvent event = new TournamentClassCopyEvent(tournamentName, tmpFile, classIndex);
+		EventManager.getInstance().callEvent(event);
 	}
 
 	private class AddStudentDialog extends JDialog {
@@ -408,7 +445,12 @@ public class CSVPanel extends JPanel implements Listener {
 				}
 
 				tableModel.addRow(new String[] { firstName, lastName, String.valueOf(level) });
-				tableModified();
+				try {
+					tableModified(tableModel);
+				} catch (IOException e) {
+					System.err.println("An error occured when modifying the table...");
+					e.printStackTrace();
+				}
 				dispose();
 			}
 		}

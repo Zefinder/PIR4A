@@ -1,9 +1,13 @@
 package ppc.tournament;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -36,7 +40,7 @@ public class InputFormat {
 	 * @throws ParseException if the file is corrupted
 	 */
 	public static List<Map<String, String[][]>> parseCsv(File csvFile) throws IOException, ParseException {
-		BufferedReader reader = new BufferedReader(new FileReader(csvFile));
+		BufferedReader reader = new BufferedReader(new FileReader(csvFile, StandardCharsets.UTF_8));
 
 		List<List<String>> csvParsed = new ArrayList<>();
 
@@ -125,6 +129,32 @@ public class InputFormat {
 		reader.close();
 
 		return processCsv(csvParsed);
+	}
+
+	public static void writeCSV(File csvFile, String[][] elements, String profName) throws IOException {
+		BufferedWriter writer = new BufferedWriter(
+				new OutputStreamWriter(new FileOutputStream(csvFile), StandardCharsets.UTF_8));
+
+		writer.append(
+				"A GARDER EN FORMAT CSV;;\r\n" + "Nom du prof;" + profName + ";\r\n" + ";;\r\n" + "Prénom;Nom;Niveau\n");
+
+		for (int row = 0; row < elements.length; row++) {
+			for (int column = 0; column < elements[row].length; column++) {
+				String element = elements[row][column];
+				if (element.contains(";") || element.contains("\"")) {
+					element = element.replace("\"", "\"\"");
+					element = "\"" + element + "\"";
+				}
+
+				if (column == elements[row].length - 1) {
+					writer.append(element);
+				} else
+					writer.append(element + ";");
+			}
+			writer.append("\n");
+		}
+
+		writer.close();
 	}
 
 	private static List<Map<String, String[][]>> processCsv(List<List<String>> csvParsed) throws ParseException {

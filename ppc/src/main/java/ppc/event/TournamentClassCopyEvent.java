@@ -5,26 +5,33 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ppc.annotation.Event
-public class TournamentCopyEvent extends Event {
+public class TournamentClassCopyEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
-	private String tournamentName;
-	private File destinationDirectory;
 
-	public TournamentCopyEvent() {
+	private String tournamentName;
+	private File toCopy;
+	private int classNumber;
+
+	public TournamentClassCopyEvent() {
 	}
 
-	public TournamentCopyEvent(String tournamentName, File destinationDirectory) {
+	public TournamentClassCopyEvent(String tournamentName, File toCopy, int classNumber) {
 		this.tournamentName = tournamentName;
-		this.destinationDirectory = destinationDirectory;
+		this.toCopy = toCopy;
+		this.classNumber = classNumber;
 	}
 
 	public String getTournamentName() {
 		return tournamentName;
 	}
 
-	public File getDestinationFolder() {
-		return destinationDirectory;
+	public File getFileToCopy() {
+		return toCopy;
+	}
+
+	public int getClassNumber() {
+		return classNumber;
 	}
 
 	@Override

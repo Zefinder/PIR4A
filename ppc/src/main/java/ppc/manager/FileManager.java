@@ -18,8 +18,10 @@ import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.TournamentAddClassEvent;
 import ppc.event.TournamentAddClassStatusEvent;
-import ppc.event.TournamentCopyEvent;
-import ppc.event.TournamentCopyStatusEvent;
+import ppc.event.TournamentClassCopyEvent;
+import ppc.event.TournamentClassCopyStatusEvent;
+import ppc.event.TournamentResultsCopyEvent;
+import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.manager.LogsManager.Message;
@@ -234,6 +236,35 @@ public final class FileManager implements Manager, Listener {
 	}
 
 	/**
+	 * Creates a temporary file a returns it to use it. The file can be delete using
+	 * the {@link #deleteTemporaryFile(String)} method. The temporary file
+	 * automatically deletes at the end of the execution.
+	 * 
+	 * @return a temporary File
+	 * @throws IOException if the temporary file could not be created
+	 */
+	public File createTemporaryFile() throws IOException {
+		File tmpFile = File.createTempFile("eem", ".tmp", tmpDirectory);
+		tmpFile.deleteOnExit();
+
+		return tmpFile;
+	}
+
+	/**
+	 * Deletes a temporary file. Does nothing if the file name doesn't correspond to
+	 * an actual temporary file.
+	 * 
+	 * @param fileName the name of the temporary file to delete
+	 */
+	public void deleteTemporaryFile(String fileName) {
+		File tmpFile = new File(tmpDirectory.getAbsolutePath() + "/" + fileName);
+		if (tmpFile.exists())
+			tmpFile.delete();
+		else
+			logs.writeWarningMessage("The temporary file does not exist and can't be deleted...");
+	}
+
+	/**
 	 * Lists all tournament for which results have been generated.
 	 * 
 	 * @return a list of tournament
@@ -249,32 +280,62 @@ public final class FileManager implements Manager, Listener {
 	 * @param event the called event
 	 */
 	@EventHandler
-	public void onCopyRequested(TournamentCopyEvent event) {
+	public void onResultsCopyRequested(TournamentResultsCopyEvent event) {
 		File tournamentResultsFolder = new File(resDirectory + "/" + event.getTournamentName());
 		File destinationFolder = event.getDestinationFolder();
-		TournamentCopyStatusEvent statusEvent;
+		TournamentResultsCopyStatusEvent statusEvent;
 
 		if (!verifyDirectory(tournamentResultsFolder)) {
 			tournamentResultsFolder.delete();
 			System.err.println("Results do not exist for this tournament...");
-			statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR,
+			statusEvent = new TournamentResultsCopyStatusEvent(EventStatus.ERROR,
 					"Les résultats n'existent pas pour ce tournoi...");
 
 		} else if (!verifyDirectory(destinationFolder)) {
 			destinationFolder.delete();
 			System.err.println("Destination do not exist...");
-			statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR, "La destination n'existe pas...");
+			statusEvent = new TournamentResultsCopyStatusEvent(EventStatus.ERROR, "La destination n'existe pas...");
 			return;
 
 		} else
 			try {
 				copyResultsFile(tournamentResultsFolder, destinationFolder);
-				statusEvent = new TournamentCopyStatusEvent(EventStatus.SUCCESS);
+				statusEvent = new TournamentResultsCopyStatusEvent(EventStatus.SUCCESS);
 			} catch (IOException e) {
 				e.printStackTrace();
-				statusEvent = new TournamentCopyStatusEvent(EventStatus.ERROR,
+				statusEvent = new TournamentResultsCopyStatusEvent(EventStatus.ERROR,
 						"Erreur lors de la copie des fichiers :\n" + e.getMessage());
 			}
+
+		EventManager.getInstance().callEvent(statusEvent);
+	}
+
+	@EventHandler
+	public void onCopyClassRequested(TournamentClassCopyEvent event) {
+		File toCopy = event.getFileToCopy();
+		TournamentClassCopyStatusEvent statusEvent;
+
+		if (!toCopy.exists()) {
+			System.err.println("Class file to copy does not exist!");
+			statusEvent = new TournamentClassCopyStatusEvent(toCopy, EventStatus.ERROR,
+					"Le fichier temporaire n'existe pas !");
+		} else if (!toCopy.isFile()) {
+			System.err.println("Class file to copy is not a file!");
+			statusEvent = new TournamentClassCopyStatusEvent(toCopy, EventStatus.ERROR,
+					"Le fichier temporaire n'est pas un fichier !");
+		} else {
+			File destinationFile = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName()
+					+ "/" + "class" + event.getClassNumber() + ".csv");
+
+			try {
+				Files.copy(toCopy.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+				statusEvent = new TournamentClassCopyStatusEvent(toCopy, EventStatus.SUCCESS);
+			} catch (IOException e) {
+				e.printStackTrace();
+				statusEvent = new TournamentClassCopyStatusEvent(toCopy, EventStatus.ERROR,
+						"Erreur lors de la copie du fichier de classe !\n" + e.getMessage());
+			}
+		}
 
 		EventManager.getInstance().callEvent(statusEvent);
 	}
