@@ -1,5 +1,6 @@
 package ppc.manager;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -7,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -59,6 +61,61 @@ public class TournamentSolverManager implements Manager, Listener {
 	private void loadPreData() {
 		this.precalculatedSolutions = new HashMap<>();
 		// TODO Ouvrir le fichier et mettre dans la map
+		File file = new File("input.txt"); // Replace "input.txt" with your file path
+		try {
+			Scanner scanner = new Scanner(file);
+
+			while (scanner.hasNextLine()) {
+				// Ignore the first line
+				scanner.nextLine();
+
+				// Parse the second line into a sorted array of integers
+				String[] studentsPerClass = scanner.nextLine().split(" ");
+				Integer[] configuration = new Integer[studentsPerClass.length];
+				int totalStudents = 0;
+				for (int i = 0; i < studentsPerClass.length; i++) {
+					int nbStudents = Integer.parseInt(studentsPerClass[i]);
+					configuration[i] = nbStudents;
+					totalStudents += nbStudents;
+				}
+				Arrays.sort(configuration, Collections.reverseOrder());
+
+				int ghost = -1;
+				if (totalStudents % 2 != 0)
+					ghost = 0;
+
+				// Parse the third line into a matrix of integers
+				String[] opponentsLine = scanner.nextLine().split(";");
+				int numRows = opponentsLine.length;
+				int numCols = opponentsLine[0].split(" ").length;
+				Integer[][] opponentsMatrix = new Integer[numRows][numCols];
+				for (int i = 0; i < numRows; i++) {
+					String[] rowValues = opponentsLine[i].split(" ");
+					for (int j = 0; j < numCols; j++) {
+						opponentsMatrix[i][j] = Integer.parseInt(rowValues[j]);
+					}
+				}
+
+				// Parse soft constraint
+				String fourthLine = scanner.nextLine();
+				boolean softConstraint = Boolean.parseBoolean(fourthLine.split(" ")[1]);
+
+				// Parse the fifth line into double and integers
+				String[] stats = scanner.nextLine().split(" ");
+				double runtime = Double.parseDouble(stats[0]);
+				int nbStudentsMet = Integer.parseInt(stats[1]);
+				int nbClassesMet = Integer.parseInt(stats[2]);
+
+				// TODO : we shouldn't have null null null... or the pdf generator will be
+				// angry...
+				precalculatedSolutions.put(configuration, new Solution(opponentsMatrix, null, null, null, ghost,
+						softConstraint, runtime, nbStudentsMet, nbClassesMet));
+			}
+
+			scanner.close();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
 	}
 
 	private Integer[] getClassesConfiguration(String[][][] levelClasses) {
@@ -88,8 +145,10 @@ public class TournamentSolverManager implements Manager, Listener {
 				lvlClasses[classNb++] = currentClass;
 
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
-			if (precalculatedSolutions.containsKey(configuration)) {
-				// TODO: also check soft constraint and maximisations
+			Solution precalculatedSolution = precalculatedSolutions.get(configuration);
+			if (precalculatedSolution != null && (precalculatedSolution.isSoftConstraint() == event.isSoftConstraint())
+					&& precalculatedSolution.getMaxStudentsMet() >= event.getStudentThreshold()
+					&& precalculatedSolution.getMaxClassesMet() >= event.getClassThreshold()) {
 				Solution currentSolution = precalculatedSolutions.get(configuration);
 				solutions.add(currentSolution);
 				if (currentSolution.getGhost() != -1)
@@ -124,7 +183,8 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		// generating the PDF files
 		String[] classNames = classesByLevel.values().iterator().next().keySet().toArray(new String[0]);
-		PdfGenerator pdfGen = new PdfGenerator(solutions, classNames, nbClasses, event.getFirstTable(), lastLevelWithGhost);
+		PdfGenerator pdfGen = new PdfGenerator(solutions, classNames, nbClasses, event.getFirstTable(),
+				lastLevelWithGhost);
 		try {
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
 			pdfGen.createPdfListeMatches();
