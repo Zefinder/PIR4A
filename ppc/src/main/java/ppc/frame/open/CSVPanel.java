@@ -279,6 +279,8 @@ public class CSVPanel extends JPanel implements Listener {
 	public void onClassCopied(TournamentClassCopyStatusEvent event) {
 		if (event.getStatus() == EventStatus.ERROR) {
 			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Erreur", JOptionPane.ERROR_MESSAGE);
+		} else {
+			System.out.println("Changes saved!");
 		}
 
 		// Deleting temp file
@@ -299,6 +301,18 @@ public class CSVPanel extends JPanel implements Listener {
 			level++;
 		}
 
+		tableModel.addTableModelListener(e -> {
+			try {
+				tableModified((TournamentTableModel) e.getSource());
+			} catch (IOException e1) {
+				System.err.println("An error occured when modifying the table...");
+				e1.printStackTrace();
+				JOptionPane.showMessageDialog(null,
+						"Une erreur est survenue lors de la modification du fichier de classe", "Erreur",
+						JOptionPane.ERROR_MESSAGE);
+			}
+		});
+
 		JTable defaultTable = new JTable(tableModel);
 		defaultTable.getColumnModel().getColumn(2).setPreferredWidth(25);
 		defaultTable.setPreferredScrollableViewportSize(defaultTable.getPreferredSize());
@@ -313,7 +327,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 	private void tableModified(TournamentTableModel model) throws IOException {
 		int editedTable = listClasses.getSelectedIndex();
-		System.out.println(String.format("Table n°%d edited!", editedTable));
+		System.out.println(String.format("Table n°%d edited, preparing to save in file", editedTable));
 
 		String[] panelName = scrollList.get(editedTable).getName().split(" ");
 		String profName = "";
@@ -334,9 +348,12 @@ public class CSVPanel extends JPanel implements Listener {
 			}
 		}
 
+		System.out.println("Saving in tmp file...");
 		InputFormat.writeCSV(tmpFile, elements, profName);
+		System.out.println("Saved!");
 
 		// Call event
+		System.out.println("Saving to data folder...");
 		TournamentClassCopyEvent event = new TournamentClassCopyEvent(tournamentName, tmpFile, classIndex);
 		EventManager.getInstance().callEvent(event);
 	}
@@ -445,12 +462,12 @@ public class CSVPanel extends JPanel implements Listener {
 				}
 
 				tableModel.addRow(new String[] { firstName, lastName, String.valueOf(level) });
-				try {
-					tableModified(tableModel);
-				} catch (IOException e) {
-					System.err.println("An error occured when modifying the table...");
-					e.printStackTrace();
-				}
+//				try {
+//					tableModified(tableModel);
+//				} catch (IOException e) {
+//					System.err.println("An error occured when modifying the table...");
+//					e.printStackTrace();
+//				}
 				dispose();
 			}
 		}

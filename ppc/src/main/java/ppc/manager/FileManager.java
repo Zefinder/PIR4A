@@ -377,8 +377,6 @@ public final class FileManager implements Manager, Listener {
 				}
 			}
 
-			System.out.println(classNumber);
-
 			File destinationFile = new File(tournamentDataDirectory.getAbsolutePath() + "/" + event.getTournamentName()
 					+ "/class" + classNumber + ".csv");
 

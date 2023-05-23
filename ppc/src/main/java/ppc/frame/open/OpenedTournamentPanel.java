@@ -283,12 +283,14 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridx = 0;
 		c.gridy = 6;
 		estimateButton = new JButton("Estimer le résultat");
+		estimateButton.addActionListener(e -> estimateResult());
 		panel.add(estimateButton, c);
 
 		c.gridwidth = 2;
 		c.gridx = 0;
 		c.gridy = 7;
 		searchButton = new JButton("Lancer la recherche");
+		searchButton.addActionListener(e -> launchSolver());
 		panel.add(searchButton, c);
 
 		panel.setBorder(BorderFactory.createTitledBorder("Paramètres de recherche"));
@@ -368,5 +370,13 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 				System.err.println("An error occured when parsing file " + csvfile.getAbsolutePath());
 			}
 		}
+	}
+	
+	private void estimateResult() {
+		
+	}
+	
+	private void launchSolver() {
+		
 	}
 }
