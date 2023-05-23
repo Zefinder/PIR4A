@@ -1,14 +1,16 @@
 package ppc.manager;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Scanner;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -63,14 +65,12 @@ public class TournamentSolverManager implements Manager, Listener {
 		// TODO Ouvrir le fichier et mettre dans la map
 		File file = new File("input.txt"); // Replace "input.txt" with your file path
 		try {
-			Scanner scanner = new Scanner(file);
+			BufferedReader reader = new BufferedReader(new FileReader(file));
 
-			while (scanner.hasNextLine()) {
-				// Ignore the first line
-				scanner.nextLine();
+			while (reader.readLine() != null) { // Ignore the first line
 
 				// Parse the second line into a sorted array of integers
-				String[] studentsPerClass = scanner.nextLine().split(" ");
+				String[] studentsPerClass = reader.readLine().split(" ");
 				Integer[] configuration = new Integer[studentsPerClass.length];
 				int totalStudents = 0;
 				for (int i = 0; i < studentsPerClass.length; i++) {
@@ -85,7 +85,7 @@ public class TournamentSolverManager implements Manager, Listener {
 					ghost = 0;
 
 				// Parse the third line into a matrix of integers
-				String[] opponentsLine = scanner.nextLine().split(";");
+				String[] opponentsLine = reader.readLine().split(";");
 				int numRows = opponentsLine.length;
 				int numCols = opponentsLine[0].split(" ").length;
 				Integer[][] opponentsMatrix = new Integer[numRows][numCols];
@@ -97,11 +97,11 @@ public class TournamentSolverManager implements Manager, Listener {
 				}
 
 				// Parse soft constraint
-				String fourthLine = scanner.nextLine();
+				String fourthLine = reader.readLine();
 				boolean softConstraint = Boolean.parseBoolean(fourthLine.split(" ")[1]);
 
 				// Parse the fifth line into double and integers
-				String[] stats = scanner.nextLine().split(" ");
+				String[] stats = reader.readLine().split(" ");
 				double runtime = Double.parseDouble(stats[0]);
 				int nbStudentsMet = Integer.parseInt(stats[1]);
 				int nbClassesMet = Integer.parseInt(stats[2]);
@@ -112,8 +112,8 @@ public class TournamentSolverManager implements Manager, Listener {
 						softConstraint, runtime, nbStudentsMet, nbClassesMet));
 			}
 
-			scanner.close();
-		} catch (FileNotFoundException e) {
+			reader.close();
+		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
@@ -144,15 +144,16 @@ public class TournamentSolverManager implements Manager, Listener {
 			for (String[][] currentClass : classesByLevel.get(key).values())
 				lvlClasses[classNb++] = currentClass;
 
+			// Checking if solution already has been computed
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
 			Solution precalculatedSolution = precalculatedSolutions.get(configuration);
 			if (precalculatedSolution != null && (precalculatedSolution.isSoftConstraint() == event.isSoftConstraint())
 					&& precalculatedSolution.getMaxStudentsMet() >= event.getStudentThreshold()
 					&& precalculatedSolution.getMaxClassesMet() >= event.getClassThreshold()) {
-				Solution currentSolution = precalculatedSolutions.get(configuration);
-				solutions.add(currentSolution);
-				if (currentSolution.getGhost() != -1)
+				solutions.add(precalculatedSolution);
+				if (precalculatedSolution.getGhost() != -1)
 					lastLevelWithGhost = lvl;
+				// Else we launch the solver
 			} else {
 				LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
 						event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
