@@ -1,36 +1,49 @@
 package ppc.tournament.solver;
 
+/**
+ * <p>
+ * Class to launch the solver for a specific level of the tournament and store
+ * the solution.
+ * </p>
+ * 
+ * @author Sarah Mousset
+ *
+ */
 public class LevelThread implements Runnable {
-	
+
 	private String[][][] classes;
-	private int level;
 	private boolean softConstraint;
+	private int classThreshold;
+	private int studentThreshold;
 	private int timeout;
-	private int firstTable = 1;
+	private int level;
 	private volatile Solution solution;
-	
-	public LevelThread(String[][][] classes, int level, boolean softConstraint, int timeout, int firstTable) {
+
+	private boolean verbose;
+
+	public LevelThread(String[][][] classes, boolean softConstraint, int classThreshold, int studentThreshold,
+			int timeout, int level, boolean verbose) {
 		this.classes = classes;
-		this.level = level;
 		this.softConstraint = softConstraint;
+		this.classThreshold = classThreshold;
+		this.studentThreshold = studentThreshold;
 		this.timeout = timeout;
-		this.firstTable = firstTable;
-	}
-	
-	public LevelThread(String[][][] classes, int level, boolean softConstraint, int timeout) {
-		this.classes = classes;
 		this.level = level;
-		this.softConstraint = softConstraint;
-		this.timeout = timeout;
+		this.verbose = verbose;
 	}
-	
+
 	public Solution getSolution() {
 		return this.solution;
 	}
 	
+	public int getLevel() {
+		return level;
+	}
+
 	@Override
 	public void run() {
-		SolverTournament tournament = new SolverTournament(classes, level, softConstraint, firstTable);
+		TournamentSolver tournament = new TournamentSolver(classes, softConstraint, classThreshold, studentThreshold,
+				verbose);
 		this.solution = tournament.solve(timeout);
 	}
 }
