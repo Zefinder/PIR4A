@@ -52,7 +52,7 @@ public final class SettingsManager implements Manager, Listener {
 	private ColorBar[] barColors;
 	private int colorBarChosen;
 
-	private static class ColorBar {
+	public static class ColorBar {
 		private Color background;
 		private Color foreground;
 		private Color selectionBackground;
