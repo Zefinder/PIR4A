@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+@ppc.annotation.Event
 public class TournamentAddLevelGroupEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();

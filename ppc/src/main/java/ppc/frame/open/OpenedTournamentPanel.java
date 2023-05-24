@@ -39,6 +39,7 @@ import ppc.event.TournamentOpeningStatusEvent;
 import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
+import ppc.manager.LogsManager;
 import ppc.manager.TournamentManager;
 import ppc.tournament.InputFormat;
 import ppc.tournament.Tournament;
@@ -80,7 +81,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 	}
-	
+
 	private void showMainFrame() {
 		MainFrame frame = (MainFrame) SwingUtilities.getWindowAncestor(this);
 		frame.showMainPanel();
@@ -88,28 +89,28 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 	private void buildPanel() {
 		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-		
+
 		JPanel leftPanel = new JPanel();
 		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
-		
+
 		JPanel containerPanel = new JPanel();
 		containerPanel.setLayout(new BoxLayout(containerPanel, BoxLayout.LINE_AXIS));
 
 		JPanel buttonPanel = new JPanel(new GridLayout(1, 1));
 		buttonPanel.setPreferredSize(new Dimension(25, 25));
 		buttonPanel.setMaximumSize(buttonPanel.getPreferredSize());
-	    BasicArrowButton backButton = new BasicArrowButton(BasicArrowButton.WEST);
-	    backButton.addActionListener(e -> showMainFrame());
-	    buttonPanel.add(backButton);
-	    containerPanel.add(buttonPanel);
-	    containerPanel.add(Box.createHorizontalGlue());
-        leftPanel.add(containerPanel);
+		BasicArrowButton backButton = new BasicArrowButton(BasicArrowButton.WEST);
+		backButton.addActionListener(e -> showMainFrame());
+		buttonPanel.add(backButton);
+		containerPanel.add(buttonPanel);
+		containerPanel.add(Box.createHorizontalGlue());
+		leftPanel.add(containerPanel);
 
 		GridBagConstraints c = new GridBagConstraints();
 		c.anchor = GridBagConstraints.WEST;
 		c.gridx = 0;
 		c.gridy = 0;
-        
+
 		JPanel informationPanel = new JPanel();
 		informationPanel.setLayout(new GridBagLayout());
 		c.anchor = GridBagConstraints.CENTER;
@@ -117,7 +118,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.insets = new Insets(5, 5, 5, 5);
 		c.gridheight = 1;
 		c.gridwidth = 1;
-		
+
 		c.gridx = 0;
 		c.gridy = 0;
 		informationPanel.add(buildInfoPanel(), c);
@@ -130,7 +131,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridy = 2;
 		informationPanel.add(buildSearchPanel(), c);
 		leftPanel.add(informationPanel);
-		
+
 		this.add(leftPanel);
 
 		JSeparator separator = new JSeparator(JSeparator.VERTICAL);
@@ -333,7 +334,10 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	@EventHandler
 	public void loadTournament(TournamentOpeningStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS) {
-			System.out.println("Loading tournament properties");
+			System.out.println("CSV Panel reset!");
+			csvPanel.reset();
+			
+			System.out.println("Loading tournament properties...");
 			Tournament tournament = TournamentManager.getInstance().getTournament(event.getTournamentName());
 			tournamentName = event.getTournamentName();
 			roundsNumber = tournament.getRoundsNumber();
@@ -351,7 +355,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			studentsThreshold.setText(String.valueOf(tournament.getStudentsThreshold() * 100) + "%");
 			classesThreshold.setText(String.valueOf(tournament.getClassesThreshold() * 100) + "%");
 			timeField.setText(String.valueOf(tournament.getMaxTime()));
-			tableOffset.setText("0");
+			tableOffset.setText("1");
 		}
 	}
 
@@ -363,7 +367,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			classesNumberLabel.setText("Nombre de classes : " + classNumber);
 
 			try {
-				List<Map<String, String[][]>> classData = InputFormat.parseCsv(event.getCSVFile());
+				List<Map<String, String[][]>> classData = InputFormat.parseCsv(event.getCSVFile(), groupsNumber);
 				csvPanel.addClass(classData, Integer.parseInt(event.getCSVFile().getName().substring(5, 6)));
 				System.out.println("Class added");
 			} catch (IOException | ParseException e) {
@@ -392,7 +396,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		for (File csvfile : files) {
 			System.out.println("Reading file " + csvfile.getName());
 			try {
-				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile);
+				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile, groupsNumber);
 				csvPanel.addClass(classData, Integer.parseInt(csvfile.getName().substring(5, 6)));
 				System.out.println("File added");
 				fileClassCount++;
@@ -403,12 +407,105 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			}
 		}
 	}
-	
+
+	// TODO Make estimation 
 	private void estimateResult() {
-		
+
 	}
-	
+
 	private void launchSolver() {
-		
+		boolean soft = softBox.isSelected();
+		boolean verbose = verboseBox.isSelected();
+
+		int time;
+		try {
+			time = Integer.valueOf(timeField.getText());
+		} catch (Exception e1) {
+			LogsManager.getInstance().writeErrorMessage("Error when parsing searching time...");
+			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du temps de recherche", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (time < 0) {
+			LogsManager.getInstance().writeErrorMessage("Time value cannot be negative...");
+			JOptionPane.showMessageDialog(null, "Le temps de recherche ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		String studentThresholdString = studentsThreshold.getText().substring(0,
+				studentsThreshold.getText().length() - 1);
+		float studentThreshold;
+		try {
+			studentThreshold = Float.valueOf(studentThresholdString);
+		} catch (Exception e1) {
+			LogsManager.getInstance().writeErrorMessage("Error when parsing student's threshold...");
+			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur de seuil d'étudiants", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		studentThreshold /= 100f;
+
+		if (studentThreshold < 0f) {
+			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
+			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (studentThreshold > 1f) {
+			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be over 1!");
+			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être supérieur à 100% !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		String classesThresholdString = classesThreshold.getText().substring(0,
+				classesThreshold.getText().length() - 1);
+		float classesThreshold;
+		try {
+			classesThreshold = Float.valueOf(classesThresholdString);
+		} catch (Exception e1) {
+			LogsManager.getInstance().writeErrorMessage("Error when parsing classes threshold...");
+			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur de seuil de classes", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+		classesThreshold /= 100f;
+
+		if (classesThreshold < 0f) {
+			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be negative!");
+			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (classesThreshold > 1f) {
+			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be over 1!");
+			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être supérieur à 100% !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		int tableOffset;
+		try {
+			tableOffset = Integer.valueOf(this.tableOffset.getText());
+		} catch (Exception e1) {
+			LogsManager.getInstance().writeErrorMessage("Error when parsing table offset...");
+			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du numéro de la première table", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		if (tableOffset < 0) {
+			LogsManager.getInstance().writeErrorMessage("Table offset value cannot be negative...");
+			JOptionPane.showMessageDialog(null, "Le numéro de la première table ne peut pas être négatif !", "Erreur",
+					JOptionPane.ERROR_MESSAGE);
+			return;
+		}
+
+		csvPanel.launchSolver(classNumber, groupsNumber, soft, studentThreshold, classesThreshold, time, tableOffset,
+				verbose);
 	}
 }

@@ -27,11 +27,15 @@ public class Solution {
 	private int ghost;
 	private boolean softConstraint;
 	private double runtime;
+	private int studentsMet;
 	private int maxStudentsMet;
+	private int classesMet;
 	private int maxClassesMet;
+	private int table;
 
 	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String[]> idToName,
-			int ghost, boolean softConstraint, double runtime, int maxStudentsMet, int maxClassesMet) {
+			int ghost, boolean softConstraint, double runtime, int studentsMet, int maxStudentsMet, int classesMet,
+			int maxClassesMet) {
 		this.matches = matches;
 		this.studentClasses = studentClasses;
 		this.listClasses = listClasses;
@@ -41,15 +45,21 @@ public class Solution {
 		this.runtime = runtime;
 		this.maxStudentsMet = maxStudentsMet;
 		this.maxClassesMet = maxClassesMet;
+		this.studentsMet = studentsMet;
+		this.classesMet = classesMet;
 	}
 
 	private void initIdToTable() {
 		this.idToTable = new HashMap<>();
 		int firstStudent = (this.ghost == -1) ? 0 : 1;
 		int offset = (this.ghost == -1) ? 1 : 0;
-		int table = 1;
+		table = 0;
 		for (int student = firstStudent; student <= matches.length / 2 - offset; student++)
 			this.idToTable.put(student, table++);
+	}
+	
+	public int lastTable() {
+		return table;
 	}
 
 	public Integer[] getClassesConfiguration() {
@@ -112,10 +122,18 @@ public class Solution {
 		return runtime;
 	}
 
+	public int getStudentsMet() {
+		return studentsMet;
+	}
+	
 	public int getMaxStudentsMet() {
 		return maxStudentsMet;
 	}
 
+	public int getClassesMet() {
+		return classesMet;
+	}
+	
 	public int getMaxClassesMet() {
 		return maxClassesMet;
 	}

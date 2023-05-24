@@ -18,18 +18,28 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
+import ppc.event.SolutionFoundEvent;
+import ppc.manager.EventManager;
 import ppc.manager.LogsManager;
 
 /**
  * <p>
- * Solver for a level of the tournament.
+ * Core of all the application. This class generates a CP-SAT solver with all
+ * constraints to organize a chess tournament will all specified requirements.
  * </p>
+ * 
+ * <p>
+ * This class should not be directly used by the user. It is better to use the
+ * {@link LevelThread} for async solving.
+ * </p>
+ * 
+ * @see LevelThread
  * 
  * @author Adrien Jakubiak
  * @author Sarah Mousset
  *
  */
-public class TournamentSolver {
+public final class TournamentSolver {
 
 	public static final int NUMBER_MATCHES = 6;
 	private int nbStudents;
@@ -56,15 +66,15 @@ public class TournamentSolver {
 
 	private LogsManager logs = LogsManager.getInstance();
 	private boolean verbose;
+	private int level;
 
-	public TournamentSolver(String[][][] listClasses, boolean soft, int classThreshold, int studentThreshold,
+	public TournamentSolver(String[][][] listClasses, boolean soft, float classThreshold, float studentThreshold, int level,
 			boolean verbose) {
 		Loader.loadNativeLibraries();
 		this.allowMeetingSameStudent = soft;
-		this.classThreshold = classThreshold;
-		this.studentThreshold = studentThreshold;
 		this.nbClasses = listClasses.length;
 		this.verbose = verbose;
+		this.level = level;
 
 		for (String[][] classs : listClasses)
 			nbStudents += classs.length;
@@ -80,6 +90,9 @@ public class TournamentSolver {
 		studentClasses = new int[nbStudents];
 		this.listClasses = newIdClasses(listClasses);
 		classmates = getClassmates(this.listClasses);
+		
+		this.classThreshold = (int) (classThreshold * maxClassesMet);
+		this.studentThreshold = (int) (studentThreshold * maxStudentsMet);
 	}
 
 	public Solution solve(int timeout) {
@@ -184,15 +197,17 @@ public class TournamentSolver {
 		solver.getParameters().setEnumerateAllSolutions(true);
 		solver.getParameters().setMaxTimeInSeconds(timeout);
 
-		System.out.println("Solving");
 		solver.solve(model, sp);
 
 		if (verbose) {
 			String solutionMessage = "Final solution:\n" + this.toString() + "\nTimed out after " + solver.wallTime();
 			logs.writeInformationMessage(solutionMessage);
 		}
+		
+		// TODO If solution is null then we send an event to tell that search must be stopped !
+		
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost, allowMeetingSameStudent,
-				bestRuntime, bestNbStudentsMet, bestNbClassesMet);
+				bestRuntime, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet);
 	}
 
 	/**
@@ -328,8 +343,8 @@ public class TournamentSolver {
 	public String toString() {
 		String solutionString = new String();
 		if (solution == null)
-			return "Infeasible";
-		
+			return "Infeasible for level " + level + "\n";
+
 		for (int i = 0; i < solution.length; i++) {
 			List<Integer> classesMet = new ArrayList<>();
 			solutionString += String.format("Student %d (class %d): \t[", i, studentClasses[i]);
@@ -382,7 +397,7 @@ public class TournamentSolver {
 		@Override
 		public void onSolutionCallback() {
 			System.out.println("Solution found ");
-			String solutionMessage = "Solution " + ++solutionCount;
+			String solutionMessage = "Solution " + ++solutionCount + "\n";
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
 
@@ -412,15 +427,21 @@ public class TournamentSolver {
 				bestNbStudentsMet = sumStudentsMet;
 				bestNbClassesMet = sumClassesMet;
 				bestRuntime = wallTime();
+				EventManager.getInstance().callEvent(
+						new SolutionFoundEvent(level, sumStudentsMet, maxStudentsMet, sumClassesMet, maxClassesMet));
 			} else if (sumStudentsMet > bestNbStudentsMet) {
 				solution = solutionMatches;
 				bestNbStudentsMet = sumStudentsMet;
 				bestNbClassesMet = sumClassesMet;
 				bestRuntime = wallTime();
+				EventManager.getInstance().callEvent(
+						new SolutionFoundEvent(level, sumStudentsMet, maxStudentsMet, sumClassesMet, maxClassesMet));
 			} else if (sumStudentsMet == bestNbStudentsMet && sumClassesMet > bestNbClassesMet) {
 				solution = solutionMatches;
 				bestNbClassesMet = sumClassesMet;
 				bestRuntime = wallTime();
+				EventManager.getInstance().callEvent(
+						new SolutionFoundEvent(level, sumStudentsMet, maxStudentsMet, sumClassesMet, maxClassesMet));
 			}
 
 			solutionMessage += "Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t";

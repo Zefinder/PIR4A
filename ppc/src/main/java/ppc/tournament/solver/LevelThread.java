@@ -13,15 +13,15 @@ public class LevelThread implements Runnable {
 
 	private String[][][] classes;
 	private boolean softConstraint;
-	private int classThreshold;
-	private int studentThreshold;
+	private float classThreshold;
+	private float studentThreshold;
 	private int timeout;
 	private int level;
 	private volatile Solution solution;
 
 	private boolean verbose;
 
-	public LevelThread(String[][][] classes, boolean softConstraint, int classThreshold, int studentThreshold,
+	public LevelThread(String[][][] classes, boolean softConstraint, float classThreshold, float studentThreshold,
 			int timeout, int level, boolean verbose) {
 		this.classes = classes;
 		this.softConstraint = softConstraint;
@@ -35,7 +35,7 @@ public class LevelThread implements Runnable {
 	public Solution getSolution() {
 		return this.solution;
 	}
-	
+
 	public int getLevel() {
 		return level;
 	}
@@ -43,7 +43,7 @@ public class LevelThread implements Runnable {
 	@Override
 	public void run() {
 		TournamentSolver tournament = new TournamentSolver(classes, softConstraint, classThreshold, studentThreshold,
-				verbose);
+				level, verbose);
 		this.solution = tournament.solve(timeout);
 	}
 }
