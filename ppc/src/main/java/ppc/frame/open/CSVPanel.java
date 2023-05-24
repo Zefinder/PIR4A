@@ -211,17 +211,17 @@ public class CSVPanel extends JPanel implements Listener {
 
 		return csvPanel;
 	}
-	
+
 	public void reset() {
 		// Clearing lists
 		scrollList = new ArrayList<>();
 		tableModelList = new ArrayList<>();
 		model.removeAllElements();
-		
+
 		// Disable buttons
 		addStudent.setEnabled(false);
 		removeStudent.setEnabled(false);
-		
+
 		// Clearing panel and refilling it
 		csvPanel.removeAll();
 		csvPanel.setLayout(new CardLayout());
@@ -302,8 +302,8 @@ public class CSVPanel extends JPanel implements Listener {
 		for (int level = 0; level < groupsNumber; level++)
 			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
 
-		EventManager.getInstance().callEvent(
-				new TournamentSolveEvent(soft, classesThreshold, studentsThreshold, timeout, firstTable, verbose));
+		EventManager.getInstance().callEvent(new TournamentSolveEvent(listClasses.size(), soft, classesThreshold,
+				studentsThreshold, timeout, firstTable, verbose));
 	}
 
 	@EventHandler

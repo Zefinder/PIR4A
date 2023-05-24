@@ -8,6 +8,7 @@ public class TournamentSolveEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
+	private int nbLevels;
 	private boolean softConstraint;
 	private float classThreshold;
 	private float studentThreshold;
@@ -18,14 +19,19 @@ public class TournamentSolveEvent extends Event {
 	public TournamentSolveEvent() {
 	}
 
-	public TournamentSolveEvent(boolean softConstraint, float classThreshold, float studentThreshold, int timeout,
-			int firstTable, boolean verbose) {
+	public TournamentSolveEvent(int nbLevels, boolean softConstraint, float classThreshold,
+			float studentThreshold, int timeout, int firstTable, boolean verbose) {
+		this.nbLevels = nbLevels;
 		this.softConstraint = softConstraint;
 		this.classThreshold = classThreshold;
 		this.studentThreshold = studentThreshold;
 		this.timeout = timeout;
 		this.firstTable = firstTable;
 		this.verbose = verbose;
+	}
+	
+	public int getNbLevels() {
+		return nbLevels;
 	}
 
 	public boolean isSoftConstraint() {
@@ -47,7 +53,7 @@ public class TournamentSolveEvent extends Event {
 	public int getFirstTable() {
 		return firstTable;
 	}
-	
+
 	public boolean isVerbose() {
 		return verbose;
 	}

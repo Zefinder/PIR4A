@@ -15,6 +15,8 @@ import javax.swing.SwingConstants;
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
+import ppc.event.TournamentSolverFinishedEvent;
+import ppc.manager.EventManager;
 
 public class LoadingPanel extends JPanel implements Listener {
 
@@ -23,13 +25,16 @@ public class LoadingPanel extends JPanel implements Listener {
 	 */
 	private static final long serialVersionUID = 2798203968951488959L;
 
+	private int level;
+
 	private JLabel levelLabel;
 	private JProgressBar progressBarStudents;
 	private JProgressBar progressBarClasses;
 	private JButton stopButton;
 
-	public LoadingPanel() {
-//		EventManager.getInstance().registerListener(this);
+	public LoadingPanel(int level) {
+		//EventManager.getInstance().registerListener(this);
+		this.level = level;
 
 		GridLayout gridLayout = new GridLayout(4, 1);
 		gridLayout.setVgap(10);
@@ -37,9 +42,8 @@ public class LoadingPanel extends JPanel implements Listener {
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		// TODO: set max panel size
-
-		// TODO: specific level
-		levelLabel = new JLabel("Niveau X");
+		
+		levelLabel = new JLabel("Niveau " + (level + 1));
 		levelLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(levelLabel);
 
@@ -60,11 +64,9 @@ public class LoadingPanel extends JPanel implements Listener {
 		});
 		add(stopButton);
 	}
-
-	// TODO: call when final solution found
+	
 	private void searchIsStopped() {
-		// TODO: specific level
-		levelLabel.setText("Niveau X - recherche terminée");
+		levelLabel.setText("Niveau " + (level + 1) + " - recherche terminée");
 		stopButton.setEnabled(false);
 	}
 
@@ -77,15 +79,27 @@ public class LoadingPanel extends JPanel implements Listener {
 
 	@EventHandler
 	public void onSolutionFound(SolutionFoundEvent event) {
-		this.updateProgress((float) event.getStudentsMet() / event.getMaxStudentsMet() * 100,
-				(float) event.getClassesMet() / event.getMaxClassesMet() * 100);
+		if (event.getLevel() == this.level) {
+			this.updateProgress((float) event.getStudentsMet() / event.getMaxStudentsMet() * 100,
+					(float) event.getClassesMet() / event.getMaxClassesMet() * 100);
+		}
+	}
+	
+	@EventHandler
+	public void onFinalSolutionFound(TournamentSolverFinishedEvent event) {
+		System.out.println("my level is: " + level);
+		if (event.getLevel() == this.level) {
+			this.updateProgress((float) event.getStudentsMet() / event.getMaxStudentsMet() * 100,
+					(float) event.getClassesMet() / event.getMaxClassesMet() * 100);
+			searchIsStopped();
+		}
 	}
 
 	public static void main(String[] args) throws InterruptedException {
 		JFrame frame = new JFrame("Loading Panel");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		LoadingPanel loadingPanel = new LoadingPanel();
+		LoadingPanel loadingPanel = new LoadingPanel(1);
 		loadingPanel.updateProgress(50f, 30f);
 
 		frame.getContentPane().add(loadingPanel);
@@ -95,12 +109,17 @@ public class LoadingPanel extends JPanel implements Listener {
 
 		Thread.sleep(2000);
 
-		SolutionFoundEvent event = new SolutionFoundEvent(0, 70, 100, 50, 100);
+		SolutionFoundEvent event = new SolutionFoundEvent(1, 70, 100, 50, 100);
 		loadingPanel.onSolutionFound(event);
-		
+
 		Thread.sleep(2000);
 
-		event = new SolutionFoundEvent(0, 100, 100, 86, 100);
+		event = new SolutionFoundEvent(1, 80, 100, 86, 100);
+		loadingPanel.onSolutionFound(event);
+
+		Thread.sleep(2000);
+
+		event = new SolutionFoundEvent(0, 90, 100, 20, 100);
 		loadingPanel.onSolutionFound(event);
 	}
 }
