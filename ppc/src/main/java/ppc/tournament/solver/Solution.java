@@ -51,7 +51,7 @@ public class Solution {
 		for (int student = firstStudent; student <= matches.length / 2 - offset; student++)
 			this.idToTable.put(student, table++);
 	}
-	
+
 	public Integer[] getClassesConfiguration() {
 		if (this.classesConfiguration == null) {
 			classesConfiguration = new Integer[listClasses.length];
@@ -86,6 +86,14 @@ public class Solution {
 		if (this.idToTable == null)
 			this.initIdToTable();
 		return this.idToTable.get(id);
+	}
+
+	public Map<Integer, Integer> getMap() {
+		return idToTable;
+	}
+
+	public void setIdToName(Map<Integer, String[]> idToName) {
+		this.idToName = idToName;
 	}
 
 	public String[] getIdToName(int id) {
