@@ -1,7 +1,9 @@
 package ppc.frame.open;
 
+import java.awt.Dimension;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -12,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -21,8 +24,10 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JSeparator;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 import javax.swing.filechooser.FileFilter;
 import javax.swing.filechooser.FileSystemView;
+import javax.swing.plaf.basic.BasicArrowButton;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
@@ -31,6 +36,7 @@ import ppc.event.TournamentAddClassEvent;
 import ppc.event.TournamentAddClassStatusEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.event.TournamentOpeningStatusEvent;
+import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
 import ppc.manager.TournamentManager;
@@ -74,30 +80,57 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 	}
+	
+	private void showMainFrame() {
+		MainFrame frame = (MainFrame) SwingUtilities.getWindowAncestor(this);
+		frame.showMainPanel();
+	}
 
 	private void buildPanel() {
 		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
-
+		
 		JPanel leftPanel = new JPanel();
-		leftPanel.setLayout(new GridBagLayout());
+		leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.PAGE_AXIS));
+		
+		JPanel containerPanel = new JPanel();
+		containerPanel.setLayout(new BoxLayout(containerPanel, BoxLayout.LINE_AXIS));
+
+		JPanel buttonPanel = new JPanel(new GridLayout(1, 1));
+		buttonPanel.setPreferredSize(new Dimension(25, 25));
+		buttonPanel.setMaximumSize(buttonPanel.getPreferredSize());
+	    BasicArrowButton backButton = new BasicArrowButton(BasicArrowButton.WEST);
+	    backButton.addActionListener(e -> showMainFrame());
+	    buttonPanel.add(backButton);
+	    containerPanel.add(buttonPanel);
+	    containerPanel.add(Box.createHorizontalGlue());
+        leftPanel.add(containerPanel);
+
 		GridBagConstraints c = new GridBagConstraints();
+		c.anchor = GridBagConstraints.WEST;
+		c.gridx = 0;
+		c.gridy = 0;
+        
+		JPanel informationPanel = new JPanel();
+		informationPanel.setLayout(new GridBagLayout());
 		c.anchor = GridBagConstraints.CENTER;
 		c.fill = GridBagConstraints.BOTH;
 		c.insets = new Insets(5, 5, 5, 5);
 		c.gridheight = 1;
 		c.gridwidth = 1;
-
+		
 		c.gridx = 0;
 		c.gridy = 0;
-		leftPanel.add(buildInfoPanel(), c);
+		informationPanel.add(buildInfoPanel(), c);
 
 		c.gridx = 0;
 		c.gridy = 1;
-		leftPanel.add(buildAddRemoveClassPanel(), c);
+		informationPanel.add(buildAddRemoveClassPanel(), c);
 
 		c.gridx = 0;
 		c.gridy = 2;
-		leftPanel.add(buildSearchPanel(), c);
+		informationPanel.add(buildSearchPanel(), c);
+		leftPanel.add(informationPanel);
+		
 		this.add(leftPanel);
 
 		JSeparator separator = new JSeparator(JSeparator.VERTICAL);
@@ -112,7 +145,6 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		panel.setLayout(new GridBagLayout());
 
 		GridBagConstraints c = new GridBagConstraints();
-
 		c.anchor = GridBagConstraints.CENTER;
 		c.fill = GridBagConstraints.BOTH;
 		c.insets = new Insets(5, 5, 5, 5);
