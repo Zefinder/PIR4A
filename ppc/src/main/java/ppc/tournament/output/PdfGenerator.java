@@ -40,7 +40,8 @@ public class PdfGenerator {
 	private int lastLevelWithGhost;
 	private boolean needsGhosts = false;
 
-	public PdfGenerator(List<Solution> solutions, String[] classNames, int nbClasses, int firstTable, int lastLevelWithGhost) {
+	public PdfGenerator(List<Solution> solutions, String[] classNames, int nbClasses, int firstTable,
+			int lastLevelWithGhost) {
 		this.solutions = solutions;
 		this.classNames = classNames;
 		this.nbClasses = nbClasses;
@@ -141,8 +142,8 @@ public class PdfGenerator {
 		}
 	}
 
-	private void addRowsMatches(Solution solution, int nbStudentsPrevLevels, int nbTablesPrevLevels, int level, PdfPTable table,
-			PdfPTable ghostTable) {
+	private void addRowsMatches(Solution solution, int nbStudentsPrevLevels, int nbTablesPrevLevels, int level,
+			PdfPTable table, PdfPTable ghostTable) {
 		int ghost = solution.getGhost();
 		if (ghost != -1) {
 			PdfPCell studentCell = new PdfPCell(new Phrase("Élève seul(e)"));
@@ -337,7 +338,7 @@ public class PdfGenerator {
 					String[] name = solution.getIdToName(listClasses[classNb][student]);
 					studentCell.setPhrase(new Phrase(name[0] + " " + name[1]));
 				}
-				
+
 				studentCell.setBorderWidth(0.25f);
 				if (classNb == nbClasses - 1)
 					studentCell.setBorderWidthRight(1);
@@ -365,7 +366,7 @@ public class PdfGenerator {
 
 			PdfPTable lvlTable = new PdfPTable(1 + nbClasses);
 			lvlTable.setWidthPercentage(100);
-			
+
 			PdfPCell classHeader = formatHeaderCell("Classe");
 			classHeader.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 			lvlTable.addCell(classHeader);
@@ -387,7 +388,7 @@ public class PdfGenerator {
 
 		document.close();
 	}
-	
+
 	private PdfPTable createFicheProfTables(int classNb, int level) {
 		float[] columns = new float[3 + TournamentSolver.NUMBER_MATCHES];
 		columns[0] = 3;
@@ -397,35 +398,36 @@ public class PdfGenerator {
 		columns[2 + TournamentSolver.NUMBER_MATCHES] = 3;
 		PdfPTable table = new PdfPTable(columns);
 		table.setWidthPercentage(100);
-		
+
 		PdfPCell classCell = formatHeaderCell("Classe " + (classNb + 1) + " : " + classNames[classNb]);
 		classCell.setColspan(table.getNumberOfColumns());
 		classCell.setBackgroundColor(colourMap.get(classNb));
 		table.addCell(classCell);
-		
+
 		PdfPCell lvlCell = formatHeaderCell("Niveau " + (level + 1));
 		lvlCell.setColspan(2);
 		table.addCell(lvlCell);
-		
+
 		PdfPCell gameCell = formatHeaderCell("Parties");
 		gameCell.setColspan(6);
 		table.addCell(gameCell);
-		
+
 		PdfPCell totalCell = formatHeaderCell("Total");
 		totalCell.setRowspan(2);
 		totalCell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 		table.addCell(totalCell);
-		
+
 		table.addCell(formatHeaderCell("ID"));
 		table.addCell(formatHeaderCell("Nom de l'élève"));
-		
+
 		for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++)
 			table.addCell(formatHeaderCell("" + (game + 1)));
-		
+
 		return table;
 	}
-	
-	private void addRowsFicheProfTables(List<PdfPTable> lvlTables, Solution solution, int levels, int level, int nbStudentsPrevLevels) {
+
+	private void addRowsFicheProfTables(List<PdfPTable> lvlTables, Solution solution, int levels, int level,
+			int nbStudentsPrevLevels) {
 		for (int classNb = 0; classNb < nbClasses; classNb++) {
 			PdfPTable table = lvlTables.get(level + (classNb * levels));
 			Integer[] currClass = solution.getListClasses()[classNb];
@@ -437,32 +439,32 @@ public class PdfGenerator {
 
 				idCell.setBorderWidth(0.25f);
 				nameCell.setBorderWidth(0.25f);
-				
+
 				if (i == currClass.length - 1) {
 					idCell.setBorderWidthBottom(1);
 					nameCell.setBorderWidthBottom(1);
 				}
-				
+
 				idCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
 				idCell.setBorderWidthLeft(1);
 				table.addCell(idCell);
-				
+
 				nameCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
 				table.addCell(nameCell);
-				
+
 				for (int empty = 0; empty < TournamentSolver.NUMBER_MATCHES + 1; empty++) {
 					PdfPCell emptyCell = new PdfPCell();
 					emptyCell.setBorderWidth(0.25f);
 					if (i == currClass.length - 1)
 						emptyCell.setBorderWidthBottom(1);
-					if (empty == TournamentSolver.NUMBER_MATCHES) 
+					if (empty == TournamentSolver.NUMBER_MATCHES)
 						emptyCell.setBorderWidthRight(1);
 					table.addCell(emptyCell);
 				}
 			}
 		}
 	}
-	
+
 	public void createPdfProfs() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
 		PdfWriter.getInstance(document, new FileOutputStream("FichesProfs.pdf"));
@@ -470,7 +472,7 @@ public class PdfGenerator {
 		document.open();
 
 		List<PdfPTable> lvlTables = new ArrayList<>();
-		for (int classNb = 0; classNb < nbClasses ; classNb++)
+		for (int classNb = 0; classNb < nbClasses; classNb++)
 			for (int level = 0; level < solutions.size(); level++)
 				lvlTables.add(createFicheProfTables(classNb, level));
 
@@ -480,7 +482,7 @@ public class PdfGenerator {
 			addRowsFicheProfTables(lvlTables, currentSolution, solutions.size(), level, nbStudents);
 			nbStudents += currentSolution.getMatches().length - ((currentSolution.getGhost() == -1) ? 0 : 1);
 		}
-		
+
 		int pdfTableNb = 1;
 		addPdfTitleDate(document);
 		for (PdfPTable classTable : lvlTables) {
@@ -488,80 +490,89 @@ public class PdfGenerator {
 			if (pdfTableNb % solutions.size() == 0 && pdfTableNb < lvlTables.size()) {
 				document.add(Chunk.NEXTPAGE);
 				addPdfTitleDate(document);
-			}
-			else
+			} else
 				document.add(Chunk.NEWLINE);
 			pdfTableNb++;
 		}
 
 		document.close();
 	}
-	
-	private void createStudentTables(Solution solution, List<List<PdfPTable>> studentTablesList, int nbStudentsPrevLevels) {
+
+	private void createStudentTables(Solution solution, List<List<PdfPTable>> studentTablesList,
+			int nbStudentsPrevLevels) {
 		float[] columns = new float[3 + TournamentSolver.NUMBER_MATCHES];
 		columns[0] = 4;
 		columns[1] = 2;
 		for (int col = 2; col < 2 + TournamentSolver.NUMBER_MATCHES; col++)
 			columns[col] = 1;
 		columns[2 + TournamentSolver.NUMBER_MATCHES] = 2;
-		
+
 		Integer[][] matches = solution.getMatches();
 		int firstRealStudent = (solution.getGhost() == -1) ? 0 : 1;
 		int offset = (solution.getGhost() == -1) ? 1 : 0;
 		for (int studentId = firstRealStudent; studentId < matches.length; studentId++) {
 			PdfPTable table = new PdfPTable(columns);
 			table.setWidthPercentage(100);
-			
+
 			int studentClass = solution.getStudentClasses()[studentId];
-			
+
 			PdfPCell idCell = new PdfPCell(new Phrase("" + (studentId + offset + nbStudentsPrevLevels)));
 			idCell.setBackgroundColor(colourMap.get(studentClass));
 			idCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
 			table.addCell(idCell);
-			
+
 			table.addCell(new PdfPCell(new Phrase("Partie")));
-			
+
 			for (int game = 1; game <= TournamentSolver.NUMBER_MATCHES; game++)
 				table.addCell(new PdfPCell(new Phrase("" + game)));
 			PdfPCell invisibleCell = new PdfPCell();
 			invisibleCell.setBorderWidth(0);
 			table.addCell(invisibleCell);
-			
+
 			String[] name = solution.getIdToName(studentId);
 			PdfPCell nameCell = new PdfPCell(new Phrase(name[0] + " " + name[1]));
 			nameCell.setRowspan(3);
 			nameCell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 			nameCell.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
 			table.addCell(nameCell);
-			
+
 			table.addCell(new PdfPCell(new Phrase("Table")));
-//			System.out.println(solution.getMap().toString());
-//			System.out.println("First table: " + firstTable);
 			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++) {
-				if (studentId < matches.length / 2)
+				// If game vs a ghost, we put a cross
+				if (firstRealStudent == 1 && matches[studentId][game] == 0) {
+					PdfPCell cell = new PdfPCell();
+					cell.setCellEvent(new CrossedOutCellEvent());
+					table.addCell(cell);
+					
+				} else if (studentId < matches.length / 2)
 					table.addCell(new PdfPCell(new Phrase("" + (solution.getIdToTable(studentId) + firstTable))));
-				else
-					table.addCell(new PdfPCell(new Phrase("" + (solution.getIdToTable(matches[studentId][game]) + firstTable))));
+				
+				else {
+					table.addCell(new PdfPCell(
+							new Phrase("" + (solution.getIdToTable(matches[studentId][game]) + firstTable))));
+
+				}
 			}
 			table.addCell(invisibleCell);
-			
+
 			table.addCell(new PdfPCell(new Phrase("Couleur")));
 			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++) {
 				PdfPCell colourCell = new PdfPCell();
-				if ((studentId < matches.length / 2 && game % 2 == 0) || (studentId >= matches.length / 2 && game % 2 == 1))
+				if ((studentId < matches.length / 2 && game % 2 == 0)
+						|| (studentId >= matches.length / 2 && game % 2 == 1))
 					colourCell.setBackgroundColor(BaseColor.BLACK);
 				table.addCell(colourCell);
 			}
 			table.addCell(new PdfPCell(new Phrase("Total")));
-			
+
 			table.addCell(new PdfPCell(new Phrase("Résultat")));
 			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES + 1; game++)
 				table.addCell(new PdfPCell());
-			
+
 			studentTablesList.get(studentClass).add(table);
 		}
 	}
-	
+
 	public void createPdfEleves() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
 		PdfWriter.getInstance(document, new FileOutputStream("FichesEleves.pdf"));
@@ -570,13 +581,13 @@ public class PdfGenerator {
 		List<List<PdfPTable>> studentTablesByClass = new ArrayList<>();
 		for (int classNb = 0; classNb < nbClasses; classNb++)
 			studentTablesByClass.add(new ArrayList<>());
-		
+
 		int nbStudents = 0;
 		for (Solution currentSolution : solutions) {
 			createStudentTables(currentSolution, studentTablesByClass, nbStudents);
 			nbStudents += currentSolution.getMatches().length - ((currentSolution.getGhost() == -1) ? 0 : 1);
 		}
-		
+
 		for (List<PdfPTable> studentTables : studentTablesByClass) {
 			for (PdfPTable table : studentTables) {
 				document.add(table);
@@ -585,7 +596,7 @@ public class PdfGenerator {
 			}
 			document.add(Chunk.NEXTPAGE);
 		}
-		
+
 		document.close();
 	}
 }

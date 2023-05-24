@@ -39,7 +39,7 @@ public class InputFormat {
 	 * @throws IOException    if the file does not exist
 	 * @throws ParseException if the file is corrupted
 	 */
-	public static List<Map<String, String[][]>> parseCsv(File csvFile) throws IOException, ParseException {
+	public static List<Map<String, String[][]>> parseCsv(File csvFile, int groupsNumber) throws IOException, ParseException {
 		BufferedReader reader = new BufferedReader(new FileReader(csvFile, StandardCharsets.UTF_8));
 
 		List<List<String>> csvParsed = new ArrayList<>();
@@ -128,15 +128,15 @@ public class InputFormat {
 		}
 		reader.close();
 
-		return processCsv(csvParsed);
+		return processCsv(csvParsed, groupsNumber);
 	}
 
 	public static void writeCSV(File csvFile, String[][] elements, String profName) throws IOException {
 		BufferedWriter writer = new BufferedWriter(
 				new OutputStreamWriter(new FileOutputStream(csvFile), StandardCharsets.UTF_8));
 
-		writer.append(
-				"A GARDER EN FORMAT CSV;;\r\n" + "Nom du prof;" + profName + ";\r\n" + ";;\r\n" + "Prénom;Nom;Niveau\n");
+		writer.append("A GARDER EN FORMAT CSV;;\r\n" + "Nom du prof;" + profName + ";\r\n" + ";;\r\n"
+				+ "Prénom;Nom;Niveau\n");
 
 		for (int row = 0; row < elements.length; row++) {
 			for (int column = 0; column < elements[row].length; column++) {
@@ -157,7 +157,7 @@ public class InputFormat {
 		writer.close();
 	}
 
-	private static List<Map<String, String[][]>> processCsv(List<List<String>> csvParsed) throws ParseException {
+	private static List<Map<String, String[][]>> processCsv(List<List<String>> csvParsed, int groupsNumber) throws ParseException {
 		Map<String[], Integer> classes = new LinkedHashMap<>();
 
 		String profName = "";
@@ -190,7 +190,13 @@ public class InputFormat {
 
 		List<Map<String, String[][]>> listMap = new ArrayList<>();
 		List<List<String[]>> namesList = new ArrayList<>();
-
+		
+		if (maxGroup - minGroup < groupsNumber) {
+			maxGroup = minGroup + groupsNumber;
+		} else if (maxGroup - minGroup > groupsNumber) {
+			throw new ParseException("Too big number of groups for CSV file", 0);
+		}
+		
 		// We init structures
 		for (int i = minGroup; i <= maxGroup; i++) {
 			listMap.add(new LinkedHashMap<>());

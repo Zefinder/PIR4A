@@ -12,7 +12,9 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,10 +36,12 @@ import javax.swing.JViewport;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
+import ppc.event.TournamentAddLevelGroupEvent;
 import ppc.event.TournamentClassCopyEvent;
 import ppc.event.TournamentClassCopyStatusEvent;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
+import ppc.event.TournamentSolveEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.frame.TournamentTableModel;
 import ppc.manager.EventManager;
@@ -59,16 +63,17 @@ public class CSVPanel extends JPanel implements Listener {
 	private JButton addStudent;
 	private JButton removeStudent;
 
-	private List<List<Map<String, String[][]>>> data;
 	private List<JScrollPane> scrollList;
+	private List<TournamentTableModel> tableModelList;
 
 	private String tournamentName;
 
 	public CSVPanel() {
 		EventManager.getInstance().registerListener(this);
 
-		data = new ArrayList<>();
 		scrollList = new ArrayList<>();
+		tableModelList = new ArrayList<>();
+
 		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
 		this.add(Box.createHorizontalStrut(10));
@@ -114,6 +119,7 @@ public class CSVPanel extends JPanel implements Listener {
 						System.out.println("Showing " + listClasses.getSelectedValue());
 						CardLayout cl = (CardLayout) csvPanel.getLayout();
 						cl.show(csvPanel, scrollList.get(selectedClass).getName());
+
 						addStudent.setEnabled(true);
 						removeStudent.setEnabled(true);
 
@@ -205,13 +211,39 @@ public class CSVPanel extends JPanel implements Listener {
 
 		return csvPanel;
 	}
+	
+	public void reset() {
+		// Clearing lists
+		scrollList = new ArrayList<>();
+		tableModelList = new ArrayList<>();
+		model.removeAllElements();
+		
+		// Disable buttons
+		addStudent.setEnabled(false);
+		removeStudent.setEnabled(false);
+		
+		// Clearing panel and refilling it
+		csvPanel.removeAll();
+		csvPanel.setLayout(new CardLayout());
+
+		TournamentTableModel tableModel = new TournamentTableModel();
+		tableModel.addColumn("Prénom");
+		tableModel.addColumn("Nom");
+		tableModel.addColumn("Niveau");
+
+		JTable defaultTable = new JTable(tableModel);
+		defaultTable.getColumnModel().getColumn(2).setPreferredWidth(25);
+		defaultTable.setPreferredScrollableViewportSize(defaultTable.getPreferredSize());
+
+		JScrollPane defaultTablePanel = new JScrollPane(defaultTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
+				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+		csvPanel.add(defaultTablePanel, "");
+	}
 
 	public void addClass(List<Map<String, String[][]>> classData, int classNumber) {
 		// Getting prof's name
 		String profName = classData.get(0).keySet().toArray(String[]::new)[0];
-
-		// Adding to data list
-		data.add(classData);
 
 		// Adding to names' list
 		model.addElement("Classe de " + profName);
@@ -242,37 +274,68 @@ public class CSVPanel extends JPanel implements Listener {
 		this.tournamentName = tournamentName;
 	}
 
+	public void launchSolver(int classNumber, int groupsNumber, boolean soft, float studentsThreshold,
+			float classesThreshold, int timeout, int firstTable, boolean verbose) {
+		// List of groups of classes (K x N)
+		List<Map<String, String[][]>> listClasses = new ArrayList<>();
+		for (int level = 0; level < groupsNumber; level++) {
+			listClasses.add(new LinkedHashMap<>());
+		}
+
+		// Parse final CSV to get lists
+		File[] csvFiles = FileManager.getInstance().getTournamentData(tournamentName);
+
+		for (File csvfile : csvFiles) {
+			System.out.println("Reading file " + csvfile.getName());
+			try {
+				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile, groupsNumber);
+				for (int level = 0; level < groupsNumber; level++) {
+					listClasses.get(level).putAll(classData.get(level));
+				}
+
+			} catch (IOException | ParseException e) {
+				e.printStackTrace();
+				System.err.println("An error occured when parsing file " + csvfile.getAbsolutePath());
+			}
+		}
+
+		for (int level = 0; level < groupsNumber; level++)
+			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
+
+		EventManager.getInstance().callEvent(
+				new TournamentSolveEvent(soft, classesThreshold, studentsThreshold, timeout, firstTable, verbose));
+	}
+
 	@EventHandler
 	public void onClassRemoved(TournamentDeleteClassStatusEvent event) {
-		if (event.getStatus() == EventStatus.SUCCESS) {
-			int selectedIndex = event.getListIndex();
+		int selectedIndex = event.getListIndex();
 
-			// Remove from list
-			model.remove(selectedIndex);
+		// Remove from list
+		model.remove(selectedIndex);
 
-			// Remove from data
-			data.remove(selectedIndex);
+		// Remove from table model list
+		tableModelList.remove(selectedIndex);
 
-			// Remove from CardLayout
-			CardLayout cl = (CardLayout) csvPanel.getLayout();
-			cl.removeLayoutComponent(scrollList.get(selectedIndex));
+		// Remove from CardLayout
+		CardLayout cl = (CardLayout) csvPanel.getLayout();
+		cl.removeLayoutComponent(scrollList.get(selectedIndex));
 
-			// Remove from JPanel list
-			scrollList.remove(selectedIndex);
+		// Remove from JPanel list
+		scrollList.remove(selectedIndex);
 
-			// Resize list
-			if (model.getSize() > 15)
-				listClasses.setVisibleRowCount(15);
-			else
-				listClasses.setVisibleRowCount(model.getSize());
+		// Resize list
+		if (model.getSize() > 15)
+			listClasses.setVisibleRowCount(15);
+		else
+			listClasses.setVisibleRowCount(model.getSize());
 
-			// Unselecting buttons
-			addStudent.setEnabled(false);
-			removeStudent.setEnabled(false);
+		// Unselecting buttons
+		addStudent.setEnabled(false);
+		removeStudent.setEnabled(false);
 
-			// Revalidate frame
-			repaint();
-		}
+		// Revalidate frame
+		repaint();
+
 	}
 
 	@EventHandler
@@ -322,6 +385,7 @@ public class CSVPanel extends JPanel implements Listener {
 		defaultTablePanel.setName(profName);
 
 		scrollList.add(defaultTablePanel);
+		tableModelList.add(tableModel);
 		csvPanel.add(defaultTablePanel, profName);
 	}
 
@@ -462,12 +526,6 @@ public class CSVPanel extends JPanel implements Listener {
 				}
 
 				tableModel.addRow(new String[] { firstName, lastName, String.valueOf(level) });
-//				try {
-//					tableModified(tableModel);
-//				} catch (IOException e) {
-//					System.err.println("An error occured when modifying the table...");
-//					e.printStackTrace();
-//				}
 				dispose();
 			}
 		}

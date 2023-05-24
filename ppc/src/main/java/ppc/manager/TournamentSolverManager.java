@@ -19,6 +19,7 @@ import com.itextpdf.text.DocumentException;
 import ppc.annotation.EventHandler;
 import ppc.annotation.ManagerPriority;
 import ppc.event.Listener;
+import ppc.event.SolutionFoundEvent;
 import ppc.event.TournamentAddLevelGroupEvent;
 import ppc.event.TournamentSolveEvent;
 import ppc.tournament.output.PdfGenerator;
@@ -98,8 +99,10 @@ public class TournamentSolverManager implements Manager, Listener {
 				}
 
 				// Parse soft constraint
-				String fourthLine = reader.readLine();
-				boolean softConstraint = Boolean.parseBoolean(fourthLine.split(" ")[1]);
+				String[] fourthLine = reader.readLine().split(" ");
+				boolean softConstraint = Boolean.parseBoolean(fourthLine[1]);
+				int maxStudentsMet = Integer.parseInt(fourthLine[2]);
+				int maxClassesMet = Integer.parseInt(fourthLine[3]);
 
 				// Parse the fifth line into double and integers
 				String[] stats = reader.readLine().split(" ");
@@ -109,7 +112,8 @@ public class TournamentSolverManager implements Manager, Listener {
 
 				precalculatedSolutions.put(Arrays.toString(configuration),
 						new Solution(opponentsMatrix, listClasses.getListStudents(), listClasses.getListClassesId(),
-								null, ghost, softConstraint, runtime, nbStudentsMet, nbClassesMet));
+								null, ghost, softConstraint, runtime, nbStudentsMet, maxStudentsMet, nbClassesMet,
+								maxClassesMet));
 			}
 
 			reader.close();
@@ -138,19 +142,21 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		// so that the levels are in increasing order
 		SortedSet<Integer> keys = new TreeSet<>(classesByLevel.keySet());
-		int lvl = 0;
+		int lvl = 1;
 		for (Integer key : keys) {
 			String[][][] lvlClasses = new String[nbClasses][][];
 			int classNb = 0;
 			for (String[][] currentClass : classesByLevel.get(key).values())
 				lvlClasses[classNb++] = currentClass;
 
-			// Checking if solution already has been computed
+			// Checking if solution already has been computed and has good computation
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
 			Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(configuration));
 			if (precalculatedSolution != null
-					&& precalculatedSolution.getMaxStudentsMet() >= event.getStudentThreshold()
-					&& precalculatedSolution.getMaxClassesMet() >= event.getClassThreshold()) {
+					&& ((float) precalculatedSolution.getStudentsMet()
+							/ precalculatedSolution.getMaxStudentsMet()) >= event.getStudentThreshold()
+					&& ((float) precalculatedSolution.getClassesMet()
+							/ precalculatedSolution.getMaxClassesMet()) >= event.getClassThreshold()) {
 
 				// We compute the idToName map and add it to the solution
 				Map<Integer, String[]> idToName = new HashMap<>();
@@ -167,6 +173,12 @@ public class TournamentSolverManager implements Manager, Listener {
 				solutions.add(precalculatedSolution);
 				if (precalculatedSolution.getGhost() != -1)
 					lastLevelWithGhost = lvl;
+
+				// We tell the frame that this solution is already found !
+				EventManager.getInstance()
+						.callEvent(new SolutionFoundEvent(lvl, precalculatedSolution.getStudentsMet(),
+								precalculatedSolution.getMaxStudentsMet(), precalculatedSolution.getClassesMet(),
+								precalculatedSolution.getMaxClassesMet()));
 
 				// Else we launch the solver
 			} else {
@@ -273,60 +285,17 @@ public class TournamentSolverManager implements Manager, Listener {
 			}
 		}
 
-//		System.out.println(Arrays.toString(studentClasses));
-//		System.out.println(Arrays.deepToString(listClassesId));
-
 		StudentListsClass listClasses = new StudentListsClass(listClassesId, studentClasses);
 
 		return listClasses;
 	}
 
-//	public static void main(String[] args) throws InterruptedException, IllegalAccessException,
-//			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
-//		Launch.init();
-//
-//		String[][][] lvlClasses = new String[][][] {
-//				{ { "Adr", "ien" }, { "sa", "rah" }, { "san", "dro" }, { "Pi", "R" }, { "A", "a" }, { "B", "b" } },
-//				{ { "Pa", "ul" }, { "As", "mun" }, { "vale", "ntin" }, { "Nic", "olas" }, { "C", "c" }, { "D", "d" } },
-//				{ { "Marie", "Jo" }, { "Dan", "iel" }, { "Marie", "Agnès" }, { "Rom", "ain" }, { "E", "e" },
-//						{ "F", "f" } } };
-//		LevelThread lvlThread = new LevelThread(lvlClasses, false, 1, 1, 60, 1, true);
-//		Thread t = new Thread(lvlThread);
-//		t.start();
-//		System.out.println("AAAAAAAAAAH");
-//		t.join();
-//		System.out.println("AAAH");
-//
-//		Solution sol = lvlThread.getSolution();
-//		Integer[][] matches = sol.getMatches();
-//
-//		Integer[][] listClasses = instance.createStudentClasses(new int[] { 6, 6, 6 });
-//		instance.precalculatedSolutions = new LinkedHashMap<>();
-//		instance.classesByLevel = new HashMap<>();
-//
-//		instance.precalculatedSolutions.put(Arrays.toString(new Integer[] { 6, 6, 6 }),
-//				new Solution(matches, sol.getStudentClasses(), listClasses, null, -1, false, 60, 2, 2));
-//
-//		Map<String, String[][]> names = new HashMap<>();
-//		names.put("prof1", new String[][] { { "Adr", "ien" }, { "sa", "rah" }, { "san", "dro" }, { "Pi", "R" },
-//				{ "A", "a" }, { "B", "b" } });
-//		names.put("prof2", new String[][] { { "Pa", "ul" }, { "As", "mun" }, { "vale", "ntin" }, { "Nic", "olas" },
-//				{ "C", "c" }, { "D", "d" } });
-//		names.put("prof3", new String[][] { { "Marie", "Jo" }, { "Dan", "iel" }, { "Marie", "Agnès" }, { "Rom", "ain" },
-//				{ "E", "e" }, { "F", "f" } });
-//
-//		TournamentAddLevelGroupEvent eventAdd = new TournamentAddLevelGroupEvent(names, 1);
-//		instance.onLevelGroupAdded(eventAdd);
-//
-//		TournamentSolveEvent event = new TournamentSolveEvent(false, 1, 1, 60, 10, true);
-//		instance.onSolverCalled(event);
-//
-//	}
-
 	public static TournamentSolverManager getInstance() {
 		return instance;
 	}
 
+	// TODO Make handler to stop search if needed. 
+	
 	private static class StudentListsClass {
 
 		private Integer[][] listClassesId;
