@@ -535,11 +535,13 @@ public class PdfGenerator {
 			table.addCell(nameCell);
 			
 			table.addCell(new PdfPCell(new Phrase("Table")));
+//			System.out.println(solution.getMap().toString());
+//			System.out.println("First table: " + firstTable);
 			for (int game = 0; game < TournamentSolver.NUMBER_MATCHES; game++) {
 				if (studentId < matches.length / 2)
-					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(studentId) + firstTable)));
+					table.addCell(new PdfPCell(new Phrase("" + (solution.getIdToTable(studentId) + firstTable))));
 				else
-					table.addCell(new PdfPCell(new Phrase("" + solution.getIdToTable(matches[studentId][game]) + firstTable)));
+					table.addCell(new PdfPCell(new Phrase("" + (solution.getIdToTable(matches[studentId][game]) + firstTable))));
 			}
 			table.addCell(invisibleCell);
 			

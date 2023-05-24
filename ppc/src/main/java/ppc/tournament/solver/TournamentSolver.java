@@ -184,6 +184,7 @@ public class TournamentSolver {
 		solver.getParameters().setEnumerateAllSolutions(true);
 		solver.getParameters().setMaxTimeInSeconds(timeout);
 
+		System.out.println("Solving");
 		solver.solve(model, sp);
 
 		if (verbose) {
@@ -326,6 +327,9 @@ public class TournamentSolver {
 	@Override
 	public String toString() {
 		String solutionString = new String();
+		if (solution == null)
+			return "Infeasible";
+		
 		for (int i = 0; i < solution.length; i++) {
 			List<Integer> classesMet = new ArrayList<>();
 			solutionString += String.format("Student %d (class %d): \t[", i, studentClasses[i]);
@@ -377,6 +381,7 @@ public class TournamentSolver {
 
 		@Override
 		public void onSolutionCallback() {
+			System.out.println("Solution found ");
 			String solutionMessage = "Solution " + ++solutionCount;
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;

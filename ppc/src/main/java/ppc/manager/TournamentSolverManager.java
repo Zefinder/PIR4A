@@ -45,7 +45,7 @@ public class TournamentSolverManager implements Manager, Listener {
 	private static final TournamentSolverManager instance = new TournamentSolverManager();
 
 	private Map<Integer, Map<String, String[][]>> classesByLevel;
-	private Map<Integer[], Solution> precalculatedSolutions;
+	private Map<String, Solution> precalculatedSolutions;
 	private LogsManager logs = LogsManager.getInstance();
 
 	public TournamentSolverManager() {
@@ -62,7 +62,6 @@ public class TournamentSolverManager implements Manager, Listener {
 
 	private void loadPreData() {
 		this.precalculatedSolutions = new HashMap<>();
-		// TODO Ouvrir le fichier et mettre dans la map
 		File file = new File("input.txt"); // Replace "input.txt" with your file path
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(file));
@@ -79,6 +78,8 @@ public class TournamentSolverManager implements Manager, Listener {
 					totalStudents += nbStudents;
 				}
 				Arrays.sort(configuration, Collections.reverseOrder());
+
+				StudentListsClass listClasses = createStudentClasses(configuration);
 
 				int ghost = -1;
 				if (totalStudents % 2 != 0)
@@ -106,14 +107,14 @@ public class TournamentSolverManager implements Manager, Listener {
 				int nbStudentsMet = Integer.parseInt(stats[1]);
 				int nbClassesMet = Integer.parseInt(stats[2]);
 
-				// TODO : we shouldn't have null null null... or the pdf generator will be
-				// angry...
-				precalculatedSolutions.put(configuration, new Solution(opponentsMatrix, null, null, null, ghost,
-						softConstraint, runtime, nbStudentsMet, nbClassesMet));
+				precalculatedSolutions.put(Arrays.toString(configuration),
+						new Solution(opponentsMatrix, listClasses.getListStudents(), listClasses.getListClassesId(),
+								null, ghost, softConstraint, runtime, nbStudentsMet, nbClassesMet));
 			}
 
 			reader.close();
 		} catch (IOException e) {
+			System.err.println("Error when reading file, cancel...");
 			e.printStackTrace();
 		}
 	}
@@ -146,13 +147,27 @@ public class TournamentSolverManager implements Manager, Listener {
 
 			// Checking if solution already has been computed
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
-			Solution precalculatedSolution = precalculatedSolutions.get(configuration);
-			if (precalculatedSolution != null && (precalculatedSolution.isSoftConstraint() == event.isSoftConstraint())
+			Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(configuration));
+			if (precalculatedSolution != null
 					&& precalculatedSolution.getMaxStudentsMet() >= event.getStudentThreshold()
 					&& precalculatedSolution.getMaxClassesMet() >= event.getClassThreshold()) {
+
+				// We compute the idToName map and add it to the solution
+				Map<Integer, String[]> idToName = new HashMap<>();
+				for (int classNumber = 0; classNumber < lvlClasses.length; classNumber++) {
+					Integer[] studentsId = precalculatedSolution.getListClasses()[classNumber];
+					for (int studentNumber = 0; studentNumber < lvlClasses[classNumber].length; studentNumber++) {
+						idToName.put(studentsId[studentNumber], lvlClasses[classNumber][studentNumber]);
+					}
+				}
+
+				precalculatedSolution.setIdToName(idToName);
+
+				// We add the solution
 				solutions.add(precalculatedSolution);
 				if (precalculatedSolution.getGhost() != -1)
 					lastLevelWithGhost = lvl;
+
 				// Else we launch the solver
 			} else {
 				LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
@@ -207,8 +222,129 @@ public class TournamentSolverManager implements Manager, Listener {
 		this.classesByLevel.put(event.getLevel(), event.getClasses());
 	}
 
+	private StudentListsClass createStudentClasses(Integer[] classes) {
+		// We count the number of students
+		int studentNumber = 0;
+		for (int i = 0; i < classes.length; i++)
+			studentNumber += classes[i];
+
+		int id = 0;
+		int[] studentClasses = new int[studentNumber];
+
+		// If odd number of students, then we add a ghost
+		if ((studentNumber & 0b1) == 1) {
+			studentClasses = new int[++studentNumber];
+			studentClasses[id++] = classes.length;
+		} else
+			studentClasses = new int[studentNumber];
+
+		boolean unbalanced = false;
+		Integer[][] listClassesId = new Integer[classes.length][];
+
+		// Repartition for the first half
+		for (int classNb = 0; classNb < classes.length; classNb++) {
+			int numberInClass = classes[classNb];
+			Integer[] listClassId = new Integer[numberInClass];
+			Arrays.fill(listClassId, -1);
+			for (int i = 0; i < numberInClass / 2; i++) {
+				studentClasses[id] = classNb;
+				listClassId[i] = id++;
+			}
+
+			if ((numberInClass & 0b1) == 1) {
+				if (unbalanced) {
+					studentClasses[id] = classNb;
+					int middle = numberInClass / 2;
+
+					listClassId[middle] = id++;
+				}
+				unbalanced = !unbalanced;
+			}
+			listClassesId[classNb] = listClassId;
+		}
+
+		// Repartition for the second half
+		for (int classNb = 0; classNb < classes.length; classNb++) {
+			for (int student = 0; student < listClassesId[classNb].length; student++) {
+				if (listClassesId[classNb][student] == -1) {
+					studentClasses[id] = classNb;
+					listClassesId[classNb][student] = id++;
+				}
+			}
+		}
+
+//		System.out.println(Arrays.toString(studentClasses));
+//		System.out.println(Arrays.deepToString(listClassesId));
+
+		StudentListsClass listClasses = new StudentListsClass(listClassesId, studentClasses);
+
+		return listClasses;
+	}
+
+//	public static void main(String[] args) throws InterruptedException, IllegalAccessException,
+//			IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException {
+//		Launch.init();
+//
+//		String[][][] lvlClasses = new String[][][] {
+//				{ { "Adr", "ien" }, { "sa", "rah" }, { "san", "dro" }, { "Pi", "R" }, { "A", "a" }, { "B", "b" } },
+//				{ { "Pa", "ul" }, { "As", "mun" }, { "vale", "ntin" }, { "Nic", "olas" }, { "C", "c" }, { "D", "d" } },
+//				{ { "Marie", "Jo" }, { "Dan", "iel" }, { "Marie", "Agnès" }, { "Rom", "ain" }, { "E", "e" },
+//						{ "F", "f" } } };
+//		LevelThread lvlThread = new LevelThread(lvlClasses, false, 1, 1, 60, 1, true);
+//		Thread t = new Thread(lvlThread);
+//		t.start();
+//		System.out.println("AAAAAAAAAAH");
+//		t.join();
+//		System.out.println("AAAH");
+//
+//		Solution sol = lvlThread.getSolution();
+//		Integer[][] matches = sol.getMatches();
+//
+//		Integer[][] listClasses = instance.createStudentClasses(new int[] { 6, 6, 6 });
+//		instance.precalculatedSolutions = new LinkedHashMap<>();
+//		instance.classesByLevel = new HashMap<>();
+//
+//		instance.precalculatedSolutions.put(Arrays.toString(new Integer[] { 6, 6, 6 }),
+//				new Solution(matches, sol.getStudentClasses(), listClasses, null, -1, false, 60, 2, 2));
+//
+//		Map<String, String[][]> names = new HashMap<>();
+//		names.put("prof1", new String[][] { { "Adr", "ien" }, { "sa", "rah" }, { "san", "dro" }, { "Pi", "R" },
+//				{ "A", "a" }, { "B", "b" } });
+//		names.put("prof2", new String[][] { { "Pa", "ul" }, { "As", "mun" }, { "vale", "ntin" }, { "Nic", "olas" },
+//				{ "C", "c" }, { "D", "d" } });
+//		names.put("prof3", new String[][] { { "Marie", "Jo" }, { "Dan", "iel" }, { "Marie", "Agnès" }, { "Rom", "ain" },
+//				{ "E", "e" }, { "F", "f" } });
+//
+//		TournamentAddLevelGroupEvent eventAdd = new TournamentAddLevelGroupEvent(names, 1);
+//		instance.onLevelGroupAdded(eventAdd);
+//
+//		TournamentSolveEvent event = new TournamentSolveEvent(false, 1, 1, 60, 10, true);
+//		instance.onSolverCalled(event);
+//
+//	}
+
 	public static TournamentSolverManager getInstance() {
 		return instance;
+	}
+
+	private static class StudentListsClass {
+
+		private Integer[][] listClassesId;
+		private int[] listStudents;
+
+		public StudentListsClass(Integer[][] listClassesId, int[] listStudents) {
+			this.listClassesId = listClassesId;
+			this.listStudents = listStudents;
+		}
+
+		public Integer[][] getListClassesId() {
+			return listClassesId;
+		}
+
+		public int[] getListStudents() {
+			return listStudents;
+		}
+
 	}
 
 }
