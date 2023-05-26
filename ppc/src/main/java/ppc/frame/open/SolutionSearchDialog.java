@@ -12,6 +12,7 @@ import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
 import ppc.event.TournamentSolveEvent;
+import ppc.manager.EventManager;
 
 public class SolutionSearchDialog extends JDialog implements Listener {
 
@@ -24,7 +25,7 @@ public class SolutionSearchDialog extends JDialog implements Listener {
 	private List<LoadingPanel> loadingPanels = new ArrayList<>();
 
 	public SolutionSearchDialog() {
-		// EventManager.getInstance().registerListener(this);
+		EventManager.getInstance().registerListener(this);
 		setModal(true);
 		this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 	}
@@ -51,6 +52,8 @@ public class SolutionSearchDialog extends JDialog implements Listener {
 		UIManager.put("ProgressBar.foreground", new Color(150, 141, 163));
 		UIManager.put("ProgressBar.selectionBackground", new Color(150, 141, 163));
 		UIManager.put("ProgressBar.selectionForeground", new Color(255, 255, 255));
+		
+		EventManager.getInstance().initManager();
 
 		SolutionSearchDialog dialog = new SolutionSearchDialog();
 
