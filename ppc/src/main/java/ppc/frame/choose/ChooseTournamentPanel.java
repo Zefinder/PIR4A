@@ -1,5 +1,6 @@
 package ppc.frame.choose;
 
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -14,6 +15,8 @@ import javax.swing.JButton;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
@@ -64,17 +67,26 @@ public class ChooseTournamentPanel extends JPanel implements Listener {
 				}
 			};
 		});
-		
+
 		if (model.getSize() > 15)
 			list.setVisibleRowCount(15);
 		else
 			list.setVisibleRowCount(model.getSize());
-		
+
+		list.setOpaque(false);
 		JScrollPane scrollpane = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-		scrollpane.setBorder(BorderFactory.createTitledBorder("Choisir un tournoi"));
-		this.add(scrollpane, c);
+		scrollpane.setBorder(
+				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Choisir un tournoi"));
+		scrollpane.setOpaque(false);
+		
+		JPanel listPanel = new JPanel();
+		listPanel.add(scrollpane);
+		listPanel.setBorder(new EmptyBorder(5, 8, 7, 8));
+		listPanel.setBackground(new Color(255, 255, 255, 200));
+		
+		this.add(listPanel, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
@@ -91,7 +103,6 @@ public class ChooseTournamentPanel extends JPanel implements Listener {
 			}
 		});
 		this.add(confirm, c);
-
 	}
 
 	private void openTournament(String tournamentName) {

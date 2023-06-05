@@ -1,12 +1,17 @@
 package ppc.frame.open;
 
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -16,6 +21,7 @@ import java.util.Map;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
@@ -73,6 +79,8 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 	private int fileClassCount;
 
+	private Image backgroundImage = new ImageIcon(this.getClass().getResource("../chess_background.jpg")).getImage();
+
 	public OpenedTournamentPanel() {
 		EventManager.getInstance().registerListener(this);
 
@@ -80,6 +88,12 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		buildPanel();
 
 		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
 	}
 
 	private void showMainFrame() {
@@ -104,6 +118,8 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		buttonPanel.add(backButton);
 		containerPanel.add(buttonPanel);
 		containerPanel.add(Box.createHorizontalGlue());
+		containerPanel.setOpaque(false);
+
 		leftPanel.add(containerPanel);
 
 		GridBagConstraints c = new GridBagConstraints();
@@ -130,11 +146,15 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridx = 0;
 		c.gridy = 2;
 		informationPanel.add(buildSearchPanel(), c);
-		leftPanel.add(informationPanel);
+		informationPanel.setOpaque(false);
 
+		leftPanel.add(informationPanel);
+		leftPanel.setBackground(new Color(0, 0, 0, 100));
 		this.add(leftPanel);
 
 		JSeparator separator = new JSeparator(JSeparator.VERTICAL);
+		separator.setBackground(new Color(0, 0, 0, 200));
+		separator.setForeground(new Color(0, 0, 0, 200));
 		this.add(separator);
 
 		csvPanel = new CSVPanel();
@@ -172,7 +192,9 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		classesNumberLabel = new JLabel("Nombre de classes");
 		panel.add(classesNumberLabel, c);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Informations générales"));
+		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+				"Informations générales"));
+		panel.setBackground(new Color(255, 255, 255, 150));
 
 		return panel;
 	}
@@ -233,7 +255,9 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		removeClass.addActionListener(e -> csvPanel.removeClass());
 		panel.add(removeClass, c);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Gestion des classes"));
+		panel.setBorder(
+				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Gestion des classes"));
+		panel.setBackground(new Color(255, 255, 255, 150));
 
 		return panel;
 	}
@@ -298,7 +322,34 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridx = 1;
 		c.gridy = 4;
 		softBox = new JCheckBox();
-		softBox.setSelected(false);
+		softBox.setSelected(true);
+		softBox.setOpaque(false);
+		softBox.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+		});
 		panel.add(softBox, c);
 
 		c.gridx = 0;
@@ -310,6 +361,33 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridy = 5;
 		verboseBox = new JCheckBox();
 		verboseBox.setSelected(true);
+		verboseBox.setOpaque(false);
+		verboseBox.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+		});
 		panel.add(verboseBox, c);
 
 		c.gridwidth = 2;
@@ -326,7 +404,9 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		searchButton.addActionListener(e -> launchSolver());
 		panel.add(searchButton, c);
 
-		panel.setBorder(BorderFactory.createTitledBorder("Paramètres de recherche"));
+		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+				"Paramètres de recherche"));
+		panel.setBackground(new Color(255, 255, 255, 150));
 
 		return panel;
 	}
@@ -336,7 +416,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		if (event.getStatus() == EventStatus.SUCCESS) {
 			System.out.println("CSV Panel reset!");
 			csvPanel.reset();
-			
+
 			System.out.println("Loading tournament properties...");
 			Tournament tournament = TournamentManager.getInstance().getTournament(event.getTournamentName());
 			tournamentName = event.getTournamentName();
@@ -370,6 +450,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 				List<Map<String, String[][]>> classData = InputFormat.parseCsv(event.getCSVFile(), groupsNumber);
 				csvPanel.addClass(classData, Integer.parseInt(event.getCSVFile().getName().substring(5, 6)));
 				System.out.println("Class added");
+				getTopLevelAncestor().repaint();
 			} catch (IOException | ParseException e) {
 				e.printStackTrace();
 				System.err.println("An error occured when parsing file " + event.getCSVFile().getAbsolutePath());
@@ -384,6 +465,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	public void onRemovedClass(TournamentDeleteClassStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS) {
 			classesNumberLabel.setText("Nombre de classes : " + --classNumber);
+			getTopLevelAncestor().repaint();
 		} else {
 			JOptionPane.showMessageDialog(null, event.getErrorMessage(), "Error", JOptionPane.ERROR_MESSAGE);
 		}
@@ -401,6 +483,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 				System.out.println("File added");
 				fileClassCount++;
 				classNumber++;
+				getTopLevelAncestor().repaint();
 			} catch (IOException | ParseException e) {
 				e.printStackTrace();
 				System.err.println("An error occured when parsing file " + csvfile.getAbsolutePath());
@@ -408,7 +491,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		}
 	}
 
-	// TODO Make estimation 
+	// TODO Make estimation
 	private void estimateResult() {
 
 	}

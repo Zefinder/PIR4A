@@ -1,5 +1,6 @@
 package ppc.frame.choose;
 
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -13,6 +14,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import javax.swing.border.Border;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
@@ -50,7 +52,10 @@ public class CreateNewTournamentPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		JPanel panel = createFormPanel();
+		JPanel panel = new JPanel();
+		panel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+		panel.setBackground(new Color(255, 255, 255, 200));
+		panel.add(createFormPanel());
 		this.add(panel, c);
 
 		c.gridx = 0;
@@ -134,17 +139,16 @@ public class CreateNewTournamentPanel extends JPanel implements Listener {
 		});
 		this.add(button, c);
 
-		c.gridx = 0;
-		c.gridy = 2;
-		JLabel infoLabel = new JLabel("Tous les champs marqués par * ne pourront pas être modifiés après !");
-		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
-		this.add(infoLabel, c);
 	}
 
 	private JPanel createFormPanel() {
+		JPanel returnPanel = new JPanel();
+		returnPanel.setLayout(new GridBagLayout());
+
 		JPanel panel = new JPanel();
 		panel.setLayout(new GridBagLayout());
-		panel.setBorder(BorderFactory.createTitledBorder("Créer un nouveau tournoi"));
+		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+				"Créer un nouveau tournoi"));
 
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -215,8 +219,21 @@ public class CreateNewTournamentPanel extends JPanel implements Listener {
 		classesValue = new JTextField(
 				String.valueOf(SettingsManager.getInstance().getClassesMetThreshold() * 100 + "%"), 10);
 		panel.add(classesValue, c);
+		panel.setOpaque(false);
 
-		return panel;
+		// Adding to final return panel
+		c.gridx = 0;
+		c.gridy = 0;
+		returnPanel.add(panel, c);
+
+		c.gridx = 0;
+		c.gridy = 1;
+		JLabel infoLabel = new JLabel("Tous les champs marqués par * ne pourront pas être modifiés après !");
+		infoLabel.setHorizontalAlignment(SwingConstants.CENTER);
+		returnPanel.add(infoLabel, c);
+
+		returnPanel.setOpaque(false);
+		return returnPanel;
 	}
 
 	@EventHandler

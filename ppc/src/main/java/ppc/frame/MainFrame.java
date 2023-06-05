@@ -50,7 +50,7 @@ public class MainFrame extends JFrame implements Listener {
 			}
 			
 		});
-
+		
 		cardPanel = buildCardPanel();
 
 		this.add(cardPanel);

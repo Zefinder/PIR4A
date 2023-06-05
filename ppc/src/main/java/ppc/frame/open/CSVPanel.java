@@ -2,6 +2,7 @@ package ppc.frame.open;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -84,6 +85,8 @@ public class CSVPanel extends JPanel implements Listener {
 
 		JPanel csvPanel = buildCSVPanel();
 		this.add(csvPanel);
+		
+		this.setBackground(new Color(0, 0, 0, 100));
 
 	}
 
@@ -123,7 +126,7 @@ public class CSVPanel extends JPanel implements Listener {
 						addStudent.setEnabled(true);
 						removeStudent.setEnabled(true);
 
-						repaint();
+						getTopLevelAncestor().repaint();
 					}
 				}
 			}
@@ -132,7 +135,9 @@ public class CSVPanel extends JPanel implements Listener {
 		JScrollPane scrollpane = new JScrollPane(listClasses, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-		scrollpane.setBorder(BorderFactory.createTitledBorder("Liste des classes"));
+		scrollpane.setBorder(
+				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Liste des classes"));
+		scrollpane.setBackground(new Color(255, 255, 255, 150));
 		panel.add(scrollpane, c);
 
 		c.gridx = 0;
@@ -188,6 +193,7 @@ public class CSVPanel extends JPanel implements Listener {
 			}
 		});
 
+		panel.setOpaque(false);
 		return panel;
 	}
 
@@ -211,17 +217,17 @@ public class CSVPanel extends JPanel implements Listener {
 
 		return csvPanel;
 	}
-	
+
 	public void reset() {
 		// Clearing lists
 		scrollList = new ArrayList<>();
 		tableModelList = new ArrayList<>();
 		model.removeAllElements();
-		
+
 		// Disable buttons
 		addStudent.setEnabled(false);
 		removeStudent.setEnabled(false);
-		
+
 		// Clearing panel and refilling it
 		csvPanel.removeAll();
 		csvPanel.setLayout(new CardLayout());

@@ -1,8 +1,11 @@
 package ppc.frame.choose;
 
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
@@ -13,6 +16,8 @@ import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
+import javax.swing.event.PopupMenuEvent;
+import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileSystemView;
 
 import ppc.event.SettingsChangeEvent;
@@ -57,6 +62,8 @@ public class SettingsPanel extends JPanel {
 		button.addActionListener(e -> changeSettings());
 		this.add(button, c);
 
+		this.setOpaque(false);
+		this.setBackground(new Color(0, 0, 0, 0));
 	}
 
 	private JPanel createFormPanel() {
@@ -90,7 +97,7 @@ public class SettingsPanel extends JPanel {
 		c.gridy = 0;
 		choosePath = new JButton("...");
 		choosePath.addActionListener(e -> searchNewResultsFolder());
-		
+
 		generalSettingsPanel.add(choosePath, c);
 
 		c.gridx = 0;
@@ -102,6 +109,33 @@ public class SettingsPanel extends JPanel {
 		c.gridy = 1;
 		newFolderOnCopy = new JCheckBox();
 		newFolderOnCopy.setSelected(SettingsManager.getInstance().createFolderWhenCopy());
+		newFolderOnCopy.setOpaque(false);
+		newFolderOnCopy.addMouseListener(new MouseListener() {
+			@Override
+			public void mouseReleased(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mousePressed(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseEntered(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+
+			@Override
+			public void mouseClicked(MouseEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+		});
 
 		generalSettingsPanel.add(newFolderOnCopy, c);
 
@@ -132,7 +166,28 @@ public class SettingsPanel extends JPanel {
 		default:
 			break;
 		}
-		generalSettingsPanel.setBorder(BorderFactory.createTitledBorder("Paramètres généraux"));
+		colorBoxes.addPopupMenuListener(new PopupMenuListener() {
+
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				getTopLevelAncestor().repaint();
+
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				getTopLevelAncestor().repaint();
+
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+		});
+
+		generalSettingsPanel.setBorder(
+				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Paramètres généraux"));
 
 		JPanel defaultValuesPanel = new JPanel();
 		defaultValuesPanel.setLayout(new GridBagLayout());
@@ -189,15 +244,21 @@ public class SettingsPanel extends JPanel {
 		classesValue = new JTextField(
 				String.valueOf(SettingsManager.getInstance().getClassesMetThreshold() * 100 + "%"), 10);
 		defaultValuesPanel.add(classesValue, c);
-		defaultValuesPanel.setBorder(BorderFactory.createTitledBorder("Valeurs de création de tournoi par défaut"));
+		defaultValuesPanel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+				"Valeurs de création de tournoi par défaut"));
 
 		c.gridx = 0;
 		c.gridy = 0;
+		generalSettingsPanel.setOpaque(false);
 		panel.add(generalSettingsPanel, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
+		defaultValuesPanel.setOpaque(false);
 		panel.add(defaultValuesPanel, c);
+
+		panel.setBackground(new Color(255, 255, 255, 200));
+		panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
 		return panel;
 	}
@@ -213,7 +274,7 @@ public class SettingsPanel extends JPanel {
 
 		EventManager.getInstance().callEvent(event);
 	}
-	
+
 	private void searchNewResultsFolder() {
 		JFileChooser chooser = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
 		chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);

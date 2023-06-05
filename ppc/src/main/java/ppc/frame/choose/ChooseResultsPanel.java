@@ -1,5 +1,6 @@
 package ppc.frame.choose;
 
+import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
@@ -16,6 +17,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileSystemView;
 
 import ppc.event.TournamentResultsCopyEvent;
@@ -66,12 +68,21 @@ public class ChooseResultsPanel extends JPanel {
 			list.setVisibleRowCount(15);
 		else
 			list.setVisibleRowCount(model.getSize());
+		list.setOpaque(false);
 
 		JScrollPane scrollpane = new JScrollPane(list, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 
-		scrollpane.setBorder(BorderFactory.createTitledBorder("Copier les pdf générés"));
-		this.add(scrollpane, c);
+		scrollpane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black),
+				"Copier les pdf générés"));
+		scrollpane.setOpaque(false);
+
+		JPanel listPanel = new JPanel();
+		listPanel.add(scrollpane);
+		listPanel.setBorder(new EmptyBorder(5, 8, 7, 8));
+		listPanel.setBackground(new Color(255, 255, 255, 200));
+
+		this.add(listPanel, c);
 
 		c.gridx = 0;
 		c.gridy = 1;

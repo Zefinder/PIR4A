@@ -1,14 +1,17 @@
 package ppc.frame.choose;
 
 import java.awt.CardLayout;
+import java.awt.Color;
+import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
-import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -18,10 +21,10 @@ import javax.swing.SwingUtilities;
 
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
-import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpenEvent;
 import ppc.event.TournamentOpeningStatusEvent;
+import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 
@@ -43,6 +46,8 @@ public class MainPanel extends JPanel implements Listener {
 	private static final int CHECK_TOURNAMENT_ACTION = 0x02;
 	private static final int SETTINGS_ACTION = 0x03;
 
+	private Image backgroundImage = new ImageIcon(this.getClass().getResource("../chess_background.jpg")).getImage();
+
 	/* Variables */
 	private JPanel optionsPanel, informationsPanel;
 
@@ -50,7 +55,6 @@ public class MainPanel extends JPanel implements Listener {
 		EventManager.getInstance().registerListener(this);
 
 		buildMainPanel();
-		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 	}
 
 	private void buildMainPanel() {
@@ -60,7 +64,12 @@ public class MainPanel extends JPanel implements Listener {
 		informationsPanel = buildInformationsPanel();
 
 		this.add(optionsPanel);
-		this.add(new JSeparator(SwingConstants.VERTICAL));
+
+		JSeparator sep = new JSeparator(SwingConstants.VERTICAL);
+		sep.setBackground(new Color(0, 0, 0, 200));
+		sep.setForeground(new Color(0, 0, 0, 200));
+		this.add(sep);
+
 		this.add(informationsPanel);
 
 	}
@@ -100,6 +109,8 @@ public class MainPanel extends JPanel implements Listener {
 		settings.addActionListener(new OptionsButtonAction(SETTINGS_ACTION));
 		optionsPanel.add(settings, c);
 
+		optionsPanel.setBackground(new Color(255, 255, 255, 100));
+
 		return optionsPanel;
 	}
 
@@ -109,19 +120,25 @@ public class MainPanel extends JPanel implements Listener {
 
 		// New tournament
 		JPanel newTournamentPanel = new CreateNewTournamentPanel();
+		newTournamentPanel.setOpaque(false);
 		informationsPanel.add(newTournamentPanel, CREATE_NEW_TOURNAMENT);
 
 		// Load tournament
 		JPanel loadTournamentPanel = new ChooseTournamentPanel();
+		loadTournamentPanel.setOpaque(false);
 		informationsPanel.add(loadTournamentPanel, LOAD_TOURNAMENT);
 
 		// Check results of tournament
 		JPanel checkResultsPanel = new ChooseResultsPanel();
+		checkResultsPanel.setOpaque(false);
 		informationsPanel.add(checkResultsPanel, CHECK_TOURNAMENT);
 
 		// Settings
 		JPanel settingsPanel = new SettingsPanel();
+		settingsPanel.setOpaque(false);
 		informationsPanel.add(settingsPanel, SETTINGS);
+
+		informationsPanel.setBackground(new Color(0, 0, 0, 100));
 
 		return informationsPanel;
 	}
@@ -162,7 +179,15 @@ public class MainPanel extends JPanel implements Listener {
 				System.err.println("Error detected when chosing options (action=" + action + ")!");
 				break;
 			}
+
+			repaint();
 		}
+	}
+
+	@Override
+	protected void paintComponent(Graphics g) {
+		super.paintComponent(g);
+		g.drawImage(backgroundImage, 0, 0, getWidth(), getHeight(), null);
 	}
 
 	@EventHandler
@@ -170,8 +195,8 @@ public class MainPanel extends JPanel implements Listener {
 		switch (event.getStatus()) {
 		case SUCCESS:
 			System.out.println("Tournament successfully created!");
-			int response = JOptionPane.showConfirmDialog(null, "Le tournoi a été créé, voulez-vous l'ouvrir ?", "Tournoi créé",
-					JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
+			int response = JOptionPane.showConfirmDialog(null, "Le tournoi a été créé, voulez-vous l'ouvrir ?",
+					"Tournoi créé", JOptionPane.YES_NO_OPTION, JOptionPane.INFORMATION_MESSAGE);
 
 			if (response == JOptionPane.YES_OPTION) {
 				System.out.println("Opening tournament " + event.getTournamentName() + "...");
