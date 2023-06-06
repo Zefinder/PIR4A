@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.reflections.Reflections;
 
@@ -60,6 +62,7 @@ public final class EventManager implements Manager {
 	private static final EventManager instance = new EventManager();
 
 	private Map<Class<? extends Event>, List<RegisteredListener>> eventMap;
+	private BlockingQueue<Event> toProcess;
 
 	private EventManager() {
 	}
@@ -94,6 +97,29 @@ public final class EventManager implements Manager {
 					e.printStackTrace();
 				}
 		}
+
+		System.out.println("Launching event-processing thread...");
+		toProcess = new LinkedBlockingQueue<>();
+		Thread eventProcessing = new Thread(new Runnable() {
+
+			@Override
+			public void run() {
+				while (true) {
+					try {
+						Event event = toProcess.take();
+						Class<?> eventClass = event.getClass();
+
+						// Call listeners
+						List<RegisteredListener> registeredListeners = eventMap.get(eventClass);
+						registeredListeners.forEach(listener -> listener.fireChange(event));
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+		});
+		eventProcessing.setName("Event processing");
+		eventProcessing.start();
 
 		System.out.println("EventManager initialised");
 	}
@@ -168,9 +194,12 @@ public final class EventManager implements Manager {
 			return;
 		}
 
-		// Call listeners
-		List<RegisteredListener> registeredListeners = eventMap.get(eventClass);
-		registeredListeners.forEach(listener -> listener.fireChange(event));
+		// We put the event in the queue
+		try {
+			toProcess.put(event);
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public static EventManager getInstance() {

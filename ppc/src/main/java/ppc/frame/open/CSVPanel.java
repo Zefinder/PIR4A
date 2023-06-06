@@ -29,10 +29,13 @@ import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JScrollPane;
+import javax.swing.JSeparator;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.JViewport;
+import javax.swing.SwingConstants;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
@@ -42,6 +45,8 @@ import ppc.event.TournamentClassCopyEvent;
 import ppc.event.TournamentClassCopyStatusEvent;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
+import ppc.event.TournamentEstimateEvent;
+import ppc.event.TournamentEstimateStatusEvent;
 import ppc.event.TournamentSolveEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.frame.TournamentTableModel;
@@ -66,6 +71,8 @@ public class CSVPanel extends JPanel implements Listener {
 
 	private List<JScrollPane> scrollList;
 	private List<TournamentTableModel> tableModelList;
+	private int[] estimationArray;
+	private int estimatedReturn;
 
 	private String tournamentName;
 
@@ -85,7 +92,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 		JPanel csvPanel = buildCSVPanel();
 		this.add(csvPanel);
-		
+
 		this.setBackground(new Color(0, 0, 0, 100));
 
 	}
@@ -280,30 +287,27 @@ public class CSVPanel extends JPanel implements Listener {
 		this.tournamentName = tournamentName;
 	}
 
+	public void launchEstimation(int groupsNumber) {
+		// List of groups of classes (K x N)
+		List<Map<String, String[][]>> listClasses = getListClasses(groupsNumber);
+
+		// Clear estimation list
+		estimationArray = new int[groupsNumber];
+		estimatedReturn = 0;
+		
+		// Send events
+		for (int level = 0; level < groupsNumber; level++)
+			EventManager.getInstance()
+					.callEvent(new TournamentEstimateEvent(level, groupsNumber, listClasses.get(level)));
+		
+		EstimationWaitDialog.showDialog();
+		
+	}
+
 	public void launchSolver(int classNumber, int groupsNumber, boolean soft, float studentsThreshold,
 			float classesThreshold, int timeout, int firstTable, boolean verbose) {
 		// List of groups of classes (K x N)
-		List<Map<String, String[][]>> listClasses = new ArrayList<>();
-		for (int level = 0; level < groupsNumber; level++) {
-			listClasses.add(new LinkedHashMap<>());
-		}
-
-		// Parse final CSV to get lists
-		File[] csvFiles = FileManager.getInstance().getTournamentData(tournamentName);
-
-		for (File csvfile : csvFiles) {
-			System.out.println("Reading file " + csvfile.getName());
-			try {
-				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile, groupsNumber);
-				for (int level = 0; level < groupsNumber; level++) {
-					listClasses.get(level).putAll(classData.get(level));
-				}
-
-			} catch (IOException | ParseException e) {
-				e.printStackTrace();
-				System.err.println("An error occured when parsing file " + csvfile.getAbsolutePath());
-			}
-		}
+		List<Map<String, String[][]>> listClasses = getListClasses(groupsNumber);
 
 		for (int level = 0; level < groupsNumber; level++)
 			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
@@ -354,6 +358,42 @@ public class CSVPanel extends JPanel implements Listener {
 
 		// Deleting temp file
 		FileManager.getInstance().deleteTemporaryFile(event.getFileToCopy().getName());
+	}
+
+	@EventHandler
+	public void onProblemEstimated(TournamentEstimateStatusEvent event) {
+		estimationArray[event.getLevel()] = event.getCode();
+		if (++estimatedReturn == event.getGroupsNumber()) {
+			EstimationWaitDialog.closeDialog();
+			EstimationResultsDialog.showDialog(estimationArray);
+		}
+	}
+
+	private List<Map<String, String[][]>> getListClasses(int groupsNumber) {
+		// List of groups of classes (K x N)
+		List<Map<String, String[][]>> listClasses = new ArrayList<>();
+		for (int level = 0; level < groupsNumber; level++) {
+			listClasses.add(new LinkedHashMap<>());
+		}
+
+		// Parse final CSV to get lists
+		File[] csvFiles = FileManager.getInstance().getTournamentData(tournamentName);
+
+		for (File csvfile : csvFiles) {
+			System.out.println("Reading file " + csvfile.getName());
+			try {
+				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile, groupsNumber);
+				for (int level = 0; level < groupsNumber; level++) {
+					listClasses.get(level).putAll(classData.get(level));
+				}
+
+			} catch (IOException | ParseException e) {
+				e.printStackTrace();
+				System.err.println("An error occured when parsing file " + csvfile.getAbsolutePath());
+			}
+		}
+
+		return listClasses;
 	}
 
 	private void addTableToPanel(List<Map<String, String[][]>> classData, String profName) {
@@ -533,6 +573,113 @@ public class CSVPanel extends JPanel implements Listener {
 
 				tableModel.addRow(new String[] { firstName, lastName, String.valueOf(level) });
 				dispose();
+			}
+		}
+	}
+
+	private static class EstimationResultsDialog extends JDialog {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3763029540959732251L;
+
+		private EstimationResultsDialog(int[] returnCodes) {
+			this.setTitle("Résultats de l'estimation");
+			this.setModalityType(ModalityType.APPLICATION_MODAL);
+			this.setSize(900, 500);
+			this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+
+			this.setLayout(new GridBagLayout());
+
+			JPanel panel = new JPanel();
+			panel.setLayout(new BoxLayout(panel, BoxLayout.PAGE_AXIS));
+			for (int level = 0; level < returnCodes.length; level++) {
+				int returnCode = returnCodes[level];
+				JLabel label = new JLabel();
+
+				if (returnCode == -1)
+					label.setText(String.format(
+							"Le groupe de niveau %d n'a pas assez de joueurs pour que chaque participant ait un adversaire...",
+							level + 1));
+
+				else if (returnCode == 0)
+					label.setText(String.format(
+							"Le groupe de niveau %d a assez d'élèves pour organiser un tournoi mais pas tout le monde aura 6 adversaires différents !",
+							level + 1));
+
+				else
+					label.setText(String.format(
+							"Le groupe de niveau %d a assez de joueurs pour organiser un tournoi où tout le monde a 6 adversaires différents !",
+							level + 1));
+
+				panel.add(Box.createVerticalStrut(15));
+				JPanel labelPanel = new JPanel(new GridBagLayout());
+				label.setHorizontalAlignment(SwingConstants.CENTER);
+				labelPanel.add(label);
+				panel.add(labelPanel);
+				panel.add(Box.createVerticalStrut(15));
+
+				if (level != returnCodes.length - 1)
+					panel.add(new JSeparator(SwingConstants.HORIZONTAL));
+			}
+
+			panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+			this.add(panel);
+			this.pack();
+			this.setLocationRelativeTo(null);
+			this.setVisible(false);
+		}
+
+		public static void showDialog(int[] returnCodes) {
+			new EstimationResultsDialog(returnCodes).setVisible(true);
+		}
+	}
+
+	private static class EstimationWaitDialog extends JDialog {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = 4261075257894380850L;
+		private static EstimationWaitDialog dialog;
+
+		private EstimationWaitDialog() {
+			this.setModalityType(ModalityType.APPLICATION_MODAL);
+			this.setSize(200, 200);
+			this.setTitle("Estimation en cours");
+
+			JPanel panel = new JPanel();
+			JProgressBar bar = new JProgressBar();
+			bar.setIndeterminate(true);
+			bar.setStringPainted(true);
+			bar.setString("Estimation en cours...");
+
+			panel.add(bar);
+			this.add(panel);
+			this.pack();
+			this.setLocationRelativeTo(null);
+
+			this.setVisible(false);
+		}
+
+		public static void showDialog() {
+			if (dialog != null) {
+				System.err.println("Trying to open a dialog that is already opened...");
+				return;
+			} else {
+				dialog = new EstimationWaitDialog();
+				dialog.setVisible(true);
+			}
+		}
+
+		public static void closeDialog() {
+			if (dialog == null) {
+				System.err.println("Trying to close a dialog but it's not opened...");
+				return;
+			} else {
+				dialog.setVisible(false);
+				dialog = null;
 			}
 		}
 	}

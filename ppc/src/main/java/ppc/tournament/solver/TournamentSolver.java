@@ -13,6 +13,7 @@ import com.google.ortools.sat.BoolVar;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
 import com.google.ortools.sat.CpSolverSolutionCallback;
+import com.google.ortools.sat.CpSolverStatus;
 import com.google.ortools.sat.IntVar;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
@@ -64,12 +65,18 @@ public final class TournamentSolver {
 	private Map<Integer, String[]> idToName = new HashMap<>();
 	private Integer[][] solution;
 
+	private SolutionCallback sp;
+
 	private LogsManager logs = LogsManager.getInstance();
 	private boolean verbose;
 	private int level;
 
-	public TournamentSolver(String[][][] listClasses, boolean soft, float classThreshold, float studentThreshold, int level,
-			boolean verbose) {
+	public TournamentSolver(String[][][] listClasses) {
+		this(listClasses, false, 0, 0, 0, false);
+	}
+
+	public TournamentSolver(String[][][] listClasses, boolean soft, float classThreshold, float studentThreshold,
+			int level, boolean verbose) {
 		Loader.loadNativeLibraries();
 		this.allowMeetingSameStudent = soft;
 		this.nbClasses = listClasses.length;
@@ -90,26 +97,18 @@ public final class TournamentSolver {
 		studentClasses = new int[nbStudents];
 		this.listClasses = newIdClasses(listClasses);
 		classmates = getClassmates(this.listClasses);
-		
+
 		this.classThreshold = (int) (classThreshold * maxClassesMet);
 		this.studentThreshold = (int) (studentThreshold * maxStudentsMet);
 	}
 
-	public Solution solve(int timeout) {
+	private CpModel createModel() {
 		CpModel model = new CpModel();
 
 		IntVar[][] opponents = new IntVar[nbStudents][NUMBER_MATCHES];
 		IntVar[][] opponentsClasses = new IntVar[opponents.length][opponents[0].length];
 		Literal[][] sameClassesMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
 		Literal[][] sameStudentsMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
-
-		// Debug
-		/*
-		 * System.out.print("camarades des joueurs : "); for (Map.Entry<Integer,
-		 * Integer[]> entry : classmates.entrySet()) { System.out.print(entry.getKey() +
-		 * ": ["); for (Integer id : entry.getValue()) { System.out.print(id + " "); }
-		 * System.out.print("] "); } System.out.println();
-		 */
 
 		for (int student = 0; student < opponents.length; student++) {
 			for (int game = 0; game < opponents[0].length; game++) {
@@ -190,10 +189,49 @@ public final class TournamentSolver {
 			objectiveFunction.addSum(sameClassesMet[student]);
 		}
 		model.maximize(objectiveFunction);
+		sp = new SolutionCallback(opponents);
 
+		return model;
+	}
+
+	/**
+	 * Checks whether a solution can be found or not.
+	 * 
+	 * @return -1 if the solution is infeasible, 0 if the solution is feasible with
+	 *         soft and 1 if feasible with hard
+	 */
+	public int isProblemSolvable() {
+		CpModel model = createModel();
 		CpSolver solver = new CpSolver();
 
-		SolutionCallback sp = new SolutionCallback(opponents);
+		solver.getParameters().setEnumerateAllSolutions(true);
+		CpSolverStatus status = solver.solve(model, new CpSolverSolutionCallback() {
+			@Override
+			public void onSolutionCallback() {
+				stopSearch();
+			}
+		});
+		if (status != CpSolverStatus.INFEASIBLE)
+			return 1;
+
+		allowMeetingSameStudent = true;
+		model = createModel();
+		status = solver.solve(model, new CpSolverSolutionCallback() {
+			@Override
+			public void onSolutionCallback() {
+				stopSearch();
+			}
+		});
+		if (status == CpSolverStatus.INFEASIBLE)
+			return -1;
+		else
+			return 0;
+	}
+
+	public Solution solve(int timeout) {
+		CpModel model = createModel();
+		CpSolver solver = new CpSolver();
+
 		solver.getParameters().setEnumerateAllSolutions(true);
 		solver.getParameters().setMaxTimeInSeconds(timeout);
 
@@ -203,9 +241,10 @@ public final class TournamentSolver {
 			String solutionMessage = "Final solution:\n" + this.toString() + "\nTimed out after " + solver.wallTime();
 			logs.writeInformationMessage(solutionMessage);
 		}
-		
-		// TODO If solution is null then we send an event to tell that search must be stopped !
-		
+
+		// TODO If solution is null then we send an event to tell that search must be
+		// stopped !
+
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost, allowMeetingSameStudent,
 				bestRuntime, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet);
 	}

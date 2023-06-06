@@ -21,7 +21,10 @@ import ppc.annotation.ManagerPriority;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
 import ppc.event.TournamentAddLevelGroupEvent;
+import ppc.event.TournamentEstimateEvent;
+import ppc.event.TournamentEstimateStatusEvent;
 import ppc.event.TournamentSolveEvent;
+import ppc.tournament.TournamentSolveImpossibleEvent;
 import ppc.tournament.output.PdfGenerator;
 import ppc.tournament.solver.LevelThread;
 import ppc.tournament.solver.Solution;
@@ -87,14 +90,21 @@ public class TournamentSolverManager implements Manager, Listener {
 					ghost = 0;
 
 				// Parse the third line into a matrix of integers
-				String[] opponentsLine = reader.readLine().split(";");
-				int numRows = opponentsLine.length;
-				int numCols = opponentsLine[0].split(" ").length;
-				Integer[][] opponentsMatrix = new Integer[numRows][numCols];
-				for (int i = 0; i < numRows; i++) {
-					String[] rowValues = opponentsLine[i].split(" ");
-					for (int j = 0; j < numCols; j++) {
-						opponentsMatrix[i][j] = Integer.parseInt(rowValues[j]);
+				Integer[][] opponentsMatrix;
+				String line = reader.readLine();
+				if (line.equals("null"))
+					opponentsMatrix = null;
+
+				else {
+					String[] opponentsLine = line.split(";");
+					int numRows = opponentsLine.length;
+					int numCols = opponentsLine[0].split(" ").length;
+					opponentsMatrix = new Integer[numRows][numCols];
+					for (int i = 0; i < numRows; i++) {
+						String[] rowValues = opponentsLine[i].split(" ");
+						for (int j = 0; j < numCols; j++) {
+							opponentsMatrix[i][j] = Integer.parseInt(rowValues[j]);
+						}
 					}
 				}
 
@@ -132,6 +142,49 @@ public class TournamentSolverManager implements Manager, Listener {
 	}
 
 	@EventHandler
+	public void onEstimationRequested(TournamentEstimateEvent event) {
+		Map<String, String[][]> evaluate = event.getClasses();
+
+		String[][][] lvlClasses = new String[evaluate.size()][][];
+		int classNb = 0;
+		int[] classes = new int[evaluate.size()];
+		for (String[][] currentClass : evaluate.values()) {
+			classes[classNb] = currentClass.length;
+			lvlClasses[classNb++] = currentClass;
+		}
+
+		int feasibility = -1;
+		// Check if feasible and in list
+		Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(classes));
+		TournamentSolver tournament;
+		if (precalculatedSolution != null) {
+			if (precalculatedSolution.getMatches() == null)
+				if (precalculatedSolution.isSoftConstraint())
+					feasibility = -1;
+				else {
+					tournament = new TournamentSolver(lvlClasses);
+					feasibility = tournament.isProblemSolvable();
+				}
+			else {
+				if (precalculatedSolution.isSoftConstraint())
+					feasibility = 0;
+				else
+					feasibility = 1;
+			}
+
+		} else {
+			// Check if feasible and not in list
+			tournament = new TournamentSolver(lvlClasses);
+			feasibility = tournament.isProblemSolvable();
+		}
+
+		System.out.println("Level " + event.getLevel() + ", feasibility: " + feasibility);
+		TournamentEstimateStatusEvent statusEvent = new TournamentEstimateStatusEvent(event.getLevel(),
+				event.getGroupsNumber(), feasibility);
+		EventManager.getInstance().callEvent(statusEvent);
+	}
+
+	@EventHandler
 	public void onSolverCalled(TournamentSolveEvent event) {
 
 		int nbClasses = classesByLevel.values().iterator().next().size();
@@ -139,6 +192,7 @@ public class TournamentSolverManager implements Manager, Listener {
 		List<LevelThread> lvlThreads = new ArrayList<>();
 		List<Solution> solutions = new ArrayList<>();
 		int lastLevelWithGhost = -1;
+		List<String[][][]> toLaunch = new ArrayList<>();
 
 		// so that the levels are in increasing order
 		SortedSet<Integer> keys = new TreeSet<>(classesByLevel.keySet());
@@ -156,7 +210,8 @@ public class TournamentSolverManager implements Manager, Listener {
 					&& ((float) precalculatedSolution.getStudentsMet()
 							/ precalculatedSolution.getMaxStudentsMet()) >= event.getStudentThreshold()
 					&& ((float) precalculatedSolution.getClassesMet()
-							/ precalculatedSolution.getMaxClassesMet()) >= event.getClassThreshold()) {
+							/ precalculatedSolution.getMaxClassesMet()) >= event.getClassThreshold()
+					&& precalculatedSolution.getMatches() != null) {
 
 				// We compute the idToName map and add it to the solution
 				Map<Integer, String[]> idToName = new HashMap<>();
@@ -180,16 +235,27 @@ public class TournamentSolverManager implements Manager, Listener {
 								precalculatedSolution.getMaxStudentsMet(), precalculatedSolution.getClassesMet(),
 								precalculatedSolution.getMaxClassesMet()));
 
-				// Else we launch the solver
+				// Else we verify that it's feasible and add it to a list
 			} else {
-				LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
-						event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
-				Thread thread = new Thread(lvlThread);
-				threads.add(thread);
-				lvlThreads.add(lvlThread);
-				thread.start();
+				TournamentSolver tournament = new TournamentSolver(lvlClasses);
+				int feasibility = tournament.isProblemSolvable();
+				if (feasibility == -1 || (feasibility == 0 && !event.isSoftConstraint())) {
+					// TODO Send not feasible event
+					EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(lvl));
+					return;
+				} else
+					toLaunch.add(lvlClasses);
 			}
 			lvl++;
+		}
+
+		for (String[][][] lvlClasses : toLaunch) {
+			LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
+					event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
+			Thread thread = new Thread(lvlThread);
+			threads.add(thread);
+			lvlThreads.add(lvlThread);
+			thread.start();
 		}
 
 		// waiting for all threads to be done
@@ -294,8 +360,8 @@ public class TournamentSolverManager implements Manager, Listener {
 		return instance;
 	}
 
-	// TODO Make handler to stop search if needed. 
-	
+	// TODO Make handler to stop search if needed.
+
 	private static class StudentListsClass {
 
 		private Integer[][] listClassesId;

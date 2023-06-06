@@ -49,6 +49,7 @@ import ppc.manager.LogsManager;
 import ppc.manager.TournamentManager;
 import ppc.tournament.InputFormat;
 import ppc.tournament.Tournament;
+import ppc.tournament.TournamentSolveImpossibleEvent;
 
 public class OpenedTournamentPanel extends JPanel implements Listener {
 	/**
@@ -471,6 +472,12 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		}
 	}
 
+	@EventHandler
+	public void onImpossibleTournament(TournamentSolveImpossibleEvent event) {
+		JOptionPane.showMessageDialog(null, "Le tournoi est impossible pour le niveau " + event.getLevel(),
+				"Tournoi impossible", JOptionPane.ERROR_MESSAGE);
+	}
+
 	private void loadData(Tournament tournament) {
 		System.out.println("Loading tournament data files");
 		File[] files = FileManager.getInstance().getTournamentData(tournament.getTournamentName());
@@ -491,15 +498,35 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		}
 	}
 
-	// TODO Make estimation
 	private void estimateResult() {
-
+		csvPanel.launchEstimation(groupsNumber);
 	}
 
 	private void launchSolver() {
 		boolean soft = softBox.isSelected();
 		boolean verbose = verboseBox.isSelected();
 
+		int time = getTimeValue();
+		if (time == -1)
+			return;
+
+		float studentThreshold = getStudentsThreshold();
+		if (studentThreshold == -1)
+			return;
+
+		float classesThreshold = getClassesThreshold();
+		if (classesThreshold == -1)
+			return;
+
+		int tableOffset = getTableOffset();
+		if (tableOffset == -1)
+			return;
+
+		csvPanel.launchSolver(classNumber, groupsNumber, soft, studentThreshold, classesThreshold, time, tableOffset,
+				verbose);
+	}
+
+	private int getTimeValue() {
 		int time;
 		try {
 			time = Integer.valueOf(timeField.getText());
@@ -507,16 +534,20 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Error when parsing searching time...");
 			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du temps de recherche", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
 		if (time < 0) {
 			LogsManager.getInstance().writeErrorMessage("Time value cannot be negative...");
 			JOptionPane.showMessageDialog(null, "Le temps de recherche ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
+		return time;
+	}
+
+	private float getStudentsThreshold() {
 		String studentThresholdString = studentsThreshold.getText().substring(0,
 				studentsThreshold.getText().length() - 1);
 		float studentThreshold;
@@ -526,7 +557,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Error when parsing student's threshold...");
 			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur de seuil d'étudiants", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 		studentThreshold /= 100f;
 
@@ -534,16 +565,20 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
 			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
 		if (studentThreshold > 1f) {
 			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be over 1!");
 			JOptionPane.showMessageDialog(null, "Le seuil d'étudiants ne peut pas être supérieur à 100% !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
+		return studentThreshold;
+	}
+
+	private float getClassesThreshold() {
 		String classesThresholdString = classesThreshold.getText().substring(0,
 				classesThreshold.getText().length() - 1);
 		float classesThreshold;
@@ -553,7 +588,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Error when parsing classes threshold...");
 			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur de seuil de classes", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 		classesThreshold /= 100f;
 
@@ -561,16 +596,20 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be negative!");
 			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
 		if (classesThreshold > 1f) {
 			LogsManager.getInstance().writeErrorMessage("Tournament's classes threshold cannot be over 1!");
 			JOptionPane.showMessageDialog(null, "Le seuil de classes ne peut pas être supérieur à 100% !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
+		return classesThreshold;
+	}
+
+	private int getTableOffset() {
 		int tableOffset;
 		try {
 			tableOffset = Integer.valueOf(this.tableOffset.getText());
@@ -578,17 +617,16 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			LogsManager.getInstance().writeErrorMessage("Error when parsing table offset...");
 			JOptionPane.showMessageDialog(null, "Impossible de lire la valeur du numéro de la première table", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
 		if (tableOffset < 0) {
 			LogsManager.getInstance().writeErrorMessage("Table offset value cannot be negative...");
 			JOptionPane.showMessageDialog(null, "Le numéro de la première table ne peut pas être négatif !", "Erreur",
 					JOptionPane.ERROR_MESSAGE);
-			return;
+			return -1;
 		}
 
-		csvPanel.launchSolver(classNumber, groupsNumber, soft, studentThreshold, classesThreshold, time, tableOffset,
-				verbose);
+		return tableOffset;
 	}
 }

@@ -2,26 +2,25 @@ package ppc.event;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 @ppc.annotation.Event
-public class TournamentEstimateEvent extends Event {
+public class TournamentEstimateStatusEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
-
+	
 	private int level;
 	private int groupsNumber;
-	private Map<String, String[][]> classes;
-
-	public TournamentEstimateEvent() {
+	private int code;
+	
+	public TournamentEstimateStatusEvent() {
 	}
-
-	public TournamentEstimateEvent(int level, int groupsNumber, Map<String, String[][]> classes) {
+	
+	public TournamentEstimateStatusEvent(int level, int groupsNumber, int code) {
 		this.level = level;
 		this.groupsNumber = groupsNumber;
-		this.classes = classes;
+		this.code = code;
 	}
-
+	
 	public int getLevel() {
 		return level;
 	}
@@ -30,8 +29,8 @@ public class TournamentEstimateEvent extends Event {
 		return groupsNumber;
 	}
 	
-	public Map<String, String[][]> getClasses() {
-		return classes;
+	public int getCode() {
+		return code;
 	}
 
 	@Override
