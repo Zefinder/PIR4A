@@ -41,7 +41,10 @@ import ppc.event.Listener;
 import ppc.event.TournamentAddClassEvent;
 import ppc.event.TournamentAddClassStatusEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
+import ppc.event.TournamentEstimateStatusEvent;
 import ppc.event.TournamentOpeningStatusEvent;
+import ppc.event.TournamentSolveImpossibleEvent;
+import ppc.event.TournamentSolverFinishedEvent;
 import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
@@ -49,7 +52,6 @@ import ppc.manager.LogsManager;
 import ppc.manager.TournamentManager;
 import ppc.tournament.InputFormat;
 import ppc.tournament.Tournament;
-import ppc.tournament.TournamentSolveImpossibleEvent;
 
 public class OpenedTournamentPanel extends JPanel implements Listener {
 	/**
@@ -69,6 +71,9 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	private JLabel groupsNumberLabel;
 	private JLabel classesNumberLabel;
 
+	private JButton addClass;
+	private JButton removeClass;
+
 	private JTextField studentsThreshold;
 	private JTextField classesThreshold;
 	private JTextField timeField;
@@ -78,6 +83,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	private JButton estimateButton;
 	private JButton searchButton;
 
+	private int estimatedReturn;
 	private int fileClassCount;
 
 	private Image backgroundImage = new ImageIcon(this.getClass().getResource("../chess_background.jpg")).getImage();
@@ -214,7 +220,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 0;
-		JButton addClass = new JButton("Ajouter une classe...");
+		addClass = new JButton("Ajouter une classe...");
 		addClass.addActionListener(new ActionListener() {
 
 			@Override
@@ -245,15 +251,18 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 				} else {
 					System.out.println("Choosing class file canceled ");
 				}
-
+				getTopLevelAncestor().repaint();
 			}
 		});
 		panel.add(addClass, c);
 
 		c.gridx = 0;
 		c.gridy = 1;
-		JButton removeClass = new JButton("Retirer la classe");
-		removeClass.addActionListener(e -> csvPanel.removeClass());
+		removeClass = new JButton("Retirer la classe");
+		removeClass.addActionListener(e -> {
+			csvPanel.removeClass();
+			getTopLevelAncestor().repaint();
+		});
 		panel.add(removeClass, c);
 
 		panel.setBorder(
@@ -395,14 +404,20 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridx = 0;
 		c.gridy = 6;
 		estimateButton = new JButton("Estimer le résultat");
-		estimateButton.addActionListener(e -> estimateResult());
+		estimateButton.addActionListener(e -> {
+			getTopLevelAncestor().repaint();
+			estimateResult();
+		});
 		panel.add(estimateButton, c);
 
 		c.gridwidth = 2;
 		c.gridx = 0;
 		c.gridy = 7;
 		searchButton = new JButton("Lancer la recherche");
-		searchButton.addActionListener(e -> launchSolver());
+		searchButton.addActionListener(e -> {
+			getTopLevelAncestor().repaint();
+			launchSolver();
+		});
 		panel.add(searchButton, c);
 
 		panel.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black),
@@ -474,8 +489,25 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 	@EventHandler
 	public void onImpossibleTournament(TournamentSolveImpossibleEvent event) {
-		JOptionPane.showMessageDialog(null, "Le tournoi est impossible pour le niveau " + event.getLevel(),
-				"Tournoi impossible", JOptionPane.ERROR_MESSAGE);
+		JOptionPane.showMessageDialog(null, event.getMessage(), "Tournoi impossible", JOptionPane.ERROR_MESSAGE);
+		addClass.setEnabled(true);
+		removeClass.setEnabled(true);
+		estimateButton.setEnabled(true);
+		searchButton.setEnabled(true);
+	}
+
+	@EventHandler
+	public void onProblemEstimated(TournamentEstimateStatusEvent event) {
+		if (++estimatedReturn == event.getGroupsNumber()) {
+			enableAll();
+			getTopLevelAncestor().repaint();
+		}
+	}
+
+	@EventHandler
+	public void onSolverFinished(TournamentSolverFinishedEvent event) {
+		enableAll();
+		getTopLevelAncestor().repaint();
 	}
 
 	private void loadData(Tournament tournament) {
@@ -499,6 +531,8 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	}
 
 	private void estimateResult() {
+		disableAll();
+		estimatedReturn = 0;
 		csvPanel.launchEstimation(groupsNumber);
 	}
 
@@ -522,6 +556,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		if (tableOffset == -1)
 			return;
 
+		disableAll();
 		csvPanel.launchSolver(classNumber, groupsNumber, soft, studentThreshold, classesThreshold, time, tableOffset,
 				verbose);
 	}
@@ -628,5 +663,31 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		}
 
 		return tableOffset;
+	}
+
+	private void disableAll() {
+		addClass.setEnabled(false);
+		removeClass.setEnabled(false);
+		studentsThreshold.setEnabled(false);
+		classesThreshold.setEnabled(false);
+		timeField.setEnabled(false);
+		tableOffset.setEnabled(false);
+		softBox.setEnabled(false);
+		verboseBox.setEnabled(false);
+		estimateButton.setEnabled(false);
+		searchButton.setEnabled(false);
+	}
+
+	private void enableAll() {
+		addClass.setEnabled(true);
+		removeClass.setEnabled(true);
+		studentsThreshold.setEnabled(true);
+		classesThreshold.setEnabled(true);
+		timeField.setEnabled(true);
+		tableOffset.setEnabled(true);
+		softBox.setEnabled(true);
+		verboseBox.setEnabled(true);
+		estimateButton.setEnabled(true);
+		searchButton.setEnabled(true);
 	}
 }

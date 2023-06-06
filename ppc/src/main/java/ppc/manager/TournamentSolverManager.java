@@ -18,13 +18,16 @@ import com.itextpdf.text.DocumentException;
 
 import ppc.annotation.EventHandler;
 import ppc.annotation.ManagerPriority;
+import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
 import ppc.event.TournamentAddLevelGroupEvent;
 import ppc.event.TournamentEstimateEvent;
 import ppc.event.TournamentEstimateStatusEvent;
+import ppc.event.TournamentOpeningStatusEvent;
 import ppc.event.TournamentSolveEvent;
-import ppc.tournament.TournamentSolveImpossibleEvent;
+import ppc.event.TournamentSolveImpossibleEvent;
+import ppc.event.TournamentSolverFinishedEvent;
 import ppc.tournament.output.PdfGenerator;
 import ppc.tournament.solver.LevelThread;
 import ppc.tournament.solver.Solution;
@@ -240,8 +243,8 @@ public class TournamentSolverManager implements Manager, Listener {
 				TournamentSolver tournament = new TournamentSolver(lvlClasses);
 				int feasibility = tournament.isProblemSolvable();
 				if (feasibility == -1 || (feasibility == 0 && !event.isSoftConstraint())) {
-					// TODO Send not feasible event
-					EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(lvl));
+					EventManager.getInstance().callEvent(
+							new TournamentSolveImpossibleEvent("Le tournoi est impossible pour le niveau " + lvl));
 					return;
 				} else
 					toLaunch.add(lvlClasses);
@@ -277,8 +280,14 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		// generating the PDF files
 		String[] classNames = classesByLevel.values().iterator().next().keySet().toArray(new String[0]);
-		PdfGenerator pdfGen = new PdfGenerator(solutions, classNames, nbClasses, event.getFirstTable(),
-				lastLevelWithGhost);
+		File destinationFolder = FileManager.getInstance().getTournamentResDirectory(event.getTournamentName());
+		if (destinationFolder == null) {
+			EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(
+					"Impossible d'accéder au dossier de résultats...\nRedémarrez l'application et réessayez..."));
+		}
+
+		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, solutions, classNames, nbClasses,
+				event.getFirstTable(), lastLevelWithGhost);
 		try {
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
 			pdfGen.createPdfListeMatches();
@@ -290,6 +299,8 @@ public class TournamentSolverManager implements Manager, Listener {
 			pdfGen.createPdfProfs();
 			logs.writeInformationMessage("Creating pdf FichesEleves... ");
 			pdfGen.createPdfEleves();
+
+			EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent());
 		} catch (FileNotFoundException | DocumentException e) {
 			e.printStackTrace();
 		}
@@ -298,6 +309,12 @@ public class TournamentSolverManager implements Manager, Listener {
 	@EventHandler
 	public void onLevelGroupAdded(TournamentAddLevelGroupEvent event) {
 		this.classesByLevel.put(event.getLevel(), event.getClasses());
+	}
+	
+	@EventHandler
+	public void onOpenedTournament(TournamentOpeningStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS)
+			classesByLevel.clear();
 	}
 
 	private StudentListsClass createStudentClasses(Integer[] classes) {
@@ -381,5 +398,5 @@ public class TournamentSolverManager implements Manager, Listener {
 		}
 
 	}
-
+	
 }

@@ -48,6 +48,7 @@ import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.event.TournamentEstimateEvent;
 import ppc.event.TournamentEstimateStatusEvent;
 import ppc.event.TournamentSolveEvent;
+import ppc.event.TournamentSolverFinishedEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.frame.TournamentTableModel;
 import ppc.manager.EventManager;
@@ -288,32 +289,36 @@ public class CSVPanel extends JPanel implements Listener {
 	}
 
 	public void launchEstimation(int groupsNumber) {
+		disableAll();
+
 		// List of groups of classes (K x N)
 		List<Map<String, String[][]>> listClasses = getListClasses(groupsNumber);
 
 		// Clear estimation list
 		estimationArray = new int[groupsNumber];
 		estimatedReturn = 0;
-		
+
 		// Send events
 		for (int level = 0; level < groupsNumber; level++)
 			EventManager.getInstance()
 					.callEvent(new TournamentEstimateEvent(level, groupsNumber, listClasses.get(level)));
-		
+
 		EstimationWaitDialog.showDialog();
-		
+
 	}
 
 	public void launchSolver(int classNumber, int groupsNumber, boolean soft, float studentsThreshold,
 			float classesThreshold, int timeout, int firstTable, boolean verbose) {
+		disableAll();
+
 		// List of groups of classes (K x N)
 		List<Map<String, String[][]>> listClasses = getListClasses(groupsNumber);
 
 		for (int level = 0; level < groupsNumber; level++)
 			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
 
-		EventManager.getInstance().callEvent(
-				new TournamentSolveEvent(soft, classesThreshold, studentsThreshold, timeout, firstTable, verbose));
+		EventManager.getInstance().callEvent(new TournamentSolveEvent(tournamentName, soft, classesThreshold,
+				studentsThreshold, timeout, firstTable, verbose));
 	}
 
 	@EventHandler
@@ -364,9 +369,15 @@ public class CSVPanel extends JPanel implements Listener {
 	public void onProblemEstimated(TournamentEstimateStatusEvent event) {
 		estimationArray[event.getLevel()] = event.getCode();
 		if (++estimatedReturn == event.getGroupsNumber()) {
+			enableAll();
 			EstimationWaitDialog.closeDialog();
 			EstimationResultsDialog.showDialog(estimationArray);
 		}
+	}
+
+	@EventHandler
+	public void onSolverFinished(TournamentSolverFinishedEvent event) {
+		enableAll();
 	}
 
 	private List<Map<String, String[][]>> getListClasses(int groupsNumber) {
@@ -575,6 +586,22 @@ public class CSVPanel extends JPanel implements Listener {
 				dispose();
 			}
 		}
+	}
+
+	private void disableAll() {
+		addStudent.setEnabled(false);
+		removeStudent.setEnabled(false);
+		listClasses.setEnabled(false);
+		// TODO Disable tables!
+		scrollList.forEach(t -> t.setEnabled(false));
+	}
+
+	private void enableAll() {
+		listClasses.setEnabled(true);
+		addStudent.setEnabled(listClasses.getSelectedIndex() != -1);
+		removeStudent.setEnabled(listClasses.getSelectedIndex() != -1);
+		// TODO Enable tables!
+		scrollList.forEach(t -> t.setEnabled(true));
 	}
 
 	private static class EstimationResultsDialog extends JDialog {

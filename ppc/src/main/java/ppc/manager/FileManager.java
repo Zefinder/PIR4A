@@ -20,10 +20,10 @@ import ppc.event.TournamentAddClassEvent;
 import ppc.event.TournamentAddClassStatusEvent;
 import ppc.event.TournamentClassCopyEvent;
 import ppc.event.TournamentClassCopyStatusEvent;
-import ppc.event.TournamentResultsCopyEvent;
-import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
+import ppc.event.TournamentResultsCopyEvent;
+import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.manager.LogsManager.Message;
 
 /**
@@ -149,6 +149,38 @@ public final class FileManager implements Manager, Listener {
 	 */
 	String getResDirectoryPath() {
 		return resDirectory.getAbsolutePath();
+	}
+
+	/**
+	 * Returns the results' directory for the specified tournament.
+	 * 
+	 * @param tournamentName the name of the tournament
+	 * @return the tournament folder for results
+	 */
+	File getTournamentResDirectory(String tournamentName) {
+		File tournamentResDirectory = new File(resDirectory.getAbsolutePath() + "/" + tournamentName);
+		if (tournamentResDirectory.exists() && tournamentResDirectory.isFile()) {
+			System.err.println("Tournament results directory is not a directory, trying to fix it...");
+			if (!tournamentResDirectory.delete()) {
+				System.err.println("Could not fix the error, cry for help...");
+				return null;
+			} else
+				System.out.println("Deleted, trying to create folder");
+
+			if (!tournamentResDirectory.mkdir()) {
+				System.err.println("Could not create the folder, pray for help...");
+				return null;
+			} else
+				System.out.println("Fixed!");
+		}
+
+		if (!tournamentResDirectory.exists() && !tournamentResDirectory.mkdir()) {
+			System.err.println("Could not create the folder, ask for help...");
+			return null;
+		} else
+			System.out.println("Folder created!");
+
+		return tournamentResDirectory;
 	}
 
 	/**

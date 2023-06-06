@@ -241,10 +241,7 @@ public final class TournamentSolver {
 			String solutionMessage = "Final solution:\n" + this.toString() + "\nTimed out after " + solver.wallTime();
 			logs.writeInformationMessage(solutionMessage);
 		}
-
-		// TODO If solution is null then we send an event to tell that search must be
-		// stopped !
-
+		
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost, allowMeetingSameStudent,
 				bestRuntime, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet);
 	}

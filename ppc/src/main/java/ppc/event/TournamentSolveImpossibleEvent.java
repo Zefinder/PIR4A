@@ -1,29 +1,26 @@
-package ppc.tournament;
+package ppc.event;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import ppc.event.Event;
-import ppc.event.RegisteredListener;
 
 @ppc.annotation.Event
 public class TournamentSolveImpossibleEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
-	private int level;
+	private String message;
 
 	public TournamentSolveImpossibleEvent() {
 	}
 
-	public TournamentSolveImpossibleEvent(int level) {
-		this.level = level;
+	public TournamentSolveImpossibleEvent(String message) {
+		this.message = message;
 	}
 
-	public int getLevel() {
-		return level;
+	public String getMessage() {
+		return message;
 	}
-
+	
 	@Override
 	public List<RegisteredListener> getHandlers() {
 		return HANDLERS;

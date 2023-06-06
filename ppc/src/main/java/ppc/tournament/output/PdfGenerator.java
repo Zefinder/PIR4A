@@ -1,6 +1,7 @@
 package ppc.tournament.output;
 
 import java.awt.Color;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
@@ -31,6 +32,13 @@ import ppc.tournament.solver.TournamentSolver;
 
 public class PdfGenerator {
 
+	private static final String LIST_MATCHES_FILENAME = "/ListeMatches.pdf";
+	private static final String LIST_CLASSES_FILENAME = "/ListeClasses.pdf";
+	private static final String LIST_LEVELS_FILENAME = "/ListeNiveaux.pdf";
+	private static final String PROF_FILE_FILENAME = "/FichesProfs.pdf";
+	private static final String STUDENTS_FILE_FILENAME = "/FichesEleves.pdf";
+
+	private File destinationFolder;
 	private List<Solution> solutions;
 	private int nbClasses;
 	private final int listMatchesColumnNb = 2 + TournamentSolver.NUMBER_MATCHES;
@@ -40,8 +48,9 @@ public class PdfGenerator {
 	private int lastLevelWithGhost;
 	private boolean needsGhosts = false;
 
-	public PdfGenerator(List<Solution> solutions, String[] classNames, int nbClasses, int firstTable,
-			int lastLevelWithGhost) {
+	public PdfGenerator(File destinationFolder, List<Solution> solutions, String[] classNames, int nbClasses,
+			int firstTable, int lastLevelWithGhost) {
+		this.destinationFolder = destinationFolder;
 		this.solutions = solutions;
 		this.classNames = classNames;
 		this.nbClasses = nbClasses;
@@ -227,7 +236,8 @@ public class PdfGenerator {
 
 	public void createPdfListeMatches() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
-		PdfWriter.getInstance(document, new FileOutputStream("ListeMatches.pdf"));
+		PdfWriter.getInstance(document,
+				new FileOutputStream(destinationFolder.getAbsolutePath() + LIST_MATCHES_FILENAME));
 
 		document.open();
 		addPdfTitleDate(document);
@@ -305,7 +315,8 @@ public class PdfGenerator {
 
 	public void createPdfListeClasses() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
-		PdfWriter.getInstance(document, new FileOutputStream("ListeClasses.pdf"));
+		PdfWriter.getInstance(document,
+				new FileOutputStream(destinationFolder.getAbsolutePath() + LIST_CLASSES_FILENAME));
 
 		document.open();
 		addPdfTitleDate(document);
@@ -351,7 +362,8 @@ public class PdfGenerator {
 
 	public void createPdfListeNiveaux() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
-		PdfWriter.getInstance(document, new FileOutputStream("ListeNiveaux.pdf"));
+		PdfWriter.getInstance(document,
+				new FileOutputStream(destinationFolder.getAbsolutePath() + LIST_LEVELS_FILENAME));
 
 		document.open();
 		addPdfTitleDate(document);
@@ -467,7 +479,7 @@ public class PdfGenerator {
 
 	public void createPdfProfs() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
-		PdfWriter.getInstance(document, new FileOutputStream("FichesProfs.pdf"));
+		PdfWriter.getInstance(document, new FileOutputStream(destinationFolder.getAbsolutePath() + PROF_FILE_FILENAME));
 
 		document.open();
 
@@ -543,10 +555,10 @@ public class PdfGenerator {
 					PdfPCell cell = new PdfPCell();
 					cell.setCellEvent(new CrossedOutCellEvent());
 					table.addCell(cell);
-					
+
 				} else if (studentId < matches.length / 2)
 					table.addCell(new PdfPCell(new Phrase("" + (solution.getIdToTable(studentId) + firstTable))));
-				
+
 				else {
 					table.addCell(new PdfPCell(
 							new Phrase("" + (solution.getIdToTable(matches[studentId][game]) + firstTable))));
@@ -575,7 +587,8 @@ public class PdfGenerator {
 
 	public void createPdfEleves() throws FileNotFoundException, DocumentException {
 		Document document = new Document();
-		PdfWriter.getInstance(document, new FileOutputStream("FichesEleves.pdf"));
+		PdfWriter.getInstance(document,
+				new FileOutputStream(destinationFolder.getAbsolutePath() + STUDENTS_FILE_FILENAME));
 
 		document.open();
 		List<List<PdfPTable>> studentTablesByClass = new ArrayList<>();
