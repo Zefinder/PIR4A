@@ -7,6 +7,7 @@ import java.awt.Insets;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -20,9 +21,14 @@ import javax.swing.event.PopupMenuEvent;
 import javax.swing.event.PopupMenuListener;
 import javax.swing.filechooser.FileSystemView;
 
+import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
 import ppc.event.SettingsChangeEvent;
+import ppc.event.TournamentCreationStatusEvent;
+import ppc.event.TournamentRemovingStatusEvent;
 import ppc.manager.EventManager;
 import ppc.manager.SettingsManager;
+import ppc.manager.TournamentManager;
 
 public class SettingsPanel extends JPanel {
 
@@ -34,6 +40,7 @@ public class SettingsPanel extends JPanel {
 	private JTextField resultsPath;
 	private JButton choosePath;
 	private JComboBox<String> colorBoxes;
+	private JComboBox<String> removeTournament;
 	private JCheckBox newFolderOnCopy;
 	private JTextField matchesValue;
 	private JTextField levelsValue;
@@ -64,6 +71,18 @@ public class SettingsPanel extends JPanel {
 
 		this.setOpaque(false);
 		this.setBackground(new Color(0, 0, 0, 0));
+	}
+
+	@EventHandler
+	public void onTournamentCreated(TournamentCreationStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS)
+			removeTournament.addItem(event.getTournamentName());
+	}
+	
+	@EventHandler
+	public void onTournamentRemoved(TournamentRemovingStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS)
+			removeTournament.addItem(event.getTournamentName());
 	}
 
 	private JPanel createFormPanel() {
@@ -185,6 +204,39 @@ public class SettingsPanel extends JPanel {
 				getTopLevelAncestor().repaint();
 			}
 		});
+
+		c.gridx = 0;
+		c.gridy = 3;
+		JLabel removeLabel = new JLabel("Supprimer un tournoi");
+		generalSettingsPanel.add(removeLabel, c);
+
+		c.gridx = 1;
+		c.gridy = 3;
+		removeTournament = new JComboBox<>();
+		removeTournament.addItem("Choisir un tournoi...");
+		Stream.of(TournamentManager.getInstance().getTournaments())
+				.forEach(tournament -> removeTournament.addItem(tournament));
+		
+		removeTournament.addPopupMenuListener(new PopupMenuListener() {
+
+			@Override
+			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+				getTopLevelAncestor().repaint();
+
+			}
+
+			@Override
+			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
+				getTopLevelAncestor().repaint();
+
+			}
+
+			@Override
+			public void popupMenuCanceled(PopupMenuEvent e) {
+				getTopLevelAncestor().repaint();
+			}
+		});
+		generalSettingsPanel.add(removeTournament, c);
 
 		generalSettingsPanel.setBorder(
 				BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.black), "Paramètres généraux"));
