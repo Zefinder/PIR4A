@@ -317,8 +317,8 @@ public class CSVPanel extends JPanel implements Listener {
 		for (int level = 0; level < groupsNumber; level++)
 			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
 
-		EventManager.getInstance().callEvent(new TournamentSolveEvent(tournamentName, soft, classesThreshold,
-				studentsThreshold, timeout, firstTable, verbose));
+		EventManager.getInstance().callEvent(new TournamentSolveEvent(tournamentName, listClasses.size(), soft,
+				classesThreshold, studentsThreshold, timeout, firstTable, verbose));
 	}
 
 	@EventHandler

@@ -94,6 +94,8 @@ public final class EventManager implements Manager {
 					System.out.println(String.format("Event %s initialised!", clazz.getName()));
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 						| InvocationTargetException | NoSuchMethodException | SecurityException e) {
+					System.err.println(
+							"An error occurs when instantiating event, did you let an argument-free constructor?");
 					e.printStackTrace();
 				}
 		}
