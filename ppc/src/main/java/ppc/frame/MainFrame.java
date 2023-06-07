@@ -1,6 +1,7 @@
 package ppc.frame;
 
 import java.awt.CardLayout;
+import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
@@ -30,7 +31,7 @@ public class MainFrame extends JFrame implements Listener {
 		EventManager.getInstance().registerListener(this);
 
 		this.setTitle("Echec et Match !");
-		this.setSize(1000, 600);
+		this.setMinimumSize(new Dimension(1000, 600));
 		this.setLocationRelativeTo(null);
 		this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		

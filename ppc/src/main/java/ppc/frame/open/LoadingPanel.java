@@ -39,8 +39,6 @@ public class LoadingPanel extends JPanel implements Listener {
 		gridLayout.setVgap(10);
 		setLayout(gridLayout);
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-
-		// TODO: set max panel size
 		
 		levelLabel = new JLabel("Niveau " + (level + 1));
 		levelLabel.setHorizontalAlignment(SwingConstants.CENTER);
@@ -48,10 +46,14 @@ public class LoadingPanel extends JPanel implements Listener {
 
 		progressBarStudents = new JProgressBar();
 		progressBarStudents.setStringPainted(true);
+		progressBarStudents.setString(String.format("Élèves: 0%%"));
+		progressBarStudents.setToolTipText("Maximisation des élèves rencontrés");
 		add(progressBarStudents);
 
 		progressBarClasses = new JProgressBar();
 		progressBarClasses.setStringPainted(true);
+		progressBarClasses.setString(String.format("Classes: 0%%"));
+		progressBarClasses.setToolTipText("Maximisation des classes rencontrées");
 		add(progressBarClasses);
 
 		stopButton = new JButton("Arrêter la recherche");
@@ -70,9 +72,9 @@ public class LoadingPanel extends JPanel implements Listener {
 	}
 
 	private void updateProgress(float progressStudents, float progressClasses) {
-		progressBarStudents.setString(String.format("%.2f%%", progressStudents));
+		progressBarStudents.setString(String.format("Élèves: %.2f%%", progressStudents));
 		progressBarStudents.setValue((int) progressStudents);
-		progressBarClasses.setString(String.format("%.2f%%", progressClasses));
+		progressBarClasses.setString(String.format("Classes: %.2f%%", progressClasses));
 		progressBarClasses.setValue((int) progressClasses);
 	}
 

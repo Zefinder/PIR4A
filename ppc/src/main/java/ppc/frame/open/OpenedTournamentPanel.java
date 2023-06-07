@@ -95,6 +95,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		buildPanel();
 
 		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+		this.setMinimumSize(getSize());
 	}
 
 	@Override

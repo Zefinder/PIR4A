@@ -621,6 +621,7 @@ public class CSVPanel extends JPanel implements Listener {
 			this.setTitle("Résultats de l'estimation");
 			this.setModalityType(ModalityType.APPLICATION_MODAL);
 			this.setSize(900, 500);
+			this.setResizable(false);
 			this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
 
 			this.setLayout(new GridBagLayout());
@@ -638,7 +639,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 				else if (returnCode == 0)
 					label.setText(String.format(
-							"Le groupe de niveau %d a assez d'élèves pour organiser un tournoi mais pas tout le monde aura 6 adversaires différents !",
+							"Le groupe de niveau %d a assez d'élèves pour organiser un tournoi mais tout le monde n'aura pas 6 adversaires différents !",
 							level + 1));
 
 				else
@@ -680,6 +681,7 @@ public class CSVPanel extends JPanel implements Listener {
 		private EstimationWaitDialog() {
 			this.setModalityType(ModalityType.APPLICATION_MODAL);
 			this.setSize(200, 200);
+			this.setResizable(false);
 			this.setTitle("Estimation en cours");
 
 			JPanel panel = new JPanel();
@@ -733,7 +735,8 @@ public class CSVPanel extends JPanel implements Listener {
 				LoadingPanel levelPanel = new LoadingPanel(level);
 				add(levelPanel);
 			}
-
+			
+		    this.setResizable(false);
 			this.pack();
 			this.setLocationRelativeTo(null);
 		}
