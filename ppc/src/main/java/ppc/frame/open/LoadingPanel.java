@@ -6,7 +6,6 @@ import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
@@ -16,7 +15,6 @@ import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
 import ppc.event.TournamentSolverFinishedEvent;
-import ppc.manager.EventManager;
 
 public class LoadingPanel extends JPanel implements Listener {
 
@@ -95,33 +93,5 @@ public class LoadingPanel extends JPanel implements Listener {
 					(float) event.getClassesMet() / event.getMaxClassesMet() * 100);
 			searchIsStopped();
 		}
-	}
-
-	public static void main(String[] args) throws InterruptedException {
-		JFrame frame = new JFrame("Loading Panel");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-
-		LoadingPanel loadingPanel = new LoadingPanel(1);
-		loadingPanel.updateProgress(50f, 30f);
-
-		frame.getContentPane().add(loadingPanel);
-		frame.pack();
-		frame.setLocationRelativeTo(null);
-		frame.setVisible(true);
-
-		Thread.sleep(2000);
-
-		SolutionFoundEvent event = new SolutionFoundEvent(1, 70, 100, 50, 100);
-		loadingPanel.onSolutionFound(event);
-
-		Thread.sleep(2000);
-
-		event = new SolutionFoundEvent(1, 80, 100, 86, 100);
-		loadingPanel.onSolutionFound(event);
-
-		Thread.sleep(2000);
-
-		event = new SolutionFoundEvent(0, 90, 100, 20, 100);
-		loadingPanel.onSolutionFound(event);
 	}
 }
