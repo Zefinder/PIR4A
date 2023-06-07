@@ -12,9 +12,10 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
 import ppc.annotation.EventHandler;
+import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
-import ppc.event.TournamentSolverFinishedEvent;
+import ppc.manager.EventManager;
 
 public class LoadingPanel extends JPanel implements Listener {
 
@@ -31,7 +32,7 @@ public class LoadingPanel extends JPanel implements Listener {
 	private JButton stopButton;
 
 	public LoadingPanel(int level) {
-		//EventManager.getInstance().registerListener(this);
+		EventManager.getInstance().registerListener(this);
 		this.level = level;
 
 		GridLayout gridLayout = new GridLayout(4, 1);
@@ -64,7 +65,7 @@ public class LoadingPanel extends JPanel implements Listener {
 	}
 	
 	private void searchIsStopped() {
-		levelLabel.setText("Niveau " + (level + 1) + " - recherche terminée");
+		levelLabel.setText("Niveau " + (level + 1) + " - terminé");
 		stopButton.setEnabled(false);
 	}
 
@@ -86,7 +87,7 @@ public class LoadingPanel extends JPanel implements Listener {
 	}
 	
 	@EventHandler
-	public void onFinalSolutionFound(TournamentSolverFinishedEvent event) {
+	public void onFinalSolutionFound(FinalSolutionFoundEvent event) {
 		System.out.println("my level is: " + level);
 		if (event.getLevel() == this.level) {
 			this.updateProgress((float) event.getStudentsMet() / event.getMaxStudentsMet() * 100,

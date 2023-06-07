@@ -19,6 +19,7 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
+import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.SolutionFoundEvent;
 import ppc.manager.EventManager;
 import ppc.manager.LogsManager;
@@ -241,7 +242,8 @@ public final class TournamentSolver {
 			String solutionMessage = "Final solution:\n" + this.toString() + "\nTimed out after " + solver.wallTime();
 			logs.writeInformationMessage(solutionMessage);
 		}
-		
+
+		EventManager.getInstance().callEvent(new FinalSolutionFoundEvent(level, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet));
 		return new Solution(solution, studentClasses, listClasses, idToName, ghost, allowMeetingSameStudent,
 				bestRuntime, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet);
 	}

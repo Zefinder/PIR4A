@@ -19,8 +19,8 @@ import com.itextpdf.text.DocumentException;
 import ppc.annotation.EventHandler;
 import ppc.annotation.ManagerPriority;
 import ppc.event.EventStatus;
+import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.Listener;
-import ppc.event.SolutionFoundEvent;
 import ppc.event.TournamentAddLevelGroupEvent;
 import ppc.event.TournamentEstimateEvent;
 import ppc.event.TournamentEstimateStatusEvent;
@@ -195,11 +195,10 @@ public class TournamentSolverManager implements Manager, Listener {
 		List<LevelThread> lvlThreads = new ArrayList<>();
 		List<Solution> solutions = new ArrayList<>();
 		int lastLevelWithGhost = -1;
-		List<String[][][]> toLaunch = new ArrayList<>();
 
 		// so that the levels are in increasing order
 		SortedSet<Integer> keys = new TreeSet<>(classesByLevel.keySet());
-		int lvl = 1;
+		int lvl = 0;
 		for (Integer key : keys) {
 			String[][][] lvlClasses = new String[nbClasses][][];
 			int classNb = 0;
@@ -215,7 +214,7 @@ public class TournamentSolverManager implements Manager, Listener {
 					&& ((float) precalculatedSolution.getClassesMet()
 							/ precalculatedSolution.getMaxClassesMet()) >= event.getClassThreshold()
 					&& precalculatedSolution.getMatches() != null) {
-
+				
 				// We compute the idToName map and add it to the solution
 				Map<Integer, String[]> idToName = new HashMap<>();
 				for (int classNumber = 0; classNumber < lvlClasses.length; classNumber++) {
@@ -234,10 +233,10 @@ public class TournamentSolverManager implements Manager, Listener {
 
 				// We tell the frame that this solution is already found !
 				EventManager.getInstance()
-						.callEvent(new SolutionFoundEvent(lvl, precalculatedSolution.getStudentsMet(),
+						.callEvent(new FinalSolutionFoundEvent(lvl, precalculatedSolution.getStudentsMet(),
 								precalculatedSolution.getMaxStudentsMet(), precalculatedSolution.getClassesMet(),
 								precalculatedSolution.getMaxClassesMet()));
-
+				
 				// Else we verify that it's feasible and add it to a list
 			} else {
 				TournamentSolver tournament = new TournamentSolver(lvlClasses);
@@ -246,18 +245,17 @@ public class TournamentSolverManager implements Manager, Listener {
 					EventManager.getInstance().callEvent(
 							new TournamentSolveImpossibleEvent("Le tournoi est impossible pour le niveau " + lvl));
 					return;
-				} else
-					toLaunch.add(lvlClasses);
+				} else {
+					LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
+							event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
+					threads.add(new Thread(lvlThread));
+					lvlThreads.add(lvlThread);
+				}
 			}
 			lvl++;
 		}
 
-		for (String[][][] lvlClasses : toLaunch) {
-			LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
-					event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
-			Thread thread = new Thread(lvlThread);
-			threads.add(thread);
-			lvlThreads.add(lvlThread);
+		for (Thread thread : threads) {
 			thread.start();
 		}
 
@@ -310,7 +308,7 @@ public class TournamentSolverManager implements Manager, Listener {
 	public void onLevelGroupAdded(TournamentAddLevelGroupEvent event) {
 		this.classesByLevel.put(event.getLevel(), event.getClasses());
 	}
-	
+
 	@EventHandler
 	public void onOpenedTournament(TournamentOpeningStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS)
@@ -398,5 +396,5 @@ public class TournamentSolverManager implements Manager, Listener {
 		}
 
 	}
-	
+
 }

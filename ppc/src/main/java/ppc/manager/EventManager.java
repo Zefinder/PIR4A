@@ -113,7 +113,8 @@ public final class EventManager implements Manager {
 
 						// Call listeners
 						List<RegisteredListener> registeredListeners = eventMap.get(eventClass);
-						registeredListeners.forEach(listener -> listener.fireChange(event));
+						registeredListeners.forEach(listener -> new Thread(() -> listener.fireChange(event)).start());
+
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}

@@ -6,6 +6,7 @@ import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -313,12 +314,17 @@ public class CSVPanel extends JPanel implements Listener {
 
 		// List of groups of classes (K x N)
 		List<Map<String, String[][]>> listClasses = getListClasses(groupsNumber);
-
-		for (int level = 0; level < groupsNumber; level++)
+		
+		int nbLevels = 0;
+		for (int level = 0; level < groupsNumber; level++) {
 			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
+			nbLevels++;
+		}
 
+		SolutionSearchDialog dialog = new SolutionSearchDialog(nbLevels);
 		EventManager.getInstance().callEvent(new TournamentSolveEvent(tournamentName, listClasses.size(), soft,
 				classesThreshold, studentsThreshold, timeout, firstTable, verbose));
+		dialog.setVisible(true);
 	}
 
 	@EventHandler
@@ -708,6 +714,28 @@ public class CSVPanel extends JPanel implements Listener {
 				dialog.setVisible(false);
 				dialog = null;
 			}
+		}
+	}
+	
+	private static class SolutionSearchDialog extends JDialog {
+
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -4843477171080105523L;
+
+		public SolutionSearchDialog(int nbLevels) {
+			setModal(true);
+			this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			this.setLayout(new GridLayout((int) Math.ceil((double) nbLevels / 3), 3));
+			for (int level = 0; level < nbLevels; level++) {
+				System.out.println(level);
+				LoadingPanel levelPanel = new LoadingPanel(level);
+				add(levelPanel);
+			}
+
+			this.pack();
+			this.setLocationRelativeTo(null);
 		}
 	}
 }
