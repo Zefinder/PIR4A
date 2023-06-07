@@ -375,8 +375,6 @@ public class TournamentSolverManager implements Manager, Listener {
 		return instance;
 	}
 
-	// TODO Make handler to stop search if needed.
-
 	private static class StudentListsClass {
 
 		private Integer[][] listClassesId;

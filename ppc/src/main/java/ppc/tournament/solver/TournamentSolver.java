@@ -19,8 +19,11 @@ import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
+import ppc.annotation.EventHandler;
 import ppc.event.FinalSolutionFoundEvent;
+import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
+import ppc.event.StopSearchEvent;
 import ppc.manager.EventManager;
 import ppc.manager.LogsManager;
 
@@ -423,13 +426,20 @@ public final class TournamentSolver {
 	 * @author Sarah Mousset
 	 *
 	 */
-	private class SolutionCallback extends CpSolverSolutionCallback {
+	public class SolutionCallback extends CpSolverSolutionCallback implements Listener {
 		private int solutionCount;
 		IntVar[][] opponents;
 
 		public SolutionCallback(IntVar[][] opponents) {
+			EventManager.getInstance().registerListener(this);
 			solutionCount = 0;
 			this.opponents = opponents;
+		}
+		
+		@EventHandler
+		public void onStoppedSearch(StopSearchEvent event) {
+			if (event.getLevel() == level)
+				stopSearch();
 		}
 
 		@Override

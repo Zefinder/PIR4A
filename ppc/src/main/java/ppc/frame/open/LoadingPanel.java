@@ -15,6 +15,7 @@ import ppc.annotation.EventHandler;
 import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
+import ppc.event.StopSearchEvent;
 import ppc.manager.EventManager;
 
 public class LoadingPanel extends JPanel implements Listener {
@@ -59,7 +60,8 @@ public class LoadingPanel extends JPanel implements Listener {
 		stopButton = new JButton("Arrêter la recherche");
 		stopButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				// TODO: stop search
+				System.out.println("Stopping search for level " + level);
+				EventManager.getInstance().callEvent(new StopSearchEvent(level));
 				searchIsStopped();
 			}
 		});
