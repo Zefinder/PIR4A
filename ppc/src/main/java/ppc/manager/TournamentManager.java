@@ -17,6 +17,7 @@ import ppc.event.TournamentCreateEvent;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpenEvent;
 import ppc.event.TournamentOpeningStatusEvent;
+import ppc.event.TournamentRemovingStatusEvent;
 import ppc.tournament.Tournament;
 
 /**
@@ -142,6 +143,12 @@ public final class TournamentManager implements Manager, Listener {
 		EventManager.getInstance().callEvent(createdEvent);
 	}
 
+	@EventHandler
+	public void onTournamentRemoved(TournamentRemovingStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS)
+			tournamentList.remove(event.getTournamentName());
+	}
+
 	private void initTournamentFile(Tournament tournament, File tournamentFile) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(tournamentFile, false));
 		Properties properties = tournament.getTournamentProperties();
@@ -176,14 +183,16 @@ public final class TournamentManager implements Manager, Listener {
 	 * Returns the {@link Tournament} class from the tournament name.
 	 * 
 	 * @param tournamentName the tournament name
-	 * @return the tournament class corresponding to the name or {@code null} if not present
+	 * @return the tournament class corresponding to the name or {@code null} if not
+	 *         present
 	 */
 	public Tournament getTournament(String tournamentName) {
 		return tournamentList.get(tournamentName);
 	}
 
 	/**
-	 * Returns the list of registered tournaments (ie. tournaments without any errors)
+	 * Returns the list of registered tournaments (ie. tournaments without any
+	 * errors)
 	 * 
 	 * @return the list of registered tournaments
 	 */

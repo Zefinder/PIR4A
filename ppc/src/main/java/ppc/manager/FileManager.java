@@ -8,6 +8,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
+import java.text.ParseException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -22,9 +23,12 @@ import ppc.event.TournamentClassCopyEvent;
 import ppc.event.TournamentClassCopyStatusEvent;
 import ppc.event.TournamentDeleteClassEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
+import ppc.event.TournamentRemoveEvent;
+import ppc.event.TournamentRemovingStatusEvent;
 import ppc.event.TournamentResultsCopyEvent;
 import ppc.event.TournamentResultsCopyStatusEvent;
 import ppc.manager.LogsManager.Message;
+import ppc.tournament.InputFormat;
 
 /**
  * <p>
@@ -413,9 +417,10 @@ public final class FileManager implements Manager, Listener {
 					+ "/class" + classNumber + ".csv");
 
 			try {
+				InputFormat.parseCsv(toCopy, event.getGroupsNumber());
 				Files.copy(toCopy.toPath(), destinationFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
 				statusEvent = new TournamentAddClassStatusEvent(destinationFile, EventStatus.SUCCESS);
-			} catch (IOException e) {
+			} catch (IOException | ParseException e) {
 				e.printStackTrace();
 				statusEvent = new TournamentAddClassStatusEvent(null, EventStatus.ERROR,
 						"Erreur lors de la copie du fichier de classe !\n" + e.getMessage());
@@ -448,6 +453,61 @@ public final class FileManager implements Manager, Listener {
 		} else {
 			toDelete.delete();
 			statusEvent = new TournamentDeleteClassStatusEvent(event.getListIndex(), EventStatus.SUCCESS);
+		}
+
+		EventManager.getInstance().callEvent(statusEvent);
+	}
+
+	/**
+	 * Listener called when a tournament needs to be deleted.
+	 * 
+	 * @param event the called event
+	 */
+	@EventHandler
+	public void onDeleteTournament(TournamentRemoveEvent event) {
+		// Delete tournament file, data folder and results folder
+		TournamentRemovingStatusEvent statusEvent;
+
+		File tournamentFile = new File(tournamentDirectory + "/" + event.getTournamentName() + ".trn");
+		File tournamentDataFolder = getTournamentDataFolder(event.getTournamentName());
+		File tournamentResFolder = getTournamentResDirectory(event.getTournamentName());
+
+		// Verify that the tournament exists
+		if (TournamentManager.getInstance().getTournament(event.getTournamentName()) == null
+				|| !tournamentFile.exists()) {
+			System.err.println("Tournament file does not exist!");
+			statusEvent = new TournamentRemovingStatusEvent(event.getTournamentName(), EventStatus.ERROR,
+					"Le tournoi n'existe pas!");
+		} else if (!tournamentFile.delete()) {
+			System.err.println("Impossible to delete tournament file... Abort!");
+			statusEvent = new TournamentRemovingStatusEvent(event.getTournamentName(), EventStatus.ERROR,
+					"Impossible de supprimer le fichier de tournoi... Peut-être est-il ouvert ailleurs ?");
+		} else {
+			for (File file : tournamentDataFolder.listFiles())
+				file.delete();
+
+			if (!tournamentDataFolder.delete()) {
+				System.err.println("Impossible to delete tournament data folder... Abort!");
+				statusEvent = new TournamentRemovingStatusEvent(event.getTournamentName(), EventStatus.ERROR,
+						"Impossible de supprimer le dossier de tournoi...");
+			} else {
+				if (tournamentResFolder.exists()) {
+					for (File file : tournamentResFolder.listFiles())
+						file.delete();
+
+					if (!tournamentResFolder.delete()) {
+						System.err.println("Impossible to delete tournament results folder... Abort!");
+						statusEvent = new TournamentRemovingStatusEvent(event.getTournamentName(), EventStatus.ERROR,
+								"Impossible de supprimer le dossier de résultats de tournoi...");
+					} else {
+						System.out.println("Tournament deleted!");
+						statusEvent = new TournamentRemovingStatusEvent(event.getTournamentName(), EventStatus.SUCCESS);
+					}
+				} else {
+					System.out.println("Tournament deleted!");
+					statusEvent = new TournamentRemovingStatusEvent(event.getTournamentName(), EventStatus.SUCCESS);
+				}
+			}
 		}
 
 		EventManager.getInstance().callEvent(statusEvent);

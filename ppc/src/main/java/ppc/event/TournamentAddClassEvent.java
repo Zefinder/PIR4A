@@ -11,13 +11,15 @@ public class TournamentAddClassEvent extends Event {
 	
 	private String tournamentName;
 	private File tournamentFile;
+	private int groupsNumber;
 	
 	public TournamentAddClassEvent() {
 	}
 	
-	public TournamentAddClassEvent(String tournamentName, File tournamentFile, int classNumber) {
+	public TournamentAddClassEvent(String tournamentName, File tournamentFile, int groupsNumber) {
 		this.tournamentName = tournamentName;
 		this.tournamentFile = tournamentFile;
+		this.groupsNumber = groupsNumber;
 	}
 	
 	public String getTournamentName() {
@@ -26,6 +28,10 @@ public class TournamentAddClassEvent extends Event {
 	
 	public File getTournamentFile() {
 		return tournamentFile;
+	}
+	
+	public int getGroupsNumber() {
+		return groupsNumber;
 	}
 
 	@Override

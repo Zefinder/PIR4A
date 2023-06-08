@@ -84,14 +84,12 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	private JButton searchButton;
 
 	private int estimatedReturn;
-	private int fileClassCount;
 
 	private Image backgroundImage = new ImageIcon(this.getClass().getResource("../chess_background.jpg")).getImage();
 
 	public OpenedTournamentPanel() {
 		EventManager.getInstance().registerListener(this);
 
-		fileClassCount = 0;
 		buildPanel();
 
 		this.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
@@ -247,7 +245,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 					File chosen = chooser.getSelectedFile();
 					System.out.println("File choosen: " + chosen.getAbsolutePath());
 					EventManager.getInstance()
-							.callEvent(new TournamentAddClassEvent(tournamentName, chosen, fileClassCount));
+							.callEvent(new TournamentAddClassEvent(tournamentName, chosen, groupsNumber));
 				} else {
 					System.out.println("Choosing class file canceled ");
 				}
@@ -452,6 +450,9 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			classesThreshold.setText(String.valueOf(tournament.getClassesThreshold() * 100) + "%");
 			timeField.setText(String.valueOf(tournament.getMaxTime()));
 			tableOffset.setText("1");
+			
+			getTopLevelAncestor().revalidate();
+			getTopLevelAncestor().repaint();
 		}
 	}
 
@@ -459,13 +460,13 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	public void onAddedClass(TournamentAddClassStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS) {
 			classNumber++;
-			fileClassCount++;
 			classesNumberLabel.setText("Nombre de classes : " + classNumber);
 
 			try {
 				List<Map<String, String[][]>> classData = InputFormat.parseCsv(event.getCSVFile(), groupsNumber);
 				csvPanel.addClass(classData, Integer.parseInt(event.getCSVFile().getName().substring(5, 6)));
 				System.out.println("Class added");
+				getTopLevelAncestor().revalidate();
 				getTopLevelAncestor().repaint();
 			} catch (IOException | ParseException e) {
 				e.printStackTrace();
@@ -520,7 +521,6 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 				List<Map<String, String[][]>> classData = InputFormat.parseCsv(csvfile, groupsNumber);
 				csvPanel.addClass(classData, Integer.parseInt(csvfile.getName().substring(5, 6)));
 				System.out.println("File added");
-				fileClassCount++;
 				classNumber++;
 				getTopLevelAncestor().repaint();
 			} catch (IOException | ParseException e) {

@@ -4,6 +4,8 @@ import java.awt.Color;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
@@ -15,6 +17,7 @@ import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.event.PopupMenuEvent;
@@ -23,14 +26,16 @@ import javax.swing.filechooser.FileSystemView;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
+import ppc.event.Listener;
 import ppc.event.SettingsChangeEvent;
 import ppc.event.TournamentCreationStatusEvent;
+import ppc.event.TournamentRemoveEvent;
 import ppc.event.TournamentRemovingStatusEvent;
 import ppc.manager.EventManager;
 import ppc.manager.SettingsManager;
 import ppc.manager.TournamentManager;
 
-public class SettingsPanel extends JPanel {
+public class SettingsPanel extends JPanel implements Listener {
 
 	/**
 	 * 
@@ -49,6 +54,8 @@ public class SettingsPanel extends JPanel {
 	private JTextField classesValue;
 
 	public SettingsPanel() {
+		EventManager.getInstance().registerListener(this);
+
 		this.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -78,11 +85,11 @@ public class SettingsPanel extends JPanel {
 		if (event.getStatus() == EventStatus.SUCCESS)
 			removeTournament.addItem(event.getTournamentName());
 	}
-	
+
 	@EventHandler
 	public void onTournamentRemoved(TournamentRemovingStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS)
-			removeTournament.addItem(event.getTournamentName());
+			removeTournament.removeItem(event.getTournamentName());
 	}
 
 	private JPanel createFormPanel() {
@@ -186,17 +193,14 @@ public class SettingsPanel extends JPanel {
 			break;
 		}
 		colorBoxes.addPopupMenuListener(new PopupMenuListener() {
-
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 				getTopLevelAncestor().repaint();
-
 			}
 
 			@Override
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 				getTopLevelAncestor().repaint();
-
 			}
 
 			@Override
@@ -216,24 +220,42 @@ public class SettingsPanel extends JPanel {
 		removeTournament.addItem("Choisir un tournoi...");
 		Stream.of(TournamentManager.getInstance().getTournaments())
 				.forEach(tournament -> removeTournament.addItem(tournament));
-		
-		removeTournament.addPopupMenuListener(new PopupMenuListener() {
 
+		removeTournament.addPopupMenuListener(new PopupMenuListener() {
 			@Override
 			public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
 				getTopLevelAncestor().repaint();
-
 			}
 
 			@Override
 			public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
 				getTopLevelAncestor().repaint();
-
 			}
 
 			@Override
 			public void popupMenuCanceled(PopupMenuEvent e) {
 				getTopLevelAncestor().repaint();
+			}
+		});
+
+		removeTournament.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				if (removeTournament.getSelectedIndex() != 0) {
+					System.out.println("Preparing tournament remove...");
+					String tournamentName = removeTournament.getSelectedItem().toString();
+					int res = JOptionPane.showConfirmDialog(null,
+							"Voulez-vous vraiment supprimer le tournoi " + tournamentName + " ?",
+							"Supprimer le tournoi ?", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+
+					if (res == JOptionPane.YES_OPTION) {
+						System.out.println("Removing " + tournamentName);
+						EventManager.getInstance().callEvent(new TournamentRemoveEvent(tournamentName));
+					} else {
+						System.out.println("Cancelled!");
+					}
+					removeTournament.setSelectedIndex(0);
+				}
 			}
 		});
 		generalSettingsPanel.add(removeTournament, c);

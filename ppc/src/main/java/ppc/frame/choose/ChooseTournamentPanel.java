@@ -22,6 +22,7 @@ import ppc.event.EventStatus;
 import ppc.event.Listener;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpenEvent;
+import ppc.event.TournamentRemovingStatusEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.manager.EventManager;
 import ppc.manager.TournamentManager;
@@ -114,6 +115,17 @@ public class ChooseTournamentPanel extends JPanel implements Listener {
 		if (event.getStatus() == EventStatus.SUCCESS) {
 			String tournamentName = event.getTournamentName();
 			model.addElement(tournamentName);
+			if (model.getSize() > 15)
+				list.setVisibleRowCount(15);
+			else
+				list.setVisibleRowCount(model.getSize());
+		}
+	}
+	
+	@EventHandler
+	public void onTournamentRemoved(TournamentRemovingStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			model.removeElement(event.getTournamentName());
 			if (model.getSize() > 15)
 				list.setVisibleRowCount(15);
 			else
