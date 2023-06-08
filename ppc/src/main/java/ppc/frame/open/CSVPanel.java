@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,7 @@ import javax.swing.SwingConstants;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
+import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.Listener;
 import ppc.event.StopSearchEvent;
 import ppc.event.TournamentAddLevelGroupEvent;
@@ -320,7 +322,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 		// List of groups of classes (K x N)
 		List<Map<String, String[][]>> listClasses = getListClasses(groupsNumber);
-		
+
 		int nbLevels = 0;
 		for (int level = 0; level < groupsNumber; level++) {
 			EventManager.getInstance().callEvent(new TournamentAddLevelGroupEvent(listClasses.get(level), level));
@@ -358,7 +360,7 @@ public class CSVPanel extends JPanel implements Listener {
 			listClasses.setVisibleRowCount(model.getSize());
 
 		cl.show(csvPanel, "");
-		
+
 		// Unselecting buttons
 		addStudent.setEnabled(false);
 		removeStudent.setEnabled(false);
@@ -740,37 +742,56 @@ public class CSVPanel extends JPanel implements Listener {
 			}
 		}
 	}
-	
-	private static class SolutionSearchDialog extends JDialog {
+
+	public static class SolutionSearchDialog extends JDialog implements Listener {
 
 		/**
 		 * 
 		 */
 		private static final long serialVersionUID = -4843477171080105523L;
+		private Map<Integer, Boolean> levelsState = new HashMap<>();
 
 		public SolutionSearchDialog(int nbLevels) {
-			setModal(true);
-			this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			EventManager.getInstance().registerListener(this);
 			
+			setModal(true);
+			this.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+
 			// Stopping the search for every level if the dialog gets closed
 			this.addWindowListener(new WindowAdapter() {
-	            @Override
-	            public void windowClosed(WindowEvent e) {
-	            	for (int level = 0; level < nbLevels; level++)
-	            		EventManager.getInstance().callEvent(new StopSearchEvent(level));
-	            }
-	        });
-			
+				@Override
+				public void windowClosing(WindowEvent e) {
+					if (levelsState.values().stream().allMatch(Boolean::booleanValue)) {
+						SolutionSearchDialog.this.dispose(); // Close the dialog
+					} else {
+						int choice = JOptionPane.showConfirmDialog(SolutionSearchDialog.this,
+								"Êtes-vous sûr de vouloir arrêter les recherches en cours ?", "Confirmation",
+								JOptionPane.YES_NO_OPTION);
+						if (choice == JOptionPane.YES_OPTION) {
+							for (int level = 0; level < nbLevels; level++)
+								EventManager.getInstance().callEvent(new StopSearchEvent(level));
+							SolutionSearchDialog.this.dispose(); // Close the dialog
+						}
+					}
+				}
+			});
+
 			this.setLayout(new GridLayout((int) Math.ceil((double) nbLevels / 3), 3));
 			for (int level = 0; level < nbLevels; level++) {
 				System.out.println(level);
 				LoadingPanel levelPanel = new LoadingPanel(level);
 				add(levelPanel);
+				levelsState.put(level, false);
 			}
 
 			this.setResizable(false);
 			this.pack();
 			this.setLocationRelativeTo(null);
+		}
+		
+		@EventHandler
+		public void onFinalSolutionFound(FinalSolutionFoundEvent event) {
+			levelsState.put(event.getLevel(), true);
 		}
 	}
 }

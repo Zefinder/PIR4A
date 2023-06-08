@@ -7,6 +7,7 @@ import java.awt.event.ActionListener;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
@@ -60,9 +61,14 @@ public class LoadingPanel extends JPanel implements Listener {
 		stopButton = new JButton("Arrêter la recherche");
 		stopButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				System.out.println("Stopping search for level " + level);
-				EventManager.getInstance().callEvent(new StopSearchEvent(level));
-				searchIsStopped();
+				int choice = JOptionPane.showConfirmDialog(null,
+						"Êtes-vous sûr de vouloir arrêter la recherche pour le niveau " + (level + 1) + " ?",
+						"Confirmation", JOptionPane.YES_NO_OPTION);
+				if (choice == JOptionPane.YES_OPTION) {
+					System.out.println("Stopping search for level " + level);
+					EventManager.getInstance().callEvent(new StopSearchEvent(level));
+					searchIsStopped();
+				}
 			}
 		});
 		add(stopButton);
