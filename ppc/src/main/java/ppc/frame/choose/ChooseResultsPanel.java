@@ -20,6 +20,9 @@ import javax.swing.JScrollPane;
 import javax.swing.border.EmptyBorder;
 import javax.swing.filechooser.FileSystemView;
 
+import ppc.annotation.EventHandler;
+import ppc.event.EventStatus;
+import ppc.event.TournamentRemovingStatusEvent;
 import ppc.event.TournamentResultsCopyEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.manager.EventManager;
@@ -119,7 +122,17 @@ public class ChooseResultsPanel extends JPanel {
 		} else {
 			System.out.println("Choosing cancelled by the user!");
 		}
+	}
 
+	@EventHandler
+	public void onTournamentRemoved(TournamentRemovingStatusEvent event) {
+		if (event.getStatus() == EventStatus.SUCCESS) {
+			model.removeElement(event.getTournamentName());
+			if (model.getSize() > 15)
+				list.setVisibleRowCount(15);
+			else
+				list.setVisibleRowCount(model.getSize());
+		}
 	}
 
 }

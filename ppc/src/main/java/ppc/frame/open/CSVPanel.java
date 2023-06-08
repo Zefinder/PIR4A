@@ -270,6 +270,9 @@ public class CSVPanel extends JPanel implements Listener {
 		// Adding table to CardLayout
 		addTableToPanel(classData, profName + " " + classNumber);
 
+		getTopLevelAncestor().revalidate();
+		getTopLevelAncestor().repaint();
+
 	}
 
 	public void removeClass() {
@@ -322,6 +325,7 @@ public class CSVPanel extends JPanel implements Listener {
 		}
 
 		SolutionSearchDialog dialog = new SolutionSearchDialog(nbLevels);
+
 		EventManager.getInstance().callEvent(new TournamentSolveEvent(tournamentName, listClasses.size(), soft,
 				classesThreshold, studentsThreshold, timeout, firstTable, verbose));
 		dialog.setVisible(true);
@@ -350,12 +354,15 @@ public class CSVPanel extends JPanel implements Listener {
 		else
 			listClasses.setVisibleRowCount(model.getSize());
 
+		cl.show(csvPanel, "");
+		
 		// Unselecting buttons
 		addStudent.setEnabled(false);
 		removeStudent.setEnabled(false);
 
 		// Revalidate frame
-		repaint();
+		getTopLevelAncestor().revalidate();
+		getTopLevelAncestor().repaint();
 
 	}
 
@@ -598,16 +605,28 @@ public class CSVPanel extends JPanel implements Listener {
 		addStudent.setEnabled(false);
 		removeStudent.setEnabled(false);
 		listClasses.setEnabled(false);
-		// TODO Disable tables!
-		scrollList.forEach(t -> t.setEnabled(false));
+		addStudent.setEnabled(false);
+		removeStudent.setEnabled(false);
+		int selectedClass = listClasses.getSelectedIndex();
+		if (selectedClass != -1) {
+			JScrollPane selectedScrollPane = scrollList.get(selectedClass);
+			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
+			selectedTable.setEnabled(false);
+		}
 	}
 
 	private void enableAll() {
 		listClasses.setEnabled(true);
 		addStudent.setEnabled(listClasses.getSelectedIndex() != -1);
 		removeStudent.setEnabled(listClasses.getSelectedIndex() != -1);
-		// TODO Enable tables!
-		scrollList.forEach(t -> t.setEnabled(true));
+		addStudent.setEnabled(true);
+		removeStudent.setEnabled(true);
+		int selectedClass = listClasses.getSelectedIndex();
+		if (selectedClass != -1) {
+			JScrollPane selectedScrollPane = scrollList.get(selectedClass);
+			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
+			selectedTable.setEnabled(true);
+		}
 	}
 
 	private static class EstimationResultsDialog extends JDialog {
