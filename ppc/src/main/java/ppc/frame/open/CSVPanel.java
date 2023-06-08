@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.File;
 import java.io.IOException;
 import java.text.ParseException;
@@ -41,6 +43,7 @@ import javax.swing.SwingConstants;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
+import ppc.event.StopSearchEvent;
 import ppc.event.TournamentAddLevelGroupEvent;
 import ppc.event.TournamentClassCopyEvent;
 import ppc.event.TournamentClassCopyStatusEvent;
@@ -748,14 +751,24 @@ public class CSVPanel extends JPanel implements Listener {
 		public SolutionSearchDialog(int nbLevels) {
 			setModal(true);
 			this.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+			
+			// Stopping the search for every level if the dialog gets closed
+			this.addWindowListener(new WindowAdapter() {
+	            @Override
+	            public void windowClosed(WindowEvent e) {
+	            	for (int level = 0; level < nbLevels; level++)
+	            		EventManager.getInstance().callEvent(new StopSearchEvent(level));
+	            }
+	        });
+			
 			this.setLayout(new GridLayout((int) Math.ceil((double) nbLevels / 3), 3));
 			for (int level = 0; level < nbLevels; level++) {
 				System.out.println(level);
 				LoadingPanel levelPanel = new LoadingPanel(level);
 				add(levelPanel);
 			}
-			
-		    this.setResizable(false);
+
+			this.setResizable(false);
 			this.pack();
 			this.setLocationRelativeTo(null);
 		}
