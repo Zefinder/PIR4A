@@ -13,10 +13,10 @@ import javax.swing.JProgressBar;
 import javax.swing.SwingConstants;
 
 import ppc.annotation.EventHandler;
-import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.Listener;
-import ppc.event.SolutionFoundEvent;
-import ppc.event.StopSearchEvent;
+import ppc.event.solver.FinalSolutionFoundEvent;
+import ppc.event.solver.SolutionFoundEvent;
+import ppc.event.solver.StopSearchEvent;
 import ppc.manager.EventManager;
 
 public class LoadingPanel extends JPanel implements Listener {

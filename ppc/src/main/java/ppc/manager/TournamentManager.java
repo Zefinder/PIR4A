@@ -13,12 +13,12 @@ import java.util.Properties;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
-import ppc.event.SaveTournamentPropertiesEvent;
-import ppc.event.TournamentCreateEvent;
-import ppc.event.TournamentCreationStatusEvent;
-import ppc.event.TournamentOpenEvent;
-import ppc.event.TournamentOpeningStatusEvent;
-import ppc.event.TournamentRemovingStatusEvent;
+import ppc.event.mainpanel.TournamentCreateEvent;
+import ppc.event.mainpanel.TournamentCreationStatusEvent;
+import ppc.event.mainpanel.TournamentOpenEvent;
+import ppc.event.mainpanel.TournamentOpeningStatusEvent;
+import ppc.event.mainpanel.TournamentRemovingStatusEvent;
+import ppc.event.openpanel.SaveTournamentPropertiesEvent;
 import ppc.tournament.Tournament;
 
 /**

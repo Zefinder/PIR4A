@@ -21,10 +21,10 @@ import javax.swing.SwingUtilities;
 
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
-import ppc.event.TournamentCreationStatusEvent;
-import ppc.event.TournamentOpenEvent;
-import ppc.event.TournamentOpeningStatusEvent;
-import ppc.event.TournamentResultsCopyStatusEvent;
+import ppc.event.mainpanel.TournamentCreationStatusEvent;
+import ppc.event.mainpanel.TournamentOpenEvent;
+import ppc.event.mainpanel.TournamentOpeningStatusEvent;
+import ppc.event.mainpanel.TournamentResultsCopyStatusEvent;
 import ppc.frame.MainFrame;
 import ppc.manager.EventManager;
 

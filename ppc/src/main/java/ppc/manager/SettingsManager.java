@@ -16,8 +16,8 @@ import javax.swing.UIManager;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
-import ppc.event.SettingsChangeEvent;
-import ppc.event.SettingsChangeStatusEvent;
+import ppc.event.mainpanel.SettingsChangeEvent;
+import ppc.event.mainpanel.SettingsChangeStatusEvent;
 
 /**
  * <p>

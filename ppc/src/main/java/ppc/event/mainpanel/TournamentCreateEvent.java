@@ -1,9 +1,10 @@
-package ppc.event;
+package ppc.event.mainpanel;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import ppc.annotation.Event;
+import ppc.event.RegisteredListener;
 import ppc.manager.TournamentManager;
 
 /**

@@ -1,7 +1,10 @@
-package ppc.event;
+package ppc.event.openpanel;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ppc.event.RegisteredListener;
+import ppc.event.mainpanel.TournamentCreateEvent;
 
 public class SaveTournamentPropertiesEvent extends TournamentCreateEvent {
 

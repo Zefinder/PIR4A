@@ -1,8 +1,11 @@
-package ppc.event;
+package ppc.event.solver;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import ppc.event.Event;
+import ppc.event.RegisteredListener;
 
 @ppc.annotation.Event
 public class TournamentAddLevelGroupEvent extends Event {

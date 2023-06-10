@@ -1,10 +1,13 @@
-package ppc.event;
+package ppc.event.solver;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import ppc.event.Event;
+import ppc.event.RegisteredListener;
+
 @ppc.annotation.Event
-public class SolutionFoundEvent extends Event {
+public class FinalSolutionFoundEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
@@ -14,10 +17,10 @@ public class SolutionFoundEvent extends Event {
 	private int classesMet;
 	private int maxClassesMet;
 
-	public SolutionFoundEvent() {
+	public FinalSolutionFoundEvent() {
 	}
 
-	public SolutionFoundEvent(int level, int studentsMet, int maxStudentsMet, int classesMet, int maxClassesMet) {
+	public FinalSolutionFoundEvent(int level, int studentsMet, int maxStudentsMet, int classesMet, int maxClassesMet) {
 		this.level = level;
 		this.studentsMet = studentsMet;
 		this.maxStudentsMet = maxStudentsMet;

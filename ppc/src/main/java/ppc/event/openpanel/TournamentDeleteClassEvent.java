@@ -1,7 +1,10 @@
-package ppc.event;
+package ppc.event.openpanel;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ppc.event.Event;
+import ppc.event.RegisteredListener;
 
 @ppc.annotation.Event
 public class TournamentDeleteClassEvent extends Event {

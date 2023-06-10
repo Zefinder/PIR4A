@@ -20,10 +20,10 @@ import com.google.ortools.sat.LinearExprBuilder;
 import com.google.ortools.sat.Literal;
 
 import ppc.annotation.EventHandler;
-import ppc.event.FinalSolutionFoundEvent;
 import ppc.event.Listener;
-import ppc.event.SolutionFoundEvent;
-import ppc.event.StopSearchEvent;
+import ppc.event.solver.FinalSolutionFoundEvent;
+import ppc.event.solver.SolutionFoundEvent;
+import ppc.event.solver.StopSearchEvent;
 import ppc.manager.EventManager;
 import ppc.manager.LogsManager;
 

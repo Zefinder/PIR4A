@@ -1,19 +1,22 @@
-package ppc.event;
+package ppc.event.mainpanel;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import ppc.event.Event;
+import ppc.event.RegisteredListener;
+
 @ppc.annotation.Event
-public class TournamentOpenEvent extends Event {
+public class TournamentRemoveEvent extends Event {
 
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
 	private String tournamentName;
 	
-	public TournamentOpenEvent() {
+	public TournamentRemoveEvent() {
 	}
-	
-	public TournamentOpenEvent(String tournamentName) {
+
+	public TournamentRemoveEvent(String tournamentName) {
 		this.tournamentName = tournamentName;
 	}
 	

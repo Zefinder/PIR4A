@@ -8,7 +8,7 @@ import java.util.Properties;
 
 import javax.swing.JOptionPane;
 
-import ppc.event.TournamentCreateEvent;
+import ppc.event.mainpanel.TournamentCreateEvent;
 import ppc.manager.LogsManager;
 import ppc.manager.TournamentManager;
 
