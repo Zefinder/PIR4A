@@ -41,7 +41,7 @@ public class LoadingPanel extends JPanel implements Listener {
 		gridLayout.setVgap(10);
 		setLayout(gridLayout);
 		setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-		
+
 		levelLabel = new JLabel("Niveau " + (level + 1));
 		levelLabel.setHorizontalAlignment(SwingConstants.CENTER);
 		add(levelLabel);
@@ -73,7 +73,7 @@ public class LoadingPanel extends JPanel implements Listener {
 		});
 		add(stopButton);
 	}
-	
+
 	private void searchIsStopped() {
 		levelLabel.setText("Niveau " + (level + 1) + " - terminé");
 		stopButton.setEnabled(false);
@@ -95,7 +95,7 @@ public class LoadingPanel extends JPanel implements Listener {
 			repaint();
 		}
 	}
-	
+
 	@EventHandler
 	public void onFinalSolutionFound(FinalSolutionFoundEvent event) {
 		System.out.println("my level is: " + level);

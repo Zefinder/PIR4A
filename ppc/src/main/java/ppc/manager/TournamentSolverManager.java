@@ -3,8 +3,9 @@ package ppc.manager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,13 +66,15 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		this.classesByLevel = new HashMap<>();
 		this.loadPreData();
+		logs.writeInformationMessage("TournamentSolverManager initialised!");
 	}
 
 	private void loadPreData() {
 		this.precalculatedSolutions = new HashMap<>();
-		File file = new File("input.txt"); // Replace "input.txt" with your file path
+		InputStream in = getClass().getResourceAsStream("solverData.txt");
+
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(file));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 			while (reader.readLine() != null) { // Ignore the first line
 
@@ -150,35 +153,41 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		String[][][] lvlClasses = new String[evaluate.size()][][];
 		int classNb = 0;
+		int studentsNumber = 0;
 		int[] classes = new int[evaluate.size()];
 		for (String[][] currentClass : evaluate.values()) {
+			studentsNumber += currentClass.length;
 			classes[classNb] = currentClass.length;
 			lvlClasses[classNb++] = currentClass;
 		}
 
 		int feasibility = -1;
-		// Check if feasible and in list
-		Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(classes));
-		TournamentSolver tournament;
-		if (precalculatedSolution != null) {
-			if (precalculatedSolution.getMatches() == null)
-				if (precalculatedSolution.isSoftConstraint())
-					feasibility = -1;
+		if (studentsNumber == 0)
+			feasibility = 1;
+		else {
+			// Check if feasible and in list
+			Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(classes));
+			TournamentSolver tournament;
+			if (precalculatedSolution != null) {
+				if (precalculatedSolution.getMatches() == null)
+					if (precalculatedSolution.isSoftConstraint())
+						feasibility = -1;
+					else {
+						tournament = new TournamentSolver(lvlClasses);
+						feasibility = tournament.isProblemSolvable();
+					}
 				else {
-					tournament = new TournamentSolver(lvlClasses);
-					feasibility = tournament.isProblemSolvable();
+					if (precalculatedSolution.isSoftConstraint())
+						feasibility = 0;
+					else
+						feasibility = 1;
 				}
-			else {
-				if (precalculatedSolution.isSoftConstraint())
-					feasibility = 0;
-				else
-					feasibility = 1;
-			}
 
-		} else {
-			// Check if feasible and not in list
-			tournament = new TournamentSolver(lvlClasses);
-			feasibility = tournament.isProblemSolvable();
+			} else {
+				// Check if feasible and not in list
+				tournament = new TournamentSolver(lvlClasses);
+				feasibility = tournament.isProblemSolvable();
+			}
 		}
 
 		System.out.println("Level " + event.getLevel() + ", feasibility: " + feasibility);
@@ -189,12 +198,25 @@ public class TournamentSolverManager implements Manager, Listener {
 
 	@EventHandler
 	public void onSolverCalled(TournamentSolveEvent event) {
-
 		int nbClasses = classesByLevel.values().iterator().next().size();
 		List<Thread> threads = new ArrayList<>();
 		List<LevelThread> lvlThreads = new ArrayList<>();
 		List<Solution> solutions = new ArrayList<>();
 		int lastLevelWithGhost = -1;
+
+		if (nbClasses == 0) {
+			logs.writeErrorMessage("No class were added so impossible to create a tournament!");
+			EventManager.getInstance()
+					.callEvent(new TournamentSolveImpossibleEvent("Il n'y a pas de classes pour faire un tournoi !"));
+			return;
+		}
+
+		if (nbClasses == 1) {
+			logs.writeErrorMessage("Impossible to create a tournament with only one class!");
+			EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(
+					"Il n'est pas possible de faire un tournoi avec seulement une classe !"));
+			return;
+		}
 
 		// so that the levels are in increasing order
 		SortedSet<Integer> keys = new TreeSet<>(classesByLevel.keySet());
@@ -202,8 +224,14 @@ public class TournamentSolverManager implements Manager, Listener {
 		for (Integer key : keys) {
 			String[][][] lvlClasses = new String[nbClasses][][];
 			int classNb = 0;
-			for (String[][] currentClass : classesByLevel.get(key).values())
+			int studentsNumber = 0;
+			for (String[][] currentClass : classesByLevel.get(key).values()) {
+				studentsNumber += currentClass.length;
 				lvlClasses[classNb++] = currentClass;
+			}
+
+			if (studentsNumber == 0)
+				continue;
 
 			// Checking if solution already has been computed and has good computation
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
@@ -242,6 +270,7 @@ public class TournamentSolverManager implements Manager, Listener {
 				TournamentSolver tournament = new TournamentSolver(lvlClasses);
 				int feasibility = tournament.isProblemSolvable();
 				if (feasibility == -1 || (feasibility == 0 && !event.isSoftConstraint())) {
+					logs.writeErrorMessage("Impossible to solve for level group " + lvl);
 					EventManager.getInstance().callEvent(
 							new TournamentSolveImpossibleEvent("Le tournoi est impossible pour le niveau " + lvl));
 					return;
@@ -298,7 +327,7 @@ public class TournamentSolverManager implements Manager, Listener {
 			logs.writeInformationMessage("Creating pdf FichesEleves... ");
 			pdfGen.createPdfEleves();
 
-			EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent());
+			EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent(event.getTournamentName()));
 		} catch (FileNotFoundException | DocumentException e) {
 			e.printStackTrace();
 		}

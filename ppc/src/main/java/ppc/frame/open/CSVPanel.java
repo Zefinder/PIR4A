@@ -54,6 +54,7 @@ import ppc.event.TournamentDeleteClassStatusEvent;
 import ppc.event.TournamentEstimateEvent;
 import ppc.event.TournamentEstimateStatusEvent;
 import ppc.event.TournamentSolveEvent;
+import ppc.event.TournamentSolveImpossibleEvent;
 import ppc.event.TournamentSolverFinishedEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.frame.TournamentTableModel;
@@ -397,6 +398,11 @@ public class CSVPanel extends JPanel implements Listener {
 	public void onSolverFinished(TournamentSolverFinishedEvent event) {
 		enableAll();
 	}
+	
+	@EventHandler
+	public void onImpossibleTournament(TournamentSolveImpossibleEvent event) {
+		enableAll();
+	}
 
 	private List<Map<String, String[][]>> getListClasses(int groupsNumber) {
 		// List of groups of classes (K x N)
@@ -618,6 +624,8 @@ public class CSVPanel extends JPanel implements Listener {
 			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
 			selectedTable.setEnabled(false);
 		}
+		
+		getTopLevelAncestor().repaint();
 	}
 
 	private void enableAll() {
@@ -632,6 +640,8 @@ public class CSVPanel extends JPanel implements Listener {
 			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
 			selectedTable.setEnabled(true);
 		}
+		
+		getTopLevelAncestor().repaint();
 	}
 
 	private static class EstimationResultsDialog extends JDialog {
