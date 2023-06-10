@@ -86,7 +86,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 	private int estimatedReturn;
 
-	private Image backgroundImage = new ImageIcon(this.getClass().getResource("../chess_background.jpg")).getImage();
+	private Image backgroundImage = new ImageIcon(this.getClass().getClassLoader().getResource("chess_background.jpg")).getImage();
 
 	public OpenedTournamentPanel() {
 		EventManager.getInstance().registerListener(this);

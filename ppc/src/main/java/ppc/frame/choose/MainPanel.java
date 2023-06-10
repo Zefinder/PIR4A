@@ -46,7 +46,7 @@ public class MainPanel extends JPanel implements Listener {
 	private static final int CHECK_TOURNAMENT_ACTION = 0x02;
 	private static final int SETTINGS_ACTION = 0x03;
 
-	private Image backgroundImage = new ImageIcon(this.getClass().getResource("../chess_background.jpg")).getImage();
+	private Image backgroundImage = new ImageIcon(this.getClass().getClassLoader().getResource("chess_background.jpg")).getImage();
 
 	/* Variables */
 	private JPanel optionsPanel, informationsPanel;

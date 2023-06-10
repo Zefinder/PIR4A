@@ -71,7 +71,7 @@ public class TournamentSolverManager implements Manager, Listener {
 
 	private void loadPreData() {
 		this.precalculatedSolutions = new HashMap<>();
-		InputStream in = getClass().getResourceAsStream("solverData.txt");
+		InputStream in = getClass().getClassLoader().getResourceAsStream("solverData.txt");
 
 		try {
 			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
@@ -230,6 +230,7 @@ public class TournamentSolverManager implements Manager, Listener {
 				lvlClasses[classNb++] = currentClass;
 			}
 
+			System.out.println("Number of students for this group: " + studentsNumber);
 			if (studentsNumber == 0)
 				continue;
 
@@ -242,7 +243,7 @@ public class TournamentSolverManager implements Manager, Listener {
 					&& ((float) precalculatedSolution.getClassesMet()
 							/ precalculatedSolution.getMaxClassesMet()) >= event.getClassThreshold()
 					&& precalculatedSolution.getMatches() != null) {
-				
+
 				// We compute the idToName map and add it to the solution
 				Map<Integer, String[]> idToName = new HashMap<>();
 				for (int classNumber = 0; classNumber < lvlClasses.length; classNumber++) {
@@ -264,7 +265,7 @@ public class TournamentSolverManager implements Manager, Listener {
 						.callEvent(new FinalSolutionFoundEvent(lvl, precalculatedSolution.getStudentsMet(),
 								precalculatedSolution.getMaxStudentsMet(), precalculatedSolution.getClassesMet(),
 								precalculatedSolution.getMaxClassesMet()));
-				
+
 				// Else we verify that it's feasible and add it to a list
 			} else {
 				TournamentSolver tournament = new TournamentSolver(lvlClasses);
@@ -275,8 +276,9 @@ public class TournamentSolverManager implements Manager, Listener {
 							new TournamentSolveImpossibleEvent("Le tournoi est impossible pour le niveau " + lvl));
 					return;
 				} else {
-					LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(), event.getClassThreshold(),
-							event.getStudentThreshold(), event.getTimeout(), lvl, event.isVerbose());
+					LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(),
+							event.getClassThreshold(), event.getStudentThreshold(), event.getTimeout(), lvl,
+							event.isVerbose());
 					threads.add(new Thread(lvlThread));
 					lvlThreads.add(lvlThread);
 				}
@@ -335,13 +337,18 @@ public class TournamentSolverManager implements Manager, Listener {
 
 	@EventHandler
 	public void onLevelGroupAdded(TournamentAddLevelGroupEvent event) {
-		this.classesByLevel.put(event.getLevel(), event.getClasses());
+		System.out.println("Level group " + event.getLevel() + " have been added!");
+		put(event.getLevel(), event.getClasses());
 	}
 
 	@EventHandler
 	public void onOpenedTournament(TournamentOpeningStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS)
 			classesByLevel.clear();
+	}
+
+	private synchronized void put(int level, Map<String, String[][]> classes) {
+		this.classesByLevel.put(level, classes);
 	}
 
 	private StudentListsClass createStudentClasses(Integer[] classes) {

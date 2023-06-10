@@ -89,7 +89,6 @@ public class LoadingPanel extends JPanel implements Listener {
 	@EventHandler
 	public void onSolutionFound(SolutionFoundEvent event) {
 		if (event.getLevel() == this.level) {
-			System.out.println("Updated!");
 			this.updateProgress((float) event.getStudentsMet() / event.getMaxStudentsMet() * 100,
 					(float) event.getClassesMet() / event.getMaxClassesMet() * 100);
 			repaint();
@@ -98,7 +97,6 @@ public class LoadingPanel extends JPanel implements Listener {
 
 	@EventHandler
 	public void onFinalSolutionFound(FinalSolutionFoundEvent event) {
-		System.out.println("my level is: " + level);
 		if (event.getLevel() == this.level) {
 			this.updateProgress((float) event.getStudentsMet() / event.getMaxStudentsMet() * 100,
 					(float) event.getClassesMet() / event.getMaxClassesMet() * 100);

@@ -268,14 +268,15 @@ public class CSVPanel extends JPanel implements Listener {
 
 		// Adding to names' list
 		model.addElement("Classe de " + profName);
-		if (model.getSize() > 15)
-			listClasses.setVisibleRowCount(15);
-		else
-			listClasses.setVisibleRowCount(model.getSize());
 
 		// Adding table to CardLayout
 		addTableToPanel(classData, profName + " " + classNumber);
-
+		
+		if (model.getSize() > 15)
+			listClasses.setVisibleRowCount(15);
+		else {
+			listClasses.setVisibleRowCount(model.getSize());
+		}
 		getTopLevelAncestor().revalidate();
 		getTopLevelAncestor().repaint();
 
@@ -580,7 +581,7 @@ public class CSVPanel extends JPanel implements Listener {
 			contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
 			JButton addButton = new JButton("Ajouter");
-			addButton.addActionListener(e -> addStudent());
+			addButton.addActionListener(e -> addStudent()); 
 			buttonPanel.add(addButton);
 
 			JButton cancelButton = new JButton("Annuler");
@@ -788,7 +789,6 @@ public class CSVPanel extends JPanel implements Listener {
 
 			this.setLayout(new GridLayout((int) Math.ceil((double) nbLevels / 3), 3));
 			for (int level = 0; level < nbLevels; level++) {
-				System.out.println(level);
 				LoadingPanel levelPanel = new LoadingPanel(level);
 				add(levelPanel);
 				levelsState.put(level, false);

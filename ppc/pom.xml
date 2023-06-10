@@ -36,7 +36,7 @@
 				<configuration>
 					<archive>
 						<manifest>
-							<mainClass>ppc.exercises.NQueens</mainClass>
+							<mainClass>ppc.Launch</mainClass>
 						</manifest>
 					</archive>
 					<descriptorRefs>
