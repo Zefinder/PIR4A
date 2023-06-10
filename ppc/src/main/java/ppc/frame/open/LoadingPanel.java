@@ -14,7 +14,6 @@ import javax.swing.SwingConstants;
 import ppc.annotation.EventHandler;
 import ppc.event.Listener;
 import ppc.event.SolutionFoundEvent;
-import ppc.event.TournamentSolverFinishedEvent;
 
 public class LoadingPanel extends JPanel implements Listener {
 
@@ -85,6 +84,7 @@ public class LoadingPanel extends JPanel implements Listener {
 		}
 	}
 	
+	/*
 	@EventHandler
 	public void onFinalSolutionFound(TournamentSolverFinishedEvent event) {
 		System.out.println("my level is: " + level);
@@ -94,4 +94,5 @@ public class LoadingPanel extends JPanel implements Listener {
 			searchIsStopped();
 		}
 	}
+	*/
 }

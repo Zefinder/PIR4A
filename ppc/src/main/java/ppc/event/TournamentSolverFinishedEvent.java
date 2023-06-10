@@ -4,15 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 @ppc.annotation.Event
-public class TournamentSolverFinishedEvent extends SolutionFoundEvent {
-
+public class TournamentSolverFinishedEvent extends Event {
+	
 	private static final List<RegisteredListener> HANDLERS = new ArrayList<>();
 
+	private String tournamentName;
+	
 	public TournamentSolverFinishedEvent() {
 	}
 	
-	public TournamentSolverFinishedEvent(int level, int studentsMet, int maxStudentsMet, int classesMet, int maxClassesMet) {
-		super(level, studentsMet, maxStudentsMet, classesMet, maxClassesMet);
+	public TournamentSolverFinishedEvent(String tournamentName) {
+		this.tournamentName = tournamentName;
+	}
+	
+	public String getTournamentName() {
+		return tournamentName;
 	}
 
 	@Override

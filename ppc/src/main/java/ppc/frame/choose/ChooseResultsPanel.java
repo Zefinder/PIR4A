@@ -22,13 +22,15 @@ import javax.swing.filechooser.FileSystemView;
 
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
+import ppc.event.Listener;
 import ppc.event.TournamentRemovingStatusEvent;
 import ppc.event.TournamentResultsCopyEvent;
+import ppc.event.TournamentSolverFinishedEvent;
 import ppc.frame.TournamentListRenderer;
 import ppc.manager.EventManager;
 import ppc.manager.FileManager;
 
-public class ChooseResultsPanel extends JPanel {
+public class ChooseResultsPanel extends JPanel implements Listener {
 
 	/**
 	 * 
@@ -39,6 +41,8 @@ public class ChooseResultsPanel extends JPanel {
 	private JList<String> list;
 
 	public ChooseResultsPanel() {
+		EventManager.getInstance().registerListener(this);
+		
 		this.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -122,6 +126,16 @@ public class ChooseResultsPanel extends JPanel {
 		} else {
 			System.out.println("Choosing cancelled by the user!");
 		}
+	}
+
+	@EventHandler
+	public void onCreatedTournament(TournamentSolverFinishedEvent event) {
+		String tournamentName = event.getTournamentName();
+		model.addElement(tournamentName);
+		if (model.getSize() > 15)
+			list.setVisibleRowCount(15);
+		else
+			list.setVisibleRowCount(model.getSize());
 	}
 
 	@EventHandler

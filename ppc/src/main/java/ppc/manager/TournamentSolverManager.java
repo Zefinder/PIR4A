@@ -3,8 +3,9 @@ package ppc.manager;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -65,13 +66,15 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		this.classesByLevel = new HashMap<>();
 		this.loadPreData();
+		logs.writeInformationMessage("TournamentSolverManager initialised!");
 	}
 
 	private void loadPreData() {
 		this.precalculatedSolutions = new HashMap<>();
-		File file = new File("input.txt"); // Replace "input.txt" with your file path
+		InputStream in = getClass().getResourceAsStream("solverData.txt");
+		
 		try {
-			BufferedReader reader = new BufferedReader(new FileReader(file));
+			BufferedReader reader = new BufferedReader(new InputStreamReader(in));
 
 			while (reader.readLine() != null) { // Ignore the first line
 
@@ -300,7 +303,7 @@ public class TournamentSolverManager implements Manager, Listener {
 			logs.writeInformationMessage("Creating pdf FichesEleves... ");
 			pdfGen.createPdfEleves();
 
-			EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent());
+			EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent(event.getTournamentName()));
 		} catch (FileNotFoundException | DocumentException e) {
 			e.printStackTrace();
 		}
@@ -310,7 +313,7 @@ public class TournamentSolverManager implements Manager, Listener {
 	public void onLevelGroupAdded(TournamentAddLevelGroupEvent event) {
 		this.classesByLevel.put(event.getLevel(), event.getClasses());
 	}
-	
+
 	@EventHandler
 	public void onOpenedTournament(TournamentOpeningStatusEvent event) {
 		if (event.getStatus() == EventStatus.SUCCESS)
@@ -377,8 +380,6 @@ public class TournamentSolverManager implements Manager, Listener {
 		return instance;
 	}
 
-	// TODO Make handler to stop search if needed.
-
 	private static class StudentListsClass {
 
 		private Integer[][] listClassesId;
@@ -398,5 +399,5 @@ public class TournamentSolverManager implements Manager, Listener {
 		}
 
 	}
-	
+
 }
