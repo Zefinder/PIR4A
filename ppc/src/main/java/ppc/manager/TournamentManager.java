@@ -13,6 +13,7 @@ import java.util.Properties;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
+import ppc.event.SaveTournamentPropertiesEvent;
 import ppc.event.TournamentCreateEvent;
 import ppc.event.TournamentCreationStatusEvent;
 import ppc.event.TournamentOpenEvent;
@@ -114,7 +115,7 @@ public final class TournamentManager implements Manager, Listener {
 					"Ce nom de tournoi existe déjà !");
 		} else {
 			String message = Tournament.verifyTournamentProperties(event.getName(), event.getMatchesNumber(),
-					event.getGroupsNumber(), event.getMaxSearchingTime(), event.getStudentsMetThreshold(),
+					event.getGroupsNumber(), event.getMaxSearchingTime(), 1, event.getStudentsMetThreshold(),
 					event.getClassesMetThreshold());
 
 			if (!message.equals("")) {
@@ -123,12 +124,13 @@ public final class TournamentManager implements Manager, Listener {
 			} else {
 				createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.SUCCESS);
 				tournament = new Tournament(event.getName(), event.getMatchesNumber(), event.getGroupsNumber(),
-						event.getMaxSearchingTime(), event.getStudentsMetThreshold(), event.getClassesMetThreshold());
+						event.getMaxSearchingTime(), 1, event.getStudentsMetThreshold(),
+						event.getClassesMetThreshold());
 
 				try {
 					File tournamentFile = FileManager.getInstance().createTournamentFile(event.getName());
 					tournamentList.put(event.getName(), tournament);
-					initTournamentFile(tournament, tournamentFile);
+					saveTournamentFile(tournament, tournamentFile);
 
 					createdEvent = new TournamentCreationStatusEvent(event.getName(), EventStatus.SUCCESS);
 
@@ -149,7 +151,7 @@ public final class TournamentManager implements Manager, Listener {
 			tournamentList.remove(event.getTournamentName());
 	}
 
-	private void initTournamentFile(Tournament tournament, File tournamentFile) throws IOException {
+	private void saveTournamentFile(Tournament tournament, File tournamentFile) throws IOException {
 		BufferedWriter writer = new BufferedWriter(new FileWriter(tournamentFile, false));
 		Properties properties = tournament.getTournamentProperties();
 
@@ -177,6 +179,32 @@ public final class TournamentManager implements Manager, Listener {
 		}
 
 		EventManager.getInstance().callEvent(openingEvent);
+	}
+
+	/**
+	 * Listener called when a tournament is closed to return to the main frame.
+	 * 
+	 * @param event the called event
+	 */
+	@EventHandler
+	public void onClosedTournament(SaveTournamentPropertiesEvent event) {
+		String message = Tournament.verifyTournamentProperties(event.getName(), event.getMatchesNumber(),
+				event.getGroupsNumber(), event.getMaxSearchingTime(), 1, event.getStudentsMetThreshold(),
+				event.getClassesMetThreshold());
+
+		if (message.equals("")) {
+			Tournament tournament = new Tournament(event.getName(), event.getMatchesNumber(), event.getGroupsNumber(),
+					event.getMaxSearchingTime(), event.getTableOffset(), event.getStudentsMetThreshold(),
+					event.getClassesMetThreshold());
+
+			File tournamentFile = FileManager.getInstance().getTournamentFile(event.getName());
+			try {
+				saveTournamentFile(tournament, tournamentFile);
+				tournamentList.put(event.getName(), tournament);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 	/**

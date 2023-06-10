@@ -38,6 +38,7 @@ import javax.swing.plaf.basic.BasicArrowButton;
 import ppc.annotation.EventHandler;
 import ppc.event.EventStatus;
 import ppc.event.Listener;
+import ppc.event.SaveTournamentPropertiesEvent;
 import ppc.event.TournamentAddClassEvent;
 import ppc.event.TournamentAddClassStatusEvent;
 import ppc.event.TournamentDeleteClassStatusEvent;
@@ -102,6 +103,27 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	}
 
 	private void showMainFrame() {
+		// Save tournament properties
+		int time = getTimeValue();
+		if (time == -1)
+			return;
+
+		float studentsThreshold = getStudentsThreshold();
+		if (studentsThreshold == -1)
+			return;
+
+		float classesThreshold = getClassesThreshold();
+		if (classesThreshold == -1)
+			return;
+
+		int tableOffset = getTableOffset();
+		if (tableOffset == -1)
+			return;
+		EventManager.getInstance().callEvent(new SaveTournamentPropertiesEvent(tournamentName, roundsNumber,
+				groupsNumber, time, tableOffset, studentsThreshold, classesThreshold));
+		System.out.println("Saving tournament's properties");
+
+		// Return to main frame
 		MainFrame frame = (MainFrame) SwingUtilities.getWindowAncestor(this);
 		frame.showMainPanel();
 	}
@@ -449,8 +471,8 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 			studentsThreshold.setText(String.valueOf(tournament.getStudentsThreshold() * 100) + "%");
 			classesThreshold.setText(String.valueOf(tournament.getClassesThreshold() * 100) + "%");
 			timeField.setText(String.valueOf(tournament.getMaxTime()));
-			tableOffset.setText("1");
-			
+			tableOffset.setText(String.valueOf(tournament.getTableOffset()));
+
 			getTopLevelAncestor().revalidate();
 			getTopLevelAncestor().repaint();
 		}
@@ -491,10 +513,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 	@EventHandler
 	public void onImpossibleTournament(TournamentSolveImpossibleEvent event) {
 		JOptionPane.showMessageDialog(null, event.getMessage(), "Tournoi impossible", JOptionPane.ERROR_MESSAGE);
-		addClass.setEnabled(true);
-		removeClass.setEnabled(true);
-		estimateButton.setEnabled(true);
-		searchButton.setEnabled(true);
+		enableAll();
 	}
 
 	@EventHandler
@@ -676,6 +695,8 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		verboseBox.setEnabled(false);
 		estimateButton.setEnabled(false);
 		searchButton.setEnabled(false);
+		
+		getTopLevelAncestor().repaint();
 	}
 
 	private void enableAll() {
@@ -689,5 +710,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		verboseBox.setEnabled(true);
 		estimateButton.setEnabled(true);
 		searchButton.setEnabled(true);
+		
+		getTopLevelAncestor().repaint();
 	}
 }

@@ -29,6 +29,7 @@ public class Tournament {
 	private static final String ROUNDS_NUMBER = "rounds";
 	private static final String GROUPS_NUMBER = "groups";
 	private static final String MAX_TIME = "time";
+	private static final String TABLE_OFFSET = "tableOffset";
 	private static final String STUDENT_THRESHOLD = "students";
 	private static final String CLASSES_THRESHOLD = "classes";
 
@@ -47,7 +48,7 @@ public class Tournament {
 			throw new IOException("Wrong properties file!");
 	}
 
-	public Tournament(String name, int matchesNumber, int groupsNumber, int maxSearchingTime,
+	public Tournament(String name, int matchesNumber, int groupsNumber, int maxSearchingTime, int tableOffset,
 			float studentsMetThreshold, float classesMetThreshold) {
 		properties = new Properties();
 
@@ -55,6 +56,7 @@ public class Tournament {
 		properties.setProperty(ROUNDS_NUMBER, String.valueOf(matchesNumber));
 		properties.setProperty(GROUPS_NUMBER, String.valueOf(groupsNumber));
 		properties.setProperty(MAX_TIME, String.valueOf(maxSearchingTime));
+		properties.setProperty(TABLE_OFFSET, String.valueOf(tableOffset));
 		properties.setProperty(STUDENT_THRESHOLD, String.valueOf(studentsMetThreshold));
 		properties.setProperty(CLASSES_THRESHOLD, String.valueOf(classesMetThreshold));
 	}
@@ -78,6 +80,10 @@ public class Tournament {
 	public int getMaxTime() {
 		return Integer.valueOf(properties.getProperty(MAX_TIME));
 	}
+	
+	public int getTableOffset() {
+		return Integer.valueOf(properties.getProperty(TABLE_OFFSET));
+	}
 
 	public float getStudentsThreshold() {
 		return Float.valueOf(properties.getProperty(STUDENT_THRESHOLD));
@@ -96,16 +102,17 @@ public class Tournament {
 		String matchesString = properties.getProperty(ROUNDS_NUMBER);
 		String levelsString = properties.getProperty(GROUPS_NUMBER);
 		String timeString = properties.getProperty(MAX_TIME);
+		String tableOffsetString = properties.getProperty(TABLE_OFFSET);
 		String studentThresholdString = properties.getProperty(STUDENT_THRESHOLD);
 		String classesThresholdString = properties.getProperty(CLASSES_THRESHOLD);
 
-		if (properties.size() != 6) {
+		if (properties.size() != 7) {
 			LogsManager.getInstance().writeErrorMessage("Wrong number of properties for a tournament...");
 			return false;
 		}
 
 		if (name == null || matchesString == null || levelsString == null || timeString == null
-				|| studentThresholdString == null || classesThresholdString == null) {
+				|| tableOffsetString == null || studentThresholdString == null || classesThresholdString == null) {
 			LogsManager.getInstance().writeErrorMessage("Properties cannot be null");
 			return false;
 		}
@@ -139,6 +146,14 @@ public class Tournament {
 			return false;
 		}
 
+		int tableOffset;
+		try {
+			tableOffset = Integer.valueOf(tableOffsetString);
+		} catch (Exception e1) {
+			LogsManager.getInstance().writeErrorMessage("Error when parsing table offset...");
+			return false;
+		}
+
 		studentThresholdString = studentThresholdString.substring(0, studentThresholdString.length() - 1);
 		float studentThreshold;
 		try {
@@ -159,11 +174,12 @@ public class Tournament {
 			return false;
 		}
 
-		return verifyTournamentProperties(name, matches, levels, time, studentThreshold, classesThreshold).equals("");
+		return verifyTournamentProperties(name, matches, levels, time, tableOffset, studentThreshold, classesThreshold)
+				.equals("");
 	}
 
 	public static String verifyTournamentProperties(String name, int matchesNumber, int groupsNumber,
-			int maxSearchingTime, float studentsMetThreshold, float classesMetThreshold) {
+			int maxSearchingTime, int tableOffset, float studentsMetThreshold, float classesMetThreshold) {
 		String message = "";
 
 		if (matchesNumber < 0) {
@@ -175,6 +191,9 @@ public class Tournament {
 		} else if (maxSearchingTime < 0) {
 			LogsManager.getInstance().writeErrorMessage("Tournament's max time search cannot be negative!");
 			message = "Le temps maximal de recherche ne peut pas être négatif !";
+		} else if (tableOffset < 0) {
+			LogsManager.getInstance().writeErrorMessage("Tournament's table offset cannot be negative!");
+			message = "Le numéro de la première table ne peut pas être négatif !";
 		} else if (studentsMetThreshold < 0f) {
 			LogsManager.getInstance().writeErrorMessage("Tournament's students threshold cannot be negative!");
 			message = "Le seuil d'étudiants ne peut pas être négatif !";

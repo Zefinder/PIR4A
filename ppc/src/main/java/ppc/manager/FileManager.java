@@ -117,6 +117,9 @@ public final class FileManager implements Manager, Listener {
 			logs.writeInformationMessage("Creating logs directory...");
 			logsDirectory.mkdir();
 
+			logs.writeInformationMessage("Creating tmp directory...");
+			tmpDirectory.mkdir();
+			
 			logs.writeInformationMessage("Creating results directory...");
 			resDirectory.mkdir();
 
@@ -231,6 +234,21 @@ public final class FileManager implements Manager, Listener {
 	 */
 	File[] getTournamentFiles() {
 		return tournamentDirectory.listFiles(pathname -> pathname.getName().endsWith(".trn"));
+	}
+
+	/**
+	 * Return the tournament file associated to the given name
+	 * 
+	 * @param tournamentName the name of the tournament
+	 * @return the tournament file
+	 */
+	File getTournamentFile(String tournamentName) {
+		File[] files = tournamentDirectory.listFiles(pathname -> pathname.getName().equals(tournamentName + ".trn"));
+
+		if (files.length == 0)
+			return null;
+		else
+			return files[0];
 	}
 
 	/**
