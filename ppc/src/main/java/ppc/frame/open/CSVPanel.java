@@ -76,6 +76,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 	private JButton addStudent;
 	private JButton removeStudent;
+	private JButton removeClass;
 
 	private List<JScrollPane> scrollList;
 	private List<TournamentTableModel> tableModelList;
@@ -100,9 +101,10 @@ public class CSVPanel extends JPanel implements Listener {
 
 		JPanel csvPanel = buildCSVPanel();
 		this.add(csvPanel);
+		
+		buildRemoveClassButton();
 
 		this.setBackground(new Color(0, 0, 0, 100));
-
 	}
 
 	private JPanel buildListClassPanel() {
@@ -137,9 +139,9 @@ public class CSVPanel extends JPanel implements Listener {
 						System.out.println("Showing " + listClasses.getSelectedValue());
 						CardLayout cl = (CardLayout) csvPanel.getLayout();
 						cl.show(csvPanel, scrollList.get(selectedClass).getName());
-
+						
+						removeClass.setEnabled(true);
 						addStudent.setEnabled(true);
-						removeStudent.setEnabled(true);
 
 						getTopLevelAncestor().repaint();
 					}
@@ -164,8 +166,7 @@ public class CSVPanel extends JPanel implements Listener {
 			public void actionPerformed(ActionEvent e) {
 				int selectedClass = listClasses.getSelectedIndex();
 				if (selectedClass == -1) {
-					JOptionPane.showMessageDialog(null, "Veuillez sélectionner une classe.", "Erreur",
-							JOptionPane.ERROR_MESSAGE);
+					LogsManager.getInstance().writeWarningMessage("No student selected before removing...");
 				} else {
 					JScrollPane selectedScrollPane = scrollList.get(selectedClass);
 					JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
@@ -174,7 +175,7 @@ public class CSVPanel extends JPanel implements Listener {
 				}
 			}
 		});
-
+		
 		c.gridx = 0;
 		c.gridy = 2;
 		removeStudent = new JButton("Retirer l'élève");
@@ -183,26 +184,21 @@ public class CSVPanel extends JPanel implements Listener {
 		removeStudent.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				int selectedClass = listClasses.getSelectedIndex();
-				if (selectedClass == -1) {
-					JOptionPane.showMessageDialog(null, "Veuillez sélectionner une classe.", "Erreur",
+				JScrollPane selectedScrollPane = scrollList.get(selectedClass);
+				JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
+				int selectedRow = selectedTable.getSelectedRow();
+				if (selectedRow == -1) {
+					JOptionPane.showMessageDialog(null, "Veuillez sélectionner un élève à supprimer.", "Erreur",
 							JOptionPane.ERROR_MESSAGE);
 				} else {
-					JScrollPane selectedScrollPane = scrollList.get(selectedClass);
-					JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
-					int selectedRow = selectedTable.getSelectedRow();
-					if (selectedRow == -1) {
-						JOptionPane.showMessageDialog(null, "Veuillez sélectionner un élève à supprimer.", "Erreur",
-								JOptionPane.ERROR_MESSAGE);
-					} else {
-						String firstName = selectedTable.getValueAt(selectedRow, 0).toString();
-						String lastName = selectedTable.getValueAt(selectedRow, 1).toString();
-						int choice = JOptionPane.showConfirmDialog(null,
-								"Êtes-vous sûr de vouloir supprimer l'élève " + firstName + " " + lastName + " ?",
-								"Confirmation", JOptionPane.YES_NO_OPTION);
-						if (choice == JOptionPane.YES_OPTION) {
-							TournamentTableModel selectedTableModel = (TournamentTableModel) selectedTable.getModel();
-							selectedTableModel.removeRow(selectedRow);
-						}
+					String firstName = selectedTable.getValueAt(selectedRow, 0).toString();
+					String lastName = selectedTable.getValueAt(selectedRow, 1).toString();
+					int choice = JOptionPane.showConfirmDialog(null,
+							"Êtes-vous sûr de vouloir supprimer l'élève " + firstName + " " + lastName + " ?",
+							"Confirmation", JOptionPane.YES_NO_OPTION);
+					if (choice == JOptionPane.YES_OPTION) {
+						TournamentTableModel selectedTableModel = (TournamentTableModel) selectedTable.getModel();
+						selectedTableModel.removeRow(selectedRow);
 					}
 				}
 			}
@@ -231,6 +227,27 @@ public class CSVPanel extends JPanel implements Listener {
 		csvPanel.add(defaultTablePanel, "");
 
 		return csvPanel;
+	}
+	
+	public JButton buildRemoveClassButton() {
+		if (removeClass != null)
+			return removeClass;
+		removeClass = new JButton("Retirer la classe");
+		removeClass.setEnabled(false);
+		removeClass.addActionListener(e -> {
+			int selectedIndex = listClasses.getSelectedIndex();
+			if (selectedIndex != -1) {
+				String[] panelName = scrollList.get(selectedIndex).getName().split(" ");
+				int classIndex = Integer.valueOf(panelName[panelName.length - 1]);
+
+				TournamentDeleteClassEvent event = new TournamentDeleteClassEvent(tournamentName, classIndex,
+						selectedIndex);
+				EventManager.getInstance().callEvent(event);
+				repaint();
+			} else
+				LogsManager.getInstance().writeWarningMessage("No class were selected before removing...");
+		});
+		return removeClass;
 	}
 
 	public void reset() {
@@ -271,7 +288,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 		// Adding table to CardLayout
 		addTableToPanel(classData, profName + " " + classNumber);
-		
+
 		if (model.getSize() > 15)
 			listClasses.setVisibleRowCount(15);
 		else {
@@ -280,19 +297,6 @@ public class CSVPanel extends JPanel implements Listener {
 		getTopLevelAncestor().revalidate();
 		getTopLevelAncestor().repaint();
 
-	}
-
-	public void removeClass() {
-		int selectedIndex = listClasses.getSelectedIndex();
-		if (selectedIndex != -1) {
-			String[] panelName = scrollList.get(selectedIndex).getName().split(" ");
-			int classIndex = Integer.valueOf(panelName[panelName.length - 1]);
-
-			TournamentDeleteClassEvent event = new TournamentDeleteClassEvent(tournamentName, classIndex,
-					selectedIndex);
-			EventManager.getInstance().callEvent(event);
-		} else
-			LogsManager.getInstance().writeWarningMessage("No class were selected before removing...");
 	}
 
 	public void setTounamentName(String tournamentName) {
@@ -399,7 +403,7 @@ public class CSVPanel extends JPanel implements Listener {
 	public void onSolverFinished(TournamentSolverFinishedEvent event) {
 		enableAll();
 	}
-	
+
 	@EventHandler
 	public void onImpossibleTournament(TournamentSolveImpossibleEvent event) {
 		enableAll();
@@ -465,6 +469,20 @@ public class CSVPanel extends JPanel implements Listener {
 		JScrollPane defaultTablePanel = new JScrollPane(defaultTable, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,
 				JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
 		defaultTablePanel.setName(profName);
+		
+		defaultTable.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent evt) {
+				if (evt.getClickCount() == 1) {
+					JTable selectedTable = (JTable) ((JViewport) defaultTablePanel.getComponent(0)).getView();
+					int selectedStudent = selectedTable.getSelectedRow();
+
+					if (selectedStudent != -1) {
+						removeStudent.setEnabled(true);
+						getTopLevelAncestor().repaint();
+					}
+				}
+			}
+		});
 
 		scrollList.add(defaultTablePanel);
 		tableModelList.add(tableModel);
@@ -581,7 +599,7 @@ public class CSVPanel extends JPanel implements Listener {
 			contentPanel.add(buttonPanel, BorderLayout.SOUTH);
 
 			JButton addButton = new JButton("Ajouter");
-			addButton.addActionListener(e -> addStudent()); 
+			addButton.addActionListener(e -> addStudent());
 			buttonPanel.add(addButton);
 
 			JButton cancelButton = new JButton("Annuler");
@@ -625,7 +643,7 @@ public class CSVPanel extends JPanel implements Listener {
 			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
 			selectedTable.setEnabled(false);
 		}
-		
+
 		getTopLevelAncestor().repaint();
 	}
 
@@ -641,7 +659,7 @@ public class CSVPanel extends JPanel implements Listener {
 			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
 			selectedTable.setEnabled(true);
 		}
-		
+
 		getTopLevelAncestor().repaint();
 	}
 
@@ -764,7 +782,7 @@ public class CSVPanel extends JPanel implements Listener {
 
 		public SolutionSearchDialog(int nbLevels) {
 			EventManager.getInstance().registerListener(this);
-			
+
 			setModal(true);
 			this.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 
@@ -798,7 +816,7 @@ public class CSVPanel extends JPanel implements Listener {
 			this.pack();
 			this.setLocationRelativeTo(null);
 		}
-		
+
 		@EventHandler
 		public void onFinalSolutionFound(FinalSolutionFoundEvent event) {
 			levelsState.put(event.getLevel(), true);

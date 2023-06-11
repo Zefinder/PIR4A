@@ -169,6 +169,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 1;
+		csvPanel = new CSVPanel();
 		informationPanel.add(buildAddRemoveClassPanel(), c);
 
 		c.gridx = 0;
@@ -185,7 +186,6 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		separator.setForeground(new Color(0, 0, 0, 200));
 		this.add(separator);
 
-		csvPanel = new CSVPanel();
 		this.add(csvPanel);
 	}
 
@@ -279,11 +279,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 1;
-		removeClass = new JButton("Retirer la classe");
-		removeClass.addActionListener(e -> {
-			csvPanel.removeClass();
-			getTopLevelAncestor().repaint();
-		});
+		removeClass = csvPanel.buildRemoveClassButton();
 		panel.add(removeClass, c);
 
 		panel.setBorder(
