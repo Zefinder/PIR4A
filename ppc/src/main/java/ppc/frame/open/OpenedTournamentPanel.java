@@ -280,6 +280,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 		c.gridx = 0;
 		c.gridy = 1;
 		removeClass = csvPanel.buildRemoveClassButton();
+		removeClass.setEnabled(false);
 		panel.add(removeClass, c);
 
 		panel.setBorder(
