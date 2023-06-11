@@ -699,7 +699,6 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 	private void enableAll() {
 		addClass.setEnabled(true);
-		removeClass.setEnabled(true);
 		studentsThreshold.setEnabled(true);
 		classesThreshold.setEnabled(true);
 		timeField.setEnabled(true);

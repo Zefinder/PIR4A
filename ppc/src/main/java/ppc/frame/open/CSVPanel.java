@@ -649,13 +649,13 @@ public class CSVPanel extends JPanel implements Listener {
 	private void enableAll() {
 		listClasses.setEnabled(true);
 		addStudent.setEnabled(listClasses.getSelectedIndex() != -1);
-		removeStudent.setEnabled(listClasses.getSelectedIndex() != -1);
-		addStudent.setEnabled(true);
-		removeStudent.setEnabled(true);
 		int selectedClass = listClasses.getSelectedIndex();
 		if (selectedClass != -1) {
+			removeClass.setEnabled(true);
+			
 			JScrollPane selectedScrollPane = scrollList.get(selectedClass);
 			JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
+			removeStudent.setEnabled(selectedTable.getSelectedRow() != -1);
 			selectedTable.setEnabled(true);
 		}
 
