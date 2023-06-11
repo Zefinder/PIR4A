@@ -233,7 +233,6 @@ public class CSVPanel extends JPanel implements Listener {
 		if (removeClass != null)
 			return removeClass;
 		removeClass = new JButton("Retirer la classe");
-		removeClass.setEnabled(false);
 		removeClass.addActionListener(e -> {
 			int selectedIndex = listClasses.getSelectedIndex();
 			if (selectedIndex != -1) {
