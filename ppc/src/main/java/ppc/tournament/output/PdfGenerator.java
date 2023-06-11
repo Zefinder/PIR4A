@@ -39,6 +39,7 @@ public class PdfGenerator {
 	private static final String STUDENTS_FILE_FILENAME = "/FichesEleves.pdf";
 
 	private File destinationFolder;
+	private String tournamentTitle;
 	private List<Solution> solutions;
 	private int nbClasses;
 	private final int listMatchesColumnNb = 2 + TournamentSolver.NUMBER_MATCHES;
@@ -48,9 +49,10 @@ public class PdfGenerator {
 	private int lastLevelWithGhost;
 	private boolean needsGhosts = false;
 
-	public PdfGenerator(File destinationFolder, List<Solution> solutions, String[] classNames, int nbClasses,
+	public PdfGenerator(File destinationFolder, String tournamentTitle, List<Solution> solutions, String[] classNames, int nbClasses,
 			int firstTable, int lastLevelWithGhost) {
 		this.destinationFolder = destinationFolder;
+		this.tournamentTitle = tournamentTitle;
 		this.solutions = solutions;
 		this.classNames = classNames;
 		this.nbClasses = nbClasses;
@@ -93,9 +95,9 @@ public class PdfGenerator {
 	}
 
 	private void addPdfTitleDate(Document document) throws DocumentException {
-		Paragraph title = new Paragraph("Titre rencontre",
+		Paragraph title = new Paragraph(tournamentTitle,
 				FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16, BaseColor.BLACK));
-		Paragraph date = new Paragraph(new SimpleDateFormat("dd-MM-yyyy").format(new Date()));
+		Paragraph date = new Paragraph(new SimpleDateFormat("MM-yyyy").format(new Date()));
 
 		document.add(title);
 		document.add(date);

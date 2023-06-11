@@ -315,7 +315,7 @@ public class TournamentSolverManager implements Manager, Listener {
 					"Impossible d'accéder au dossier de résultats...\nRedémarrez l'application et réessayez..."));
 		}
 
-		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, solutions, classNames, nbClasses,
+		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), solutions, classNames, nbClasses,
 				event.getFirstTable(), lastLevelWithGhost);
 		try {
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
