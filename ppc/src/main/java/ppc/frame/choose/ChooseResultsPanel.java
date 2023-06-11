@@ -39,6 +39,7 @@ public class ChooseResultsPanel extends JPanel implements Listener {
 
 	private DefaultListModel<String> model;
 	private JList<String> list;
+	private JButton confirm;
 
 	public ChooseResultsPanel() {
 		EventManager.getInstance().registerListener(this);
@@ -63,6 +64,8 @@ public class ChooseResultsPanel extends JPanel implements Listener {
 		list.setFixedCellHeight(25);
 		list.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(java.awt.event.MouseEvent e) {
+				if (e.getClickCount() == 1)
+					confirm.setEnabled(true);
 				if (e.getClickCount() >= 2) {
 					JList<?> list = (JList<?>) e.getSource();
 					String tournamentName = list.getSelectedValue().toString();
@@ -93,7 +96,8 @@ public class ChooseResultsPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 1;
-		JButton confirm = new JButton("Copier les résultats...");
+		confirm = new JButton("Copier les résultats...");
+		confirm.setEnabled(false);
 		confirm.addActionListener(new ActionListener() {
 
 			@Override
