@@ -1,3 +1,4 @@
 /.metadata/
 *.png
 *.txt
+!solverData.txt
