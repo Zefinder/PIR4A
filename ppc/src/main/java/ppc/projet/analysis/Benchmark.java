@@ -17,7 +17,7 @@ public class Benchmark {
 	private Set<String> generatedProblems = new HashSet<>();
 	private BufferedWriter writer;
 	private static int nbProblemsSolved = 1;
-	private final int timeout = 5;
+	private final int timeout = 900;
 
 	public Benchmark() {
 		Integer[][] initProblem3 = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16, 17 } };
