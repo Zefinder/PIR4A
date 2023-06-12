@@ -324,7 +324,7 @@ public class OpenedTournamentPanel extends JPanel implements Listener {
 
 		c.gridx = 0;
 		c.gridy = 2;
-		JLabel timeLabel = new JLabel("Temps maximal de recherche");
+		JLabel timeLabel = new JLabel("Temps maximal de recherche (en s)");
 		panel.add(timeLabel, c);
 
 		c.gridx = 1;
