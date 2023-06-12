@@ -13,6 +13,7 @@ import com.google.ortools.sat.BoolVar;
 import com.google.ortools.sat.CpModel;
 import com.google.ortools.sat.CpSolver;
 import com.google.ortools.sat.CpSolverSolutionCallback;
+import com.google.ortools.sat.CpSolverStatus;
 import com.google.ortools.sat.IntVar;
 import com.google.ortools.sat.LinearExpr;
 import com.google.ortools.sat.LinearExprBuilder;
@@ -22,6 +23,7 @@ public class Tournament {
 
 	private static final int NUMBER_MATCHES = 6;
 	private Integer[][] initClasses;
+	private IntVar[][] opponents;
 	private int level;
 	private int nbStudents;
 	private int nbClasses;
@@ -31,10 +33,11 @@ public class Tournament {
 	private int maxClassesMet = 0;
 	private int maxStudentsMet = 0;
 	private boolean allowMeetingSameStudent = false;
-	Map<Integer, Integer[]> classmates;
+	private Map<Integer, Integer[]> classmates;
 	private Solution solution;
 	private String stats = new String();
 	private boolean solvable = true;
+	private int problemNumber;
 
 	private void initAttributes() {
 		nbClasses = initClasses.length;
@@ -54,9 +57,10 @@ public class Tournament {
 		classmates = getClassmates(newIdClasses(listClasses));
 	}
 
-	public Tournament(Integer[][] listClasses, int level, boolean soft) {
+	public Tournament(Integer[][] listClasses, int level, boolean soft, int problemNumber) {
 		this.initClasses = listClasses;
 		this.level = level;
+		this.problemNumber = problemNumber;
 		allowMeetingSameStudent = soft;
 		Loader.loadNativeLibraries();
 		initAttributes();
@@ -95,24 +99,41 @@ public class Tournament {
 		return solution.matches;
 	}
 
-	public double solve(int timeout) {
+	public int isProblemSolvable() {
+		CpModel model = createModel();
+		CpSolver solver = new CpSolver();
+
+		solver.getParameters().setEnumerateAllSolutions(true);
+		CpSolverStatus status = solver.solve(model, new CpSolverSolutionCallback() {
+			@Override
+			public void onSolutionCallback() {
+				stopSearch();
+			}
+		});
+		if (status != CpSolverStatus.INFEASIBLE)
+			return 1;
+
+		allowMeetingSameStudent = true;
+		model = createModel();
+		status = solver.solve(model, new CpSolverSolutionCallback() {
+			@Override
+			public void onSolutionCallback() {
+				stopSearch();
+			}
+		});
+		if (status == CpSolverStatus.INFEASIBLE)
+			return -1;
+		else
+			return 0;
+	}
+	
+	private CpModel createModel() {
 		CpModel model = new CpModel();
 
-		IntVar[][] opponents = new IntVar[nbStudents][NUMBER_MATCHES];
+		opponents = new IntVar[nbStudents][NUMBER_MATCHES];
 		IntVar[][] opponentsClasses = new IntVar[opponents.length][opponents[0].length];
 		Literal[][] sameClassesMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
 		Literal[][] sameStudentsMet = new BoolVar[opponents.length][NUMBER_MATCHES - 1];
-
-		// Debug
-		System.out.print("camarades des joueurs : ");
-		for (Map.Entry<Integer, Integer[]> entry : classmates.entrySet()) {
-			System.out.print(entry.getKey() + ": [");
-			for (Integer id : entry.getValue()) {
-				System.out.print(id + " ");
-			}
-			System.out.print("] ");
-		}
-		System.out.println();
 
 		for (int student = 0; student < opponents.length; student++) {
 			for (int game = 0; game < opponents[0].length; game++) {
@@ -193,6 +214,12 @@ public class Tournament {
 			objectiveFunction.addSum(sameClassesMet[student]);
 		}
 		model.maximize(objectiveFunction);
+		
+		return model;
+	}
+	
+	public double solve(int timeout) {
+		CpModel model = createModel();
 
 		CpSolver solver = new CpSolver();
 
@@ -310,28 +337,6 @@ public class Tournament {
 			}
 		}
 
-		// Checking if each person has at least 6 opponents
-		for (int classNb = 0; classNb < pawnDistribution.length; classNb++) {
-			int whiteOpponents = 0;
-			for (int whiteClass = 0; whiteClass < pawnDistribution.length; whiteClass++) {
-				if (whiteClass != classNb)
-					whiteOpponents += pawnDistribution[whiteClass][0];
-			}
-			if (whiteOpponents < NUMBER_MATCHES) {
-				solvable = false;
-				break;
-			}
-			int blackOpponents = 0;
-			for (int blackClass = 0; blackClass < pawnDistribution.length; blackClass++) {
-				if (blackClass != classNb)
-					blackOpponents += pawnDistribution[blackClass][1];
-			}
-			if (blackOpponents < NUMBER_MATCHES) {
-				solvable = false;
-				break;
-			}
-		}
-
 		// computing maxClassesMet
 		for (int classNb = 0; classNb < classes; classNb++) {
 			for (int opponentClass = 0; opponentClass < pawnDistribution.length; opponentClass++) {
@@ -442,13 +447,9 @@ public class Tournament {
 
 		@Override
 		public void onSolutionCallback() {
-			System.out.println("Solution " + ++solutionCount + " of level " + level);
+			System.out.println(String.format("Solution %d of level %d (problem n°%d)", ++solutionCount, level, problemNumber));
 			int sumClassesMet = 0;
 			int sumStudentsMet = 0;
-
-			if (stats == null) {
-				stats = "";
-			}
 
 			int[][] solutionMatches = new int[opponents.length][opponents[0].length];
 
@@ -473,22 +474,15 @@ public class Tournament {
 			// only storing the solution if it is better than the previous one
 			if (solution == null) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-				if (stats.isEmpty())
-					stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
-				else
-					stats += ";" + wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				stats = wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
 			} else if (sumStudentsMet > solution.getNbStudentsMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-				if (stats.isEmpty())
-					stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
-				else
-					stats += ";" + wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				stats = wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+
 			} else if (sumStudentsMet == solution.getNbStudentsMet() && sumClassesMet > solution.getNbClassesMet()) {
 				solution = new Solution(solutionMatches, sumStudentsMet, sumClassesMet);
-				if (stats.isEmpty())
-					stats += wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
-				else
-					stats += ";" + wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+				stats = wallTime() + " " + sumStudentsMet + " " + sumClassesMet;
+
 			}
 
 			System.out.print("Total classes met: " + sumClassesMet + " (max: " + maxClassesMet + ")\t");
@@ -497,7 +491,7 @@ public class Tournament {
 				System.out.println("optimal solution found!");
 				stopSearch();
 			}
-			System.out.println("Time spent: " + wallTime());
+			System.out.println("Time spent: " + wallTime() + "\n");
 		}
 	}
 

@@ -3,6 +3,7 @@ package ppc.projet.analysis;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
@@ -12,51 +13,39 @@ import ppc.projet.Tournament;
 
 public class Benchmark {
 
-	private BlockingQueue<Elt<Tournament, Integer>> queue = new LinkedBlockingQueue<>();
-	private Set<Integer[][]> generatedProblems = new HashSet<>();
-	private static int nbProblemsSolved = 0;
-	private final int timeout = 20;
+	private BlockingQueue<Tournament> queue = new LinkedBlockingQueue<>();
+	private Set<String> generatedProblems = new HashSet<>();
+	private BufferedWriter writer;
+	private static int nbProblemsSolved = 1;
+	private final int timeout = 5;
 
 	public Benchmark() {
 		Integer[][] initProblem3 = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16, 17 } };
-//		Integer[][] initProblem4 = { { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 }, { 12, 13, 14, 15 } };
-//		Integer[][] initProblem5 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13, 14, 15 } };
-//		Integer[][] initProblem6 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13 }, { 14, 15 } };
-//		Integer[][] initProblem7 = { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 }, { 12, 13 } };
+		Integer[][] initProblem4 = { { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 }, { 12, 13, 14, 15 } };
+		Integer[][] initProblem5 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13, 14, 15 } };
+		Integer[][] initProblem6 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13 }, { 14, 15 } };
+		Integer[][] initProblem7 = { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 }, { 12, 13 } };
 
-		this.generateProblems(initProblem3, 1, 2, 1);
+		this.generateProblems(initProblem3, 1, 3, 17);
+		this.generateProblems(initProblem4, 1, 3, 17);
+		this.generateProblems(initProblem5, 1, 3, 17);
+		this.generateProblems(initProblem6, 1, 3, 17);
+		this.generateProblems(initProblem7, 1, 3, 17);
+
 	}
 
 	private synchronized int incrementNbProblemsSolved() {
 		return nbProblemsSolved++;
 	}
 
-	private class Elt<A, B> {
-		private A a;
-		private B b;
-
-		public Elt(A a, B b) {
-			this.a = a;
-			this.b = b;
-		}
-
-		public A getA() {
-			return a;
-		}
-
-		public B getB() {
-			return b;
-		}
-	}
-
 	private void generateProblems(Integer[][] initialProblem, int minRandomFactor, int maxRandomFactor,
 			int numberPerFactor) {
 		generatedProblems = new HashSet<>();
-		generatedProblems.add(initialProblem);
+		generatedProblems.add(Arrays.deepToString(initialProblem));
 
-		int test = 1;
-		queue.add(new Elt<Tournament, Integer>(new Tournament(initialProblem, 0, false), test));
-		queue.add(new Elt<Tournament, Integer>(new Tournament(initialProblem, 0, true), test++));
+		int problemNumber = 1;
+		
+		queue.add(new Tournament(initialProblem, 0, false, problemNumber++));
 
 		Integer[][] prevProblem = initialProblem;
 		for (int randomFactor = minRandomFactor; randomFactor <= maxRandomFactor; randomFactor++) {
@@ -65,24 +54,33 @@ public class Benchmark {
 				RandomProblem problem;
 				do {
 					problem = new RandomProblem(randomFactor, prevProblem);
-					if (generatedProblems.contains(problem.getClasses())) {
+					System.out.println("AA" + Arrays.deepToString(problem.getClasses()));
+					if (generatedProblems.contains(Arrays.deepToString(problem.getClasses()))) {
 						sameProblem = true;
 						prevProblem = problem.getClasses();
 					}
-				} while (!new Tournament(problem.getClasses(), 0, false).isSolvable() && !sameProblem);
+				} while (!new Tournament(problem.getClasses(), 0, false, 0).isSolvable() && !sameProblem);
 
-				queue.add(new Elt<Tournament, Integer>(new Tournament(problem.getClasses(), 0, false), test));
-				queue.add(new Elt<Tournament, Integer>(new Tournament(problem.getClasses(), 0, true), test++));
+				int res = new Tournament(problem.getClasses(), 0, false, 0).isProblemSolvable();
+				queue.add(new Tournament(problem.getClasses(), 0, res == 0, problemNumber++));
 				prevProblem = problem.getClasses();
-				generatedProblems.add(prevProblem);
+				System.out.println("BB" + Arrays.deepToString(prevProblem));
+				generatedProblems.add(Arrays.deepToString(prevProblem));
 			}
 		}
 	}
 
-	private void writeStatsFile(String fileName, Integer[][] classes, int[][] matches, String params, String stats)
-			throws IOException {
+	private void initWriter(String fileName) throws IOException {
+		writer = new BufferedWriter(new FileWriter(fileName, false));
+	}
 
-		BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
+	private void closeWriter() throws IOException {
+		writer.flush();
+		writer.close();
+	}
+
+	private void writeStatsFile(Integer[][] classes, int[][] matches, String params, String stats) throws IOException {
+
 		writer.write(classes.length + "\n");
 		for (Integer[] c : classes)
 			writer.write(c.length + " ");
@@ -104,8 +102,8 @@ public class Benchmark {
 				}
 			}
 
-		writer.write("\n" + params + "\n" + stats);
-		writer.close();
+		writer.write("\n" + params + "\n" + stats + "\n");
+		writer.flush();
 	}
 
 	private class LaunchSolverBenchmark implements Runnable {
@@ -113,15 +111,10 @@ public class Benchmark {
 		public void run() {
 			try {
 				while (!queue.isEmpty()) {
-					Elt<Tournament, Integer> problem = queue.take();
-					Tournament tournament = problem.getA();
+					Tournament tournament = queue.take();
 					double walltime = tournament.solve(timeout);
 
-					String testNb = (problem.getB() < 10) ? "0" : "";
-					testNb += (problem.getB() < 100) ? "0" + problem.getB() : problem.getB();
 					boolean soft = tournament.isAllowMeetingSameStudent();
-					String fileName = "benchmark_" + tournament.getInitClasses().length + "_" + testNb + "_" + soft
-							+ ".txt";
 
 					String params = timeout + " " + soft + " " + tournament.getMaxStudentsMet() + " "
 							+ tournament.getMaxClassesMet();
@@ -131,7 +124,7 @@ public class Benchmark {
 
 					int[][] matches = tournament.getRepartionSolution();
 
-					writeStatsFile(fileName, tournament.getInitClasses(), matches, params, stats);
+					writeStatsFile(tournament.getInitClasses(), matches, params, stats);
 					System.out.println("Number of problems solved: " + incrementNbProblemsSolved());
 				}
 			} catch (InterruptedException | IOException e) {
@@ -140,10 +133,24 @@ public class Benchmark {
 		}
 	}
 
-	public static void main(String[] args) {
+	public static void main(String[] args) throws IOException, InterruptedException {
+
 		int threadNb = 8;
 		Benchmark benchmark = new Benchmark();
-		for (int i = 0; i < threadNb; i++)
-			(new Thread(benchmark.new LaunchSolverBenchmark())).start();
+
+		benchmark.initWriter("./solverData.txt");
+
+		Thread[] threads = new Thread[threadNb];
+		
+		for (int i = 0; i < threadNb; i++) {
+			threads[i] = new Thread(benchmark.new LaunchSolverBenchmark());
+			threads[i].start();
+		}
+		
+		for (int i = 0; i < threadNb; i++) {
+			threads[i].join();
+		}
+		
+		benchmark.closeWriter();
 	}
 }
