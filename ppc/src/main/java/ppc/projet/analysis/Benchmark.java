@@ -1,6 +1,9 @@
 package ppc.projet.analysis;
 
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -18,34 +21,73 @@ public class Benchmark {
 	private BufferedWriter writer;
 	private static int nbProblemsSolved = 1;
 	private final int timeout = 900;
+	private int problemNumber = 1;
 
-	public Benchmark() {
+	public Benchmark() throws IOException {
+		generatedProblems = new HashSet<>();
+
 		Integer[][] initProblem3 = { { 0, 1, 2, 3, 4, 5 }, { 6, 7, 8, 9, 10, 11 }, { 12, 13, 14, 15, 16, 17 } };
 		Integer[][] initProblem4 = { { 0, 1, 2, 3 }, { 4, 5, 6, 7 }, { 8, 9, 10, 11 }, { 12, 13, 14, 15 } };
 		Integer[][] initProblem5 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13, 14, 15 } };
 		Integer[][] initProblem6 = { { 0, 1, 2 }, { 3, 4, 5 }, { 6, 7, 8 }, { 9, 10, 11 }, { 12, 13 }, { 14, 15 } };
 		Integer[][] initProblem7 = { { 0, 1 }, { 2, 3 }, { 4, 5 }, { 6, 7 }, { 8, 9 }, { 10, 11 }, { 12, 13 } };
 
-		this.generateProblems(initProblem3, 1, 3, 17);
-		this.generateProblems(initProblem4, 1, 3, 17);
-		this.generateProblems(initProblem5, 1, 3, 17);
-		this.generateProblems(initProblem6, 1, 3, 17);
-		this.generateProblems(initProblem7, 1, 3, 17);
+		registerKnownProblems();
+
+//		this.generateProblems(initProblem3, 1, 3, 1);
+//		this.generateProblems(initProblem4, 1, 3, 20);
+		this.generateProblems(initProblem5, 1, 3, 20);
+		this.generateProblems(initProblem6, 1, 3, 20);
+		this.generateProblems(initProblem7, 1, 3, 20);
 
 	}
 
+	private void registerKnownProblems() throws IOException {
+		BufferedReader reader = new BufferedReader(new FileReader(new File("./solverData.txt")));
+		String line;
+		
+		while ((line = reader.readLine()) != null) {
+			line = reader.readLine();
+			Integer[][] classes = getClasses(line.split(" "));
+			generatedProblems.add(Arrays.deepToString(classes));
+			reader.readLine();
+			reader.readLine();
+			reader.readLine();
+		}
+		
+		reader.close();
+		
+	}
+
+	private Integer[][] getClasses(String[] configuration) {
+		Integer[][] classes = new Integer[configuration.length][];
+		
+		int offset = 0;
+		int classNumber = 0;
+		for (String studentsNumberString : configuration) {
+			int studentsNumber = Integer.valueOf(studentsNumberString);
+			Integer[] classs = new Integer[studentsNumber];
+			for (int i = 0; i < studentsNumber; i++) {
+				classs[i] = offset++;
+			}
+			classes[classNumber++] = classs;
+		}
+
+		return classes;
+	}
+	
 	private synchronized int incrementNbProblemsSolved() {
 		return nbProblemsSolved++;
 	}
 
 	private void generateProblems(Integer[][] initialProblem, int minRandomFactor, int maxRandomFactor,
 			int numberPerFactor) {
-		generatedProblems = new HashSet<>();
-		generatedProblems.add(Arrays.deepToString(initialProblem));
+		if (!generatedProblems.contains(Arrays.deepToString(initialProblem))) {
+			generatedProblems.add(Arrays.deepToString(initialProblem));
 
-		int problemNumber = 1;
-		
-		queue.add(new Tournament(initialProblem, 0, false, problemNumber++));
+			System.out.println("Problem n°" + problemNumber + " has been generated!");
+			queue.add(new Tournament(initialProblem, 0, false, problemNumber++));
+		}
 
 		Integer[][] prevProblem = initialProblem;
 		for (int randomFactor = minRandomFactor; randomFactor <= maxRandomFactor; randomFactor++) {
@@ -54,24 +96,25 @@ public class Benchmark {
 				RandomProblem problem;
 				do {
 					problem = new RandomProblem(randomFactor, prevProblem);
-					System.out.println("AA" + Arrays.deepToString(problem.getClasses()));
+//					System.out.println("AA" + Arrays.deepToString(problem.getClasses()));
 					if (generatedProblems.contains(Arrays.deepToString(problem.getClasses()))) {
 						sameProblem = true;
 						prevProblem = problem.getClasses();
 					}
 				} while (!new Tournament(problem.getClasses(), 0, false, 0).isSolvable() && !sameProblem);
 
+				System.out.println("Problem n°" + problemNumber + " has been generated!");
 				int res = new Tournament(problem.getClasses(), 0, false, 0).isProblemSolvable();
 				queue.add(new Tournament(problem.getClasses(), 0, res == 0, problemNumber++));
 				prevProblem = problem.getClasses();
-				System.out.println("BB" + Arrays.deepToString(prevProblem));
+//				System.out.println("BB" + Arrays.deepToString(prevProblem));
 				generatedProblems.add(Arrays.deepToString(prevProblem));
 			}
 		}
 	}
 
 	private void initWriter(String fileName) throws IOException {
-		writer = new BufferedWriter(new FileWriter(fileName, false));
+		writer = new BufferedWriter(new FileWriter(fileName, true));
 	}
 
 	private void closeWriter() throws IOException {
@@ -141,16 +184,18 @@ public class Benchmark {
 		benchmark.initWriter("./solverData.txt");
 
 		Thread[] threads = new Thread[threadNb];
-		
+
 		for (int i = 0; i < threadNb; i++) {
 			threads[i] = new Thread(benchmark.new LaunchSolverBenchmark());
 			threads[i].start();
 		}
-		
+
 		for (int i = 0; i < threadNb; i++) {
 			threads[i].join();
 		}
-		
+
 		benchmark.closeWriter();
+
+		System.out.println("All problems solved!");
 	}
 }

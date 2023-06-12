@@ -46,7 +46,7 @@ public class Tournament {
 		for (Integer[] classs : initClasses)
 			nbStudents += classs.length;
 		if (nbStudents % 2 == 1) {
-			System.out.println("adding ghost player");
+//			System.out.println("adding ghost player");
 			ghost = nbStudents++;
 			nbClasses++;
 			listClasses = Arrays.copyOf(initClasses, initClasses.length + 1);
@@ -227,10 +227,11 @@ public class Tournament {
 		solver.getParameters().setEnumerateAllSolutions(true);
 		solver.getParameters().setMaxTimeInSeconds(timeout);
 
+		System.out.println("Solving problem n°" + problemNumber);
 		solver.solve(model, sp);
 
 		if (this.solution != null) {
-			System.out.println("Final solution:");
+			System.out.println("Final solution for problem n° " + problemNumber +  ": ");
 			System.out.println(this.solution);
 		} else {
 			System.out.println("No solution");
@@ -277,7 +278,7 @@ public class Tournament {
 			}
 		});
 		Integer[][] orderedClasses = tmpList.toArray(new Integer[0][]);
-		System.out.println(Arrays.deepToString(orderedClasses));
+//		System.out.println(Arrays.deepToString(orderedClasses));
 
 		boolean unbalanced = false;
 		for (int classNb = 0; classNb < orderedClasses.length; classNb++) {
@@ -312,7 +313,7 @@ public class Tournament {
 		}
 
 		// Debug
-		System.out.println(Arrays.deepToString(pawnDistribution));
+//		System.out.println(Arrays.deepToString(pawnDistribution));
 
 		// Checking if everyone has an opponent
 		int[] blackNumberPerClass = new int[pawnDistribution.length];
@@ -351,19 +352,19 @@ public class Tournament {
 		maxStudentsMet = (ghost == -1) ? nbStudents * NUMBER_MATCHES : (nbStudents - 1) * NUMBER_MATCHES;
 
 		// Debug
-		System.out.println("classes : ");
-		for (Integer[] classs : listClasses) {
-			System.out.print("[ ");
-			for (Integer s : classs)
-				System.out.print(s + " ");
-			System.out.println("]");
-		}
-
-		// debug, printing studentClasses
-		System.out.print("studentClasses: [");
-		for (int i = 0; i < studentClasses.length; i++)
-			System.out.print(studentClasses[i] + " ");
-		System.out.println("]");
+//		System.out.println("classes : ");
+//		for (Integer[] classs : listClasses) {
+//			System.out.print("[ ");
+//			for (Integer s : classs)
+//				System.out.print(s + " ");
+//			System.out.println("]");
+//		}
+//
+//		// debug, printing studentClasses
+//		System.out.print("studentClasses: [");
+//		for (int i = 0; i < studentClasses.length; i++)
+//			System.out.print(studentClasses[i] + " ");
+//		System.out.println("]");
 
 		return listClassesId;
 	}
