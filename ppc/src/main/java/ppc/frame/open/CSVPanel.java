@@ -138,10 +138,17 @@ public class CSVPanel extends JPanel implements Listener {
 					if (selectedClass != -1) {
 						System.out.println("Showing " + listClasses.getSelectedValue());
 						CardLayout cl = (CardLayout) csvPanel.getLayout();
-						cl.show(csvPanel, scrollList.get(selectedClass).getName());
+						
+						JScrollPane selectedScrollPane = scrollList.get(selectedClass);
+						JTable selectedTable = (JTable) ((JViewport) selectedScrollPane.getComponent(0)).getView();
+						cl.show(csvPanel, selectedScrollPane.getName());
 						
 						removeClass.setEnabled(true);
 						addStudent.setEnabled(true);
+						if (selectedTable.getSelectedRow() == -1)
+							removeStudent.setEnabled(false);
+						else 
+							removeStudent.setEnabled(true);
 
 						getTopLevelAncestor().repaint();
 					}
@@ -199,6 +206,7 @@ public class CSVPanel extends JPanel implements Listener {
 					if (choice == JOptionPane.YES_OPTION) {
 						TournamentTableModel selectedTableModel = (TournamentTableModel) selectedTable.getModel();
 						selectedTableModel.removeRow(selectedRow);
+						removeStudent.setEnabled(false);
 					}
 				}
 			}
