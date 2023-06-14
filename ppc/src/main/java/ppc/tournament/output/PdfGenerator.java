@@ -6,7 +6,6 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -261,7 +260,7 @@ public class PdfGenerator {
 			addRowsMatches(solution, nbStudents, nbTables, level, table, ghostTable);
 
 			nbStudents += solution.getMatches().length - ((solution.getGhost() == -1) ? 0 : 1);
-			nbTables += solution.getMatches().length / 2;
+			nbTables += solution.getMatches().length / 2 - ((solution.getGhost() == -1) ? 0 : 1);
 			Paragraph lvlPar = new Paragraph(
 					new Phrase("Niveau " + (level + 1), FontFactory.getFont(FontFactory.HELVETICA_BOLD)));
 			lvlPar.setSpacingAfter(10);

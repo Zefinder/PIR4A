@@ -363,7 +363,6 @@ public class TournamentSolverManager implements Manager, Listener {
 		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), solutions, classNames,
 				nbClasses, event.getFirstTable(), lastLevelWithGhost);
 		try {
-			// TODO ListeMatches tables saut de 1
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
 			pdfGen.createPdfListeMatches();
 			logs.writeInformationMessage("Creating pdf ListeClasses... ");
