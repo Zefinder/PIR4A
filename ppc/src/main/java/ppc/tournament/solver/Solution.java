@@ -84,6 +84,10 @@ public class Solution {
 	public Integer[][] getListClasses() {
 		return this.listClasses;
 	}
+	
+	public void setListClasses(Integer[][] listClasses) {
+		this.listClasses = listClasses;
+	}
 
 	/**
 	 * Returns the table number to which is associated a student id. The student id

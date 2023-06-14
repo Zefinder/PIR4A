@@ -10,10 +10,13 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.SortedSet;
 import java.util.TreeSet;
+
+import javax.swing.JOptionPane;
 
 import com.itextpdf.text.DocumentException;
 
@@ -70,7 +73,7 @@ public class TournamentSolverManager implements Manager, Listener {
 	}
 
 	private void loadPreData() {
-		this.precalculatedSolutions = new HashMap<>();
+		this.precalculatedSolutions = new LinkedHashMap<>();
 		InputStream in = getClass().getClassLoader().getResourceAsStream("solverData.txt");
 
 		try {
@@ -144,7 +147,25 @@ public class TournamentSolverManager implements Manager, Listener {
 		for (int classNb = 0; classNb < levelClasses.length; classNb++)
 			configuration[classNb] = levelClasses[classNb].length;
 		Arrays.sort(configuration, Collections.reverseOrder());
+
 		return configuration;
+	}
+	
+	private Integer[] getReducedConfig(Integer[] configuration) {
+		int nullIndex = configuration.length;
+		for (int i = 0; i < configuration.length; i++) {
+			if (configuration[i] == 0) {
+				nullIndex = i;
+				break;
+			}
+		}
+
+		Integer[] trueConfiguration = new Integer[nullIndex];
+		for (int i = 0; i < nullIndex; i++) {
+			trueConfiguration[i] = configuration[i];
+		}
+
+		return trueConfiguration;
 	}
 
 	@EventHandler
@@ -236,23 +257,47 @@ public class TournamentSolverManager implements Manager, Listener {
 
 			// Checking if solution already has been computed and has good computation
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
-			Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(configuration));
-			if (precalculatedSolution != null
-					&& ((float) precalculatedSolution.getStudentsMet()
-							/ precalculatedSolution.getMaxStudentsMet()) >= event.getStudentThreshold()
-					&& ((float) precalculatedSolution.getClassesMet()
-							/ precalculatedSolution.getMaxClassesMet()) >= event.getClassThreshold()
-					&& precalculatedSolution.getMatches() != null) {
+			Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(getReducedConfig(configuration)));
+			if (precalculatedSolution != null && precalculatedSolution.getMatches() != null) {
 
 				// We compute the idToName map and add it to the solution
 				Map<Integer, String[]> idToName = new HashMap<>();
-				for (int classNumber = 0; classNumber < lvlClasses.length; classNumber++) {
-					Integer[] studentsId = precalculatedSolution.getListClasses()[classNumber];
-					for (int studentNumber = 0; studentNumber < lvlClasses[classNumber].length; studentNumber++) {
-						idToName.put(studentsId[studentNumber], lvlClasses[classNumber][studentNumber]);
+				int[] used = new int[configuration.length];
+				for (int i = 0; i < configuration.length; i++)
+					used[i] = -1;
+				
+				// Add padding to listClasses
+				Integer[][] listClasses = precalculatedSolution.getListClasses();
+				Integer[][] listClassesPad = new Integer[configuration.length][];
+				for (int i = 0; i < configuration.length; i++) {
+					if (i < listClasses.length) {
+						listClassesPad[i] = listClasses[i];
+					} else {
+						listClassesPad[i] = new Integer[]{};
 					}
 				}
+				
+				for (int classNumber = 0; classNumber < lvlClasses.length; classNumber++) {
+					int index = 0;
+					for (int i = 0; i < configuration.length; i++) {
+						if (configuration[classNumber] == lvlClasses[i].length && used[i] == -1) {
+							used[i] = classNumber;
+							index = i;
+							break;
+						}
+					}
 
+					Integer[] studentsId = listClassesPad[classNumber];
+					for (int studentNumber = 0; studentNumber < lvlClasses[index].length; studentNumber++) {
+						idToName.put(studentsId[studentNumber], lvlClasses[index][studentNumber]);
+					}
+				}
+				Integer[][] finalListClasses = new Integer[configuration.length][];
+				for (int i = 0; i < configuration.length; i++) {
+					finalListClasses[i] = listClassesPad[used[i]];
+				}
+				
+				precalculatedSolution.setListClasses(finalListClasses);
 				precalculatedSolution.setIdToName(idToName);
 
 				// We add the solution
@@ -315,8 +360,8 @@ public class TournamentSolverManager implements Manager, Listener {
 					"Impossible d'accéder au dossier de résultats...\nRedémarrez l'application et réessayez..."));
 		}
 
-		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), solutions, classNames, nbClasses,
-				event.getFirstTable(), lastLevelWithGhost);
+		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), solutions, classNames,
+				nbClasses, event.getFirstTable(), lastLevelWithGhost);
 		try {
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
 			pdfGen.createPdfListeMatches();
@@ -329,10 +374,17 @@ public class TournamentSolverManager implements Manager, Listener {
 			logs.writeInformationMessage("Creating pdf FichesEleves... ");
 			pdfGen.createPdfEleves();
 
-			EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent(event.getTournamentName()));
 		} catch (FileNotFoundException | DocumentException e) {
 			e.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.err.println("Unexpected exception occured, you might need some help...");
+			JOptionPane.showMessageDialog(null, "Une erreur inattendue est survenue !\n" + e.getMessage(), "Erreur",
+					JOptionPane.ERROR_MESSAGE);
 		}
+
+		EventManager.getInstance().callEvent(new TournamentSolverFinishedEvent(event.getTournamentName()));
+
 	}
 
 	@EventHandler

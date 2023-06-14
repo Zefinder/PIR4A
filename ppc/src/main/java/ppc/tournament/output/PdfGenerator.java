@@ -6,11 +6,13 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Stream;
 
 import com.itextpdf.text.BaseColor;
 import com.itextpdf.text.Chunk;
@@ -49,8 +51,8 @@ public class PdfGenerator {
 	private int lastLevelWithGhost;
 	private boolean needsGhosts = false;
 
-	public PdfGenerator(File destinationFolder, String tournamentTitle, List<Solution> solutions, String[] classNames, int nbClasses,
-			int firstTable, int lastLevelWithGhost) {
+	public PdfGenerator(File destinationFolder, String tournamentTitle, List<Solution> solutions, String[] classNames,
+			int nbClasses, int firstTable, int lastLevelWithGhost) {
 		this.destinationFolder = destinationFolder;
 		this.tournamentTitle = tournamentTitle;
 		this.solutions = solutions;
@@ -182,7 +184,7 @@ public class PdfGenerator {
 			tableCell.setBorderWidth(0.25f);
 			studentCell.setBorderWidth(0.25f);
 			tableCell.setBorderWidthLeft(1);
-			if (student <= matches.length / 2 - offset) {
+			if (student <= matches.length / 2 - 1) {
 				tableCell.setPhrase(new Phrase("table " + (solution.getIdToTable(student) + nbTablesPrevLevels)));
 			}
 
@@ -342,9 +344,9 @@ public class PdfGenerator {
 		document.close();
 	}
 
-	private void addRowsNiveaux(PdfPTable table, Solution solution) {
+	private void addRowsNiveaux(PdfPTable table, Solution solution, int maxStudents) {
 		Integer[][] listClasses = solution.getListClasses();
-		for (int student = 0; student < listClasses[0].length; student++) {
+		for (int student = 0; student < maxStudents; student++) {
 			for (int classNb = 0; classNb < nbClasses; classNb++) {
 				PdfPCell studentCell = new PdfPCell();
 				if (student < listClasses[classNb].length) {
@@ -355,7 +357,7 @@ public class PdfGenerator {
 				studentCell.setBorderWidth(0.25f);
 				if (classNb == nbClasses - 1)
 					studentCell.setBorderWidthRight(1);
-				if (student == listClasses[0].length - 1)
+				if (student == maxStudents - 1)
 					studentCell.setBorderWidthBottom(1);
 				table.addCell(studentCell);
 			}
@@ -390,11 +392,14 @@ public class PdfGenerator {
 				lvlTable.addCell(classCell);
 			}
 			PdfPCell studentsCell = formatHeaderCell("Élèves");
-			studentsCell.setRowspan(lvlSolution.getListClasses()[0].length);
+
+			int maxStudents = Stream.of(lvlSolution.getListClasses())
+					.max((o1, o2) -> Integer.compare(o1.length, o2.length)).get().length;
+			studentsCell.setRowspan(maxStudents);
 			studentsCell.setVerticalAlignment(PdfPCell.ALIGN_MIDDLE);
 			lvlTable.addCell(studentsCell);
 
-			addRowsNiveaux(lvlTable, lvlSolution);
+			addRowsNiveaux(lvlTable, lvlSolution, maxStudents);
 
 			document.add(lvlTable);
 			document.add(Chunk.NEXTPAGE);
