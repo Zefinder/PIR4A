@@ -17,7 +17,6 @@ import java.util.Map;
 public class Solution {
 
 	private Integer[][] matches;
-	private int[] studentClasses;
 	private Integer[][] listClasses;
 
 	private Map<Integer, Integer> idToTable;
@@ -33,11 +32,10 @@ public class Solution {
 	private int maxClassesMet;
 	private int table;
 
-	public Solution(Integer[][] matches, int[] studentClasses, Integer[][] listClasses, Map<Integer, String[]> idToName,
+	public Solution(Integer[][] matches, Integer[][] listClasses, Map<Integer, String[]> idToName,
 			int ghost, boolean softConstraint, double runtime, int studentsMet, int maxStudentsMet, int classesMet,
 			int maxClassesMet) {
 		this.matches = matches;
-		this.studentClasses = studentClasses;
 		this.listClasses = listClasses;
 		this.idToName = idToName;
 		this.ghost = ghost;
@@ -77,10 +75,6 @@ public class Solution {
 		return this.matches;
 	}
 
-	public int[] getStudentClasses() {
-		return this.studentClasses;
-	}
-
 	public Integer[][] getListClasses() {
 		return this.listClasses;
 	}
@@ -100,10 +94,6 @@ public class Solution {
 		if (this.idToTable == null)
 			this.initIdToTable();
 		return this.idToTable.get(id);
-	}
-
-	public Map<Integer, Integer> getMap() {
-		return idToTable;
 	}
 
 	public void setIdToName(Map<Integer, String[]> idToName) {

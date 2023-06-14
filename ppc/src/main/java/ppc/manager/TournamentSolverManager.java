@@ -130,9 +130,8 @@ public class TournamentSolverManager implements Manager, Listener {
 				int nbClassesMet = Integer.parseInt(stats[2]);
 
 				precalculatedSolutions.put(Arrays.toString(configuration),
-						new Solution(opponentsMatrix, listClasses.getListStudents(), listClasses.getListClassesId(),
-								null, ghost, softConstraint, runtime, nbStudentsMet, maxStudentsMet, nbClassesMet,
-								maxClassesMet));
+						new Solution(opponentsMatrix, listClasses.getListClassesId(), null, ghost, softConstraint, runtime, nbStudentsMet,
+								maxStudentsMet, nbClassesMet, maxClassesMet));
 			}
 
 			reader.close();
@@ -150,7 +149,7 @@ public class TournamentSolverManager implements Manager, Listener {
 
 		return configuration;
 	}
-	
+
 	private Integer[] getReducedConfig(Integer[] configuration) {
 		int nullIndex = configuration.length;
 		for (int i = 0; i < configuration.length; i++) {
@@ -257,7 +256,8 @@ public class TournamentSolverManager implements Manager, Listener {
 
 			// Checking if solution already has been computed and has good computation
 			Integer[] configuration = getClassesConfiguration(lvlClasses);
-			Solution precalculatedSolution = precalculatedSolutions.get(Arrays.toString(getReducedConfig(configuration)));
+			Solution precalculatedSolution = precalculatedSolutions
+					.get(Arrays.toString(getReducedConfig(configuration)));
 			if (precalculatedSolution != null && precalculatedSolution.getMatches() != null) {
 
 				// We compute the idToName map and add it to the solution
@@ -265,7 +265,7 @@ public class TournamentSolverManager implements Manager, Listener {
 				int[] used = new int[configuration.length];
 				for (int i = 0; i < configuration.length; i++)
 					used[i] = -1;
-				
+
 				// Add padding to listClasses
 				Integer[][] listClasses = precalculatedSolution.getListClasses();
 				Integer[][] listClassesPad = new Integer[configuration.length][];
@@ -273,10 +273,10 @@ public class TournamentSolverManager implements Manager, Listener {
 					if (i < listClasses.length) {
 						listClassesPad[i] = listClasses[i];
 					} else {
-						listClassesPad[i] = new Integer[]{};
+						listClassesPad[i] = new Integer[] {};
 					}
 				}
-				
+
 				for (int classNumber = 0; classNumber < lvlClasses.length; classNumber++) {
 					int index = 0;
 					for (int i = 0; i < configuration.length; i++) {
@@ -296,7 +296,7 @@ public class TournamentSolverManager implements Manager, Listener {
 				for (int i = 0; i < configuration.length; i++) {
 					finalListClasses[i] = listClassesPad[used[i]];
 				}
-				
+
 				precalculatedSolution.setListClasses(finalListClasses);
 				precalculatedSolution.setIdToName(idToName);
 
@@ -466,19 +466,13 @@ public class TournamentSolverManager implements Manager, Listener {
 	private static class StudentListsClass {
 
 		private Integer[][] listClassesId;
-		private int[] listStudents;
 
 		public StudentListsClass(Integer[][] listClassesId, int[] listStudents) {
 			this.listClassesId = listClassesId;
-			this.listStudents = listStudents;
 		}
 
 		public Integer[][] getListClassesId() {
 			return listClassesId;
-		}
-
-		public int[] getListStudents() {
-			return listStudents;
 		}
 
 	}

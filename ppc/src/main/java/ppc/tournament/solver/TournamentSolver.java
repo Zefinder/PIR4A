@@ -246,9 +246,10 @@ public final class TournamentSolver {
 			logs.writeInformationMessage(solutionMessage);
 		}
 
-		EventManager.getInstance().callEvent(new FinalSolutionFoundEvent(level, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet));
-		return new Solution(solution, studentClasses, listClasses, idToName, ghost, allowMeetingSameStudent,
-				bestRuntime, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet);
+		EventManager.getInstance().callEvent(
+				new FinalSolutionFoundEvent(level, bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet));
+		return new Solution(solution, listClasses, idToName, ghost, allowMeetingSameStudent, bestRuntime,
+				bestNbStudentsMet, maxStudentsMet, bestNbClassesMet, maxClassesMet);
 	}
 
 	/**
@@ -435,7 +436,7 @@ public final class TournamentSolver {
 			solutionCount = 0;
 			this.opponents = opponents;
 		}
-		
+
 		@EventHandler
 		public void onStoppedSearch(StopSearchEvent event) {
 			if (event.getLevel() == level)
