@@ -43,7 +43,7 @@ public class ChooseResultsPanel extends JPanel implements Listener {
 
 	public ChooseResultsPanel() {
 		EventManager.getInstance().registerListener(this);
-		
+
 		this.setLayout(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 
@@ -135,11 +135,13 @@ public class ChooseResultsPanel extends JPanel implements Listener {
 	@EventHandler
 	public void onCreatedTournament(TournamentSolverFinishedEvent event) {
 		String tournamentName = event.getTournamentName();
-		model.addElement(tournamentName);
-		if (model.getSize() > 15)
-			list.setVisibleRowCount(15);
-		else
-			list.setVisibleRowCount(model.getSize());
+		if (!model.contains(tournamentName)) {
+			model.addElement(tournamentName);
+			if (model.getSize() > 15)
+				list.setVisibleRowCount(15);
+			else
+				list.setVisibleRowCount(model.getSize());
+		}
 	}
 
 	@EventHandler
