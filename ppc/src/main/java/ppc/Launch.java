@@ -5,6 +5,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.reflections.Reflections;
 
@@ -27,23 +28,23 @@ public class Launch {
 		Set<Class<?>> types = reflections.getTypesAnnotatedWith(ppc.annotation.Manager.class);
 		monitorPrioManager.addAll(types.stream().filter(
 				manager -> manager.getAnnotation(ppc.annotation.Manager.class).priority() == ManagerPriority.MONITOR)
-				.toList());
+				.collect(Collectors.toList()));
 
 		criticalPrioManager.addAll(types.stream().filter(
 				manager -> manager.getAnnotation(ppc.annotation.Manager.class).priority() == ManagerPriority.CRITICAL)
-				.toList());
+				.collect(Collectors.toList()));
 
 		highPrioManager.addAll(types.stream().filter(
 				manager -> manager.getAnnotation(ppc.annotation.Manager.class).priority() == ManagerPriority.HIGH)
-				.toList());
+				.collect(Collectors.toList()));
 
 		mediumPrioManager.addAll(types.stream().filter(
 				manager -> manager.getAnnotation(ppc.annotation.Manager.class).priority() == ManagerPriority.MEDIUM)
-				.toList());
+				.collect(Collectors.toList()));
 
 		lowPrioManager.addAll(types.stream().filter(
 				manager -> manager.getAnnotation(ppc.annotation.Manager.class).priority() == ManagerPriority.LOW)
-				.toList());
+				.collect(Collectors.toList()));
 
 		for (Class<?> monitorPrioClass : monitorPrioManager) {
 			Manager manager = (Manager) monitorPrioClass.getMethod("getInstance").invoke(null);
