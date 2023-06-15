@@ -99,8 +99,27 @@ public final class TournamentSolver {
 		}
 
 		studentClasses = new int[nbStudents];
-		this.listClasses = newIdClasses(listClasses);
-		classmates = getClassmates(this.listClasses);
+		Integer[][] orderedListClasses = newIdClasses(listClasses);
+
+		// Keeping the good order for solution generation
+		this.listClasses = new Integer[nbClasses][];
+		int[] used = new int[nbClasses];
+		for (int i = 0; i < nbClasses; i++)
+			used[i] = -1;
+
+		for (int classNumber = 0; classNumber < nbClasses; classNumber++) {
+			for (int i = 0; i < nbClasses; i++) {
+				if (listClasses[i].length == orderedListClasses[classNumber].length && used[i] == -1) {
+					used[i] = classNumber;
+					break;
+				}
+			}
+		}
+
+		for (int i = 0; i < nbClasses; i++) {
+			this.listClasses[i] = orderedListClasses[used[i]];
+		}
+		classmates = getClassmates(orderedListClasses);
 
 		this.classThreshold = (int) (classThreshold * maxClassesMet);
 		this.studentThreshold = (int) (studentThreshold * maxStudentsMet);
