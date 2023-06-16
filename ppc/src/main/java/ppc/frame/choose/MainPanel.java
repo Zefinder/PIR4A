@@ -1,7 +1,9 @@
 package ppc.frame.choose;
 
+import java.awt.BorderLayout;
 import java.awt.CardLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Graphics;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
@@ -13,10 +15,9 @@ import java.awt.event.ActionListener;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JSeparator;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 
 import ppc.annotation.EventHandler;
@@ -58,21 +59,30 @@ public class MainPanel extends JPanel implements Listener {
 	}
 
 	private void buildMainPanel() {
-		this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
+	    this.setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
 
-		optionsPanel = buildChoosingOptionsPanel();
-		informationsPanel = buildInformationsPanel();
+	    JPanel optionsAndLabelsPanel = new JPanel();
+	    optionsAndLabelsPanel.setLayout(new BorderLayout(0,0));
 
-		this.add(optionsPanel);
+	    optionsPanel = buildChoosingOptionsPanel();
 
-		JSeparator sep = new JSeparator(SwingConstants.VERTICAL);
-		sep.setBackground(new Color(0, 0, 0, 200));
-		sep.setForeground(new Color(0, 0, 0, 200));
-		this.add(sep);
+	    optionsAndLabelsPanel.add(optionsPanel, BorderLayout.CENTER);
+	    optionsAndLabelsPanel.setBackground(new Color(255, 255, 255, 100));
 
-		this.add(informationsPanel);
+	    JPanel authorsPanel = new JPanel();
+	    authorsPanel.setLayout(new FlowLayout(FlowLayout.LEFT));
+	    authorsPanel.setOpaque(false);
+	    JLabel authorsLabel = new JLabel("Adrien Jakubiak & Sarah Mousset");
+	    authorsPanel.add(authorsLabel);
 
+	    optionsAndLabelsPanel.add(authorsPanel, BorderLayout.SOUTH);
+
+	    this.add(optionsAndLabelsPanel);
+
+	    informationsPanel = buildInformationsPanel();
+	    this.add(informationsPanel);
 	}
+
 
 	private JPanel buildChoosingOptionsPanel() {
 		JPanel optionsPanel = new JPanel();
@@ -109,7 +119,7 @@ public class MainPanel extends JPanel implements Listener {
 		settings.addActionListener(new OptionsButtonAction(SETTINGS_ACTION));
 		optionsPanel.add(settings, c);
 
-		optionsPanel.setBackground(new Color(255, 255, 255, 100));
+		optionsPanel.setOpaque(false);
 
 		return optionsPanel;
 	}
