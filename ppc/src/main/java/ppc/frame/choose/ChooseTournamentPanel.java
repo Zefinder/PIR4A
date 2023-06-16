@@ -7,6 +7,7 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.swing.BorderFactory;
@@ -55,7 +56,7 @@ public class ChooseTournamentPanel extends JPanel implements Listener {
 
 		model = new DefaultListModel<>();
 		list = new JList<>(model);
-		model.addAll(Stream.of(TournamentManager.getInstance().getTournaments()).toList());
+		model.addAll(Stream.of(TournamentManager.getInstance().getTournaments()).collect(Collectors.toList()));
 
 		list.setCellRenderer(new TournamentListRenderer());
 		list.setFixedCellHeight(25);
