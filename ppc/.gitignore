@@ -3,3 +3,6 @@
 /.project
 /bin/
 /.settings/
+/exe/
+*.exe
+/jre
