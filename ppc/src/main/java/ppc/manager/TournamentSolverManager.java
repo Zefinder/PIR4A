@@ -67,7 +67,7 @@ public class TournamentSolverManager implements Manager, Listener {
 		logs.writeInformationMessage("Initialising TournamentSolverManager...");
 		EventManager.getInstance().registerListener(this);
 
-		this.classesByLevel = new HashMap<>();
+		this.classesByLevel = new LinkedHashMap<>();
 		this.loadPreData();
 		logs.writeInformationMessage("TournamentSolverManager initialised!");
 	}
@@ -222,6 +222,9 @@ public class TournamentSolverManager implements Manager, Listener {
 		List<Thread> threads = new ArrayList<>();
 		List<LevelThread> lvlThreads = new ArrayList<>();
 		List<Solution> solutions = new ArrayList<>();
+		for (int i = 0; i < classesByLevel.size(); i++)
+			solutions.add(null);
+		
 		int lastLevelWithGhost = -1;
 
 		if (nbClasses == 0) {
@@ -301,7 +304,7 @@ public class TournamentSolverManager implements Manager, Listener {
 				precalculatedSolution.setIdToName(idToName);
 
 				// We add the solution
-				solutions.add(precalculatedSolution);
+				solutions.set(lvl, precalculatedSolution);
 				if (precalculatedSolution.getGhost() != -1)
 					lastLevelWithGhost = lvl;
 
@@ -347,7 +350,7 @@ public class TournamentSolverManager implements Manager, Listener {
 		// retrieving solutions from threads
 		for (LevelThread lvlThread : lvlThreads) {
 			Solution currentSolution = lvlThread.getSolution();
-			solutions.add(currentSolution);
+			solutions.set(lvlThread.getLevel(), currentSolution);
 			if (currentSolution.getGhost() != -1 && lvlThread.getLevel() > lastLevelWithGhost)
 				lastLevelWithGhost = lvlThread.getLevel();
 		}
@@ -358,6 +361,10 @@ public class TournamentSolverManager implements Manager, Listener {
 		if (destinationFolder == null) {
 			EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(
 					"Impossible d'accéder au dossier de résultats...\nRedémarrez l'application et réessayez..."));
+		}
+		
+		for (Solution solution : solutions) {
+			System.out.println(Arrays.deepToString(solution.getListClasses()));
 		}
 
 		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), solutions, classNames,
