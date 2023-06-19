@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import javax.swing.ImageIcon;
+
 import org.reflections.Reflections;
 
 import ppc.annotation.ManagerPriority;
@@ -78,6 +80,7 @@ public class Launch {
 		init();
 		
 		MainFrame mf = new MainFrame();
+		mf.setIconImage(new ImageIcon("EchecEtMatch_logo.png").getImage());
 		mf.initFrame();
 	}
 
