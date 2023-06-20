@@ -263,6 +263,11 @@ public class TournamentSolverManager implements Manager, Listener {
 					.get(Arrays.toString(getReducedConfig(configuration)));
 			if (precalculatedSolution != null && precalculatedSolution.getMatches() != null) {
 
+				try {
+					precalculatedSolution = (Solution) precalculatedSolution.clone();
+				} catch (CloneNotSupportedException e) {
+					e.printStackTrace();
+				}
 				// We compute the idToName map and add it to the solution
 				Map<Integer, String[]> idToName = new HashMap<>();
 				int[] used = new int[configuration.length];

@@ -14,7 +14,7 @@ import java.util.Map;
  * @author Sarah Mousset
  *
  */
-public class Solution {
+public class Solution implements Cloneable {
 
 	private Integer[][] matches;
 	private Integer[][] listClasses;
@@ -32,8 +32,8 @@ public class Solution {
 	private int maxClassesMet;
 	private int table;
 
-	public Solution(Integer[][] matches, Integer[][] listClasses, Map<Integer, String[]> idToName,
-			int ghost, boolean softConstraint, double runtime, int studentsMet, int maxStudentsMet, int classesMet,
+	public Solution(Integer[][] matches, Integer[][] listClasses, Map<Integer, String[]> idToName, int ghost,
+			boolean softConstraint, double runtime, int studentsMet, int maxStudentsMet, int classesMet,
 			int maxClassesMet) {
 		this.matches = matches;
 		this.listClasses = listClasses;
@@ -55,7 +55,7 @@ public class Solution {
 		for (int student = firstStudent; student <= matches.length / 2 - offset; student++)
 			this.idToTable.put(student, table++);
 	}
-	
+
 	public int lastTable() {
 		return table;
 	}
@@ -78,7 +78,7 @@ public class Solution {
 	public Integer[][] getListClasses() {
 		return this.listClasses;
 	}
-	
+
 	public void setListClasses(Integer[][] listClasses) {
 		this.listClasses = listClasses;
 	}
@@ -119,7 +119,7 @@ public class Solution {
 	public int getStudentsMet() {
 		return studentsMet;
 	}
-	
+
 	public int getMaxStudentsMet() {
 		return maxStudentsMet;
 	}
@@ -127,8 +127,15 @@ public class Solution {
 	public int getClassesMet() {
 		return classesMet;
 	}
-	
+
 	public int getMaxClassesMet() {
 		return maxClassesMet;
+	}
+
+	@Override
+	public Object clone() throws CloneNotSupportedException {
+		Map<Integer, String[]> map = idToName == null ? null : idToName;
+		return new Solution(matches.clone(), listClasses.clone(), map, ghost, softConstraint,
+				runtime, studentsMet, maxStudentsMet, classesMet, maxClassesMet);
 	}
 }
