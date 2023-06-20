@@ -172,7 +172,7 @@ public class SettingsPanel extends JPanel implements Listener {
 
 		c.gridx = 1;
 		c.gridy = 2;
-		colorBoxes = new JComboBox<>(new String[] { "Défaut", "Vert", "Violet" });
+		colorBoxes = new JComboBox<>(new String[] { "Défaut", "Vert", "Violet", "Bleu", "Rouge", "Orange", "Rose" });
 		generalSettingsPanel.add(colorBoxes, c);
 		switch (SettingsManager.getInstance().getProgressBarColor().toLowerCase()) {
 		case "défaut":
@@ -184,9 +184,29 @@ public class SettingsPanel extends JPanel implements Listener {
 		case "green":
 			colorBoxes.setSelectedIndex(1);
 			break;
-
+		
+		case "purple":
 		case "violet":
 			colorBoxes.setSelectedIndex(2);
+			break;
+			
+		case "blue":
+		case "bleu":
+			colorBoxes.setSelectedIndex(3);
+			break;
+			
+		case "red":
+		case "rouge":
+			colorBoxes.setSelectedIndex(4);
+			break;
+			
+		case "orange":
+			colorBoxes.setSelectedIndex(5);
+			break;
+			
+		case "rose":
+		case "pink":
+			colorBoxes.setSelectedIndex(6);
 			break;
 
 		default:

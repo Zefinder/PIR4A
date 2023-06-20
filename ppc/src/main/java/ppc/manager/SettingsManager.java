@@ -93,8 +93,6 @@ public final class SettingsManager implements Manager, Listener {
 		EventManager.getInstance().registerListener(this);
 
 		// Creating bar colors
-		barColors = new ColorBar[3];
-
 		ColorBar defaultColor = new ColorBar((Color) UIManager.get("ProgressBar.background"),
 				(Color) UIManager.get("ProgressBar.foreground"),
 				(Color) UIManager.get("ProgressBar.selectionBackground"),
@@ -103,12 +101,23 @@ public final class SettingsManager implements Manager, Listener {
 		ColorBar greenColor = new ColorBar(new Color(255, 255, 255), new Color(164, 198, 136), new Color(164, 198, 136),
 				new Color(255, 255, 255));
 
-		ColorBar violetColor = new ColorBar(new Color(255, 255, 255), new Color(150, 141, 163),
-				new Color(150, 141, 163), new Color(255, 255, 255));
-		
-		barColors[0] = defaultColor;
-		barColors[1] = greenColor;
-		barColors[2] = violetColor;
+		ColorBar violetColor = new ColorBar(new Color(255, 255, 255), new Color(190, 168, 215),
+				new Color(190, 168, 215), new Color(255, 255, 255));
+
+		ColorBar blueColor = new ColorBar(new Color(255, 255, 255), new Color(19, 82, 171), new Color(19, 82, 171),
+				new Color(255, 255, 255));
+
+		ColorBar redColor = new ColorBar(new Color(255, 255, 255), new Color(255, 156, 159), new Color(255, 156, 159),
+				new Color(255, 255, 255));
+
+		ColorBar orangeColor = new ColorBar(new Color(255, 255, 255), new Color(253, 177, 150),
+				new Color(253, 177, 150), new Color(255, 255, 255));
+
+		ColorBar pinkColor = new ColorBar(new Color(255, 255, 255), new Color(244, 173, 198), new Color(244, 173, 198),
+				new Color(255, 255, 255));
+
+		barColors = new ColorBar[] { defaultColor, greenColor, violetColor, blueColor, redColor, orangeColor,
+				pinkColor };
 
 		// Getting settings file
 		settingsFile = FileManager.getInstance().getSettingsFile();
@@ -323,9 +332,33 @@ public final class SettingsManager implements Manager, Listener {
 					colorBarChosen = 1;
 					break;
 
+				case "purple":
 				case "violet":
 					logs.writeInformationMessage("Violet progress bar color set");
 					colorBarChosen = 2;
+					break;
+
+				case "blue":
+				case "bleu":
+					logs.writeInformationMessage("Blue progress bar color set");
+					colorBarChosen = 3;
+					break;
+
+				case "red":
+				case "rouge":
+					logs.writeInformationMessage("Red progress bar color set");
+					colorBarChosen = 4;
+					break;
+
+				case "orange":
+					logs.writeInformationMessage("Orange progress bar color set");
+					colorBarChosen = 5;
+					break;
+
+				case "pink":
+				case "rose":
+					logs.writeInformationMessage("Pink progress bar color set");
+					colorBarChosen = 6;
 					break;
 
 				default:
