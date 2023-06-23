@@ -17,6 +17,7 @@ import ppc.event.Listener;
 import ppc.event.solver.FinalSolutionFoundEvent;
 import ppc.event.solver.SolutionFoundEvent;
 import ppc.event.solver.StopSearchEvent;
+import ppc.event.solver.TournamentSolveImpossibleEvent;
 import ppc.manager.EventManager;
 
 public class LoadingPanel extends JPanel implements Listener {
@@ -102,5 +103,11 @@ public class LoadingPanel extends JPanel implements Listener {
 					(float) event.getClassesMet() / event.getMaxClassesMet() * 100);
 			searchIsStopped();
 		}
+	}
+	
+	@EventHandler
+	public void onImpossibleLevel(TournamentSolveImpossibleEvent event) {
+		if (event.getLevel() == this.level)
+			searchIsStopped();
 	}
 }

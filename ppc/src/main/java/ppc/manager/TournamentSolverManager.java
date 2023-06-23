@@ -230,14 +230,14 @@ public class TournamentSolverManager implements Manager, Listener {
 		if (nbClasses == 0) {
 			logs.writeErrorMessage("No class were added so impossible to create a tournament!");
 			EventManager.getInstance()
-					.callEvent(new TournamentSolveImpossibleEvent("Il n'y a pas de classes pour faire un tournoi !"));
+					.callEvent(new TournamentSolveImpossibleEvent("Il n'y a pas de classes pour faire un tournoi !", -1));
 			return;
 		}
 
 		if (nbClasses == 1) {
 			logs.writeErrorMessage("Impossible to create a tournament with only one class!");
 			EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(
-					"Il n'est pas possible de faire un tournoi avec seulement une classe !"));
+					"Il n'est pas possible de faire un tournoi avec seulement une classe !", -1));
 			return;
 		}
 
@@ -326,8 +326,7 @@ public class TournamentSolverManager implements Manager, Listener {
 				if (feasibility == -1 || (feasibility == 0 && !event.isSoftConstraint())) {
 					logs.writeErrorMessage("Impossible to solve for level group " + lvl);
 					EventManager.getInstance().callEvent(
-							new TournamentSolveImpossibleEvent("Le tournoi est impossible pour le niveau " + lvl));
-					return;
+							new TournamentSolveImpossibleEvent("Le tournoi est impossible pour le niveau " + (lvl + 1), lvl));
 				} else {
 					LevelThread lvlThread = new LevelThread(lvlClasses, event.isSoftConstraint(),
 							event.getClassThreshold(), event.getStudentThreshold(), event.getTimeout(), lvl,
@@ -365,14 +364,16 @@ public class TournamentSolverManager implements Manager, Listener {
 		File destinationFolder = FileManager.getInstance().getTournamentResDirectory(event.getTournamentName());
 		if (destinationFolder == null) {
 			EventManager.getInstance().callEvent(new TournamentSolveImpossibleEvent(
-					"Impossible d'accéder au dossier de résultats...\nRedémarrez l'application et réessayez..."));
+					"Impossible d'accéder au dossier de résultats...\nRedémarrez l'application et réessayez...", -1));
 		}
 		
+		List<Solution> possibleSolutions = new ArrayList<>();
 		for (Solution solution : solutions) {
-			System.out.println(Arrays.deepToString(solution.getListClasses()));
+			if (solution != null)
+				possibleSolutions.add(solution);
 		}
 
-		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), solutions, classNames,
+		PdfGenerator pdfGen = new PdfGenerator(destinationFolder, event.getTournamentName(), possibleSolutions, classNames,
 				nbClasses, event.getFirstTable(), lastLevelWithGhost);
 		try {
 			logs.writeInformationMessage("Creating pdf ListeMatches... ");
